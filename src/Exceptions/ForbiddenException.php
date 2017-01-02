@@ -27,7 +27,7 @@ namespace hollodotme\FastCGI\Exceptions;
  * Class ForbiddenException
  * @package hollodotme\FastCGI
  */
-class ForbiddenException extends FastCGIException
+class ForbiddenException extends FastCGIClientException
 {
 
 }

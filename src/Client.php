@@ -26,7 +26,7 @@ namespace hollodotme\FastCGI;
 use hollodotme\FastCGI\Exceptions\ConnectException;
 use hollodotme\FastCGI\Exceptions\ForbiddenException;
 use hollodotme\FastCGI\Exceptions\ReadFailedException;
-use hollodotme\FastCGI\Exceptions\TimedOutException;
+use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 
@@ -370,11 +370,12 @@ class Client
 	 * In that case it is possible that a delayed response to a request made by a previous script
 	 * invocation comes back on this socket and is mistaken for response to request made with same ID
 	 * during this request.
+
 	 *
-	 * @param array  $params  Array of parameters
+*@param array  $params  Array of parameters
 	 * @param string $content Content
 	 *
-	 * @throws TimedOutException
+	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 * @return int
 	 */
@@ -421,7 +422,7 @@ class Client
 
 			if ( $info['timed_out'] )
 			{
-				throw new TimedOutException( 'Write timed out' );
+				throw new TimedoutException( 'Write timed out' );
 			}
 
 			// Broken pipe, tear down so future requests might succeed
@@ -440,14 +441,16 @@ class Client
 
 	/**
 	 * Blocking call that waits for response to specific request
+
 	 *
-	 * @param int $requestId     Request ID
+*@param int $requestId     Request ID
 	 * @param int $timeoutMs     [optional] the number of milliseconds to wait.
 	 *                           Defaults to the ReadWriteTimeout value set.
+
 	 *
-	 * @throws ForbiddenException
+*@throws ForbiddenException
 	 * @throws ReadFailedException
-	 * @throws TimedOutException
+	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 * @return string
 	 */
@@ -508,7 +511,7 @@ class Client
 				// Reset
 				$this->setStreamTimeout( $this->socketConnection->getReadWriteTimeout() );
 
-				throw new TimedOutException( 'Timed out' );
+				throw new TimedoutException( 'Timed out' );
 			}
 		} while ( $response );
 
@@ -521,7 +524,7 @@ class Client
 
 			if ( $info['timed_out'] )
 			{
-				throw new TimedOutException( 'Read timed out' );
+				throw new TimedoutException( 'Read timed out' );
 			}
 
 			if ( $info['unread_bytes'] == 0 && $info['blocked'] && $info['eof'] )

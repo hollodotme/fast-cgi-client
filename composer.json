@@ -22,5 +22,28 @@
 		"psr-4": {
 			"hollodotme\\FastCGI\\": "src/"
 		}
+	},
+	"require-dev": {
+		"tm/tooly-composer-script": "^1.0"
+	},
+	"scripts": {
+		"post-install-cmd": "Tooly\\ScriptHandler::installPharTools",
+		"post-update-cmd": "Tooly\\ScriptHandler::installPharTools"
+	},
+	"extra": {
+		"tools": {
+			"phpunit": {
+				"url": "https://phar.phpunit.de/phpunit.phar",
+				"only-dev": true
+			},
+			"coveralls": {
+				"url": "https://github.com/satooshi/php-coveralls/releases/download/v1.0.1/coveralls.phar",
+				"only-dev": true
+			},
+			"phpmetrics": {
+				"url": "https://github.com/phpmetrics/PhpMetrics/releases/download/v2.0.0-rc/phpmetrics.phar",
+				"only-dev": true
+			}
+		}
 	}
 }

@@ -27,7 +27,7 @@ namespace hollodotme\FastCGI\Exceptions;
  * Class ConnectException
  * @package hollodotme\FastCGI\Exceptions
  */
-class ConnectException extends FastCGIException
+class ConnectException extends FastCGIClientException
 {
 
 }
