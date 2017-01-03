@@ -24,7 +24,7 @@ composer require hollodotme/fast-cgi-client:^1.0
 ### Use version 2.x for compatibility with PHP 7.1.x
 
 ```bash
-composer require hollodotme/fast-cgi-client:^1.0
+composer require hollodotme/fast-cgi-client:^2.0
 ```
 
 ---
