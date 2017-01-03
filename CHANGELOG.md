@@ -3,7 +3,9 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
-## Unreleased
+## [1.0.0] - 2017-01-03
+
+Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](https://github.com/adoy/PHP-FastCGI-Client/):
 
 ### Added 
 
@@ -24,3 +26,5 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CH
  * Unused class constants from `Client`
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
+
+[1.0.0]: https://github.com/hollodotme/fast-cgi-client/tree/v1.0.0
