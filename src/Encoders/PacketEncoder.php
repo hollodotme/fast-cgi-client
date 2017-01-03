@@ -29,7 +29,7 @@ namespace hollodotme\FastCGI\Encoders;
  */
 final class PacketEncoder
 {
-	const VERSION = 1;
+	private const VERSION = 1;
 
 	public function encodePacket( int $type, string $content, int $requestId ) : string
 	{

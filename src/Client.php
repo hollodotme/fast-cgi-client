@@ -39,35 +39,35 @@ use hollodotme\FastCGI\Timing\Timer;
  */
 class Client
 {
-	const BEGIN_REQUEST     = 1;
+	private const BEGIN_REQUEST     = 1;
 
-	const END_REQUEST       = 3;
+	private const END_REQUEST       = 3;
 
-	const PARAMS            = 4;
+	private const PARAMS            = 4;
 
-	const STDIN             = 5;
+	private const STDIN             = 5;
 
-	const STDOUT            = 6;
+	private const STDOUT            = 6;
 
-	const STDERR            = 7;
+	private const STDERR            = 7;
 
-	const RESPONDER         = 1;
+	private const RESPONDER         = 1;
 
-	const REQUEST_COMPLETE  = 0;
+	private const REQUEST_COMPLETE  = 0;
 
-	const CANT_MPX_CONN     = 1;
+	private const CANT_MPX_CONN     = 1;
 
-	const OVERLOADED        = 2;
+	private const OVERLOADED        = 2;
 
-	const UNKNOWN_ROLE      = 3;
+	private const UNKNOWN_ROLE      = 3;
 
-	const HEADER_LEN        = 8;
+	private const HEADER_LEN        = 8;
 
-	const REQ_STATE_WRITTEN = 1;
+	private const REQ_STATE_WRITTEN = 1;
 
-	const REQ_STATE_OK      = 2;
+	private const REQ_STATE_OK      = 2;
 
-	const REQ_STATE_ERR     = 3;
+	private const REQ_STATE_ERR     = 3;
 
 	/** @var ConfiguresSocketConnection */
 	private $connection;
@@ -99,7 +99,95 @@ class Client
 		$this->nameValuePairEncoder = new NameValuePairEncoder();
 	}
 
-	private function connect()
+	/**
+	 * Execute a request to the FastCGI application
+	 *
+	 * @param array  $params  Array of parameters
+	 * @param string $content Content
+	 *
+	 * @return string
+	 */
+	public function sendRequest( array $params, string $content ) : string
+	{
+		$requestId = $this->sendAsyncRequest( $params, $content );
+
+		return $this->waitForResponse( $requestId );
+	}
+
+	/**
+	 * Execute a request to the FastCGI application asyncronously
+	 * This sends request to application and returns the assigned ID for that request.
+	 * You should keep this id for later use with wait_for_response(). Ids are chosen randomly
+	 * rather than seqentially to guard against false-positives when using persistent sockets.
+	 * In that case it is possible that a delayed response to a request made by a previous script
+	 * invocation comes back on this socket and is mistaken for response to request made with same ID
+	 * during this request.
+
+*
+* @param array       $params  Array of parameters
+	 * @param string $content Content
+
+*
+* @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @return int
+	 */
+	public function sendAsyncRequest( array $params, string $content ) : int
+	{
+		$this->connect();
+
+		// Pick random number between 1 and max 16 bit unsigned int 65535
+		$requestId = mt_rand( 1, (1 << 16) - 1 );
+
+		// Using persistent sockets implies you want them kept alive by server
+		$keepAlive = intval( $this->connection->keepAlive() || $this->connection->isPersistent() );
+
+		$request = $this->packetEncoder->encodePacket(
+			self::BEGIN_REQUEST,
+			chr( 0 ) . chr( self::RESPONDER ) . chr( $keepAlive ) . str_repeat( chr( 0 ), 5 ),
+			$requestId
+		);
+
+		$paramsRequest = $this->nameValuePairEncoder->encodePairs( $params );
+
+		if ( $paramsRequest )
+		{
+			$request .= $this->packetEncoder->encodePacket( self::PARAMS, $paramsRequest, $requestId );
+		}
+
+		$request .= $this->packetEncoder->encodePacket( self::PARAMS, '', $requestId );
+
+		if ( $content )
+		{
+			$request .= $this->packetEncoder->encodePacket( self::STDIN, $content, $requestId );
+		}
+
+		$request .= $this->packetEncoder->encodePacket( self::STDIN, '', $requestId );
+
+		if ( fwrite( $this->socket, $request ) === false || fflush( $this->socket ) === false )
+		{
+			$info = stream_get_meta_data( $this->socket );
+
+			if ( $info['timed_out'] )
+			{
+				throw new TimedoutException( 'Write timed out' );
+			}
+
+			// Broken pipe, tear down so future requests might succeed
+			fclose( $this->socket );
+
+			throw new WriteFailedException( 'Failed to write request to socket [broken pipe]' );
+		}
+
+		$this->requests[ $requestId ] = [
+			'state'    => self::REQ_STATE_WRITTEN,
+			'response' => null,
+		];
+
+		return $requestId;
+	}
+
+	private function connect() : void
 	{
 		if ( $this->socket === null )
 		{
@@ -157,7 +245,7 @@ class Client
 	 * Read a FastCGI PacketEncoder
 	 * @return array|null
 	 */
-	private function readPacket()
+	private function readPacket() : ?array
 	{
 		if ( $packet = fread( $this->socket, self::HEADER_LEN ) )
 		{
@@ -186,92 +274,6 @@ class Client
 		{
 			return null;
 		}
-	}
-
-	/**
-	 * Execute a request to the FastCGI application
-	 *
-	 * @param array  $params  Array of parameters
-	 * @param string $content Content
-	 *
-	 * @return string
-	 */
-	public function sendRequest( array $params, string $content ) : string
-	{
-		$requestId = $this->sendAsyncRequest( $params, $content );
-
-		return $this->waitForResponse( $requestId );
-	}
-
-	/**
-	 * Execute a request to the FastCGI application asyncronously
-	 * This sends request to application and returns the assigned ID for that request.
-	 * You should keep this id for later use with wait_for_response(). Ids are chosen randomly
-	 * rather than seqentially to guard against false-positives when using persistent sockets.
-	 * In that case it is possible that a delayed response to a request made by a previous script
-	 * invocation comes back on this socket and is mistaken for response to request made with same ID
-	 * during this request.
-	 *
-	 * @param array  $params  Array of parameters
-	 * @param string $content Content
-	 *
-*@throws TimedoutException
-	 * @throws WriteFailedException
-	 * @return int
-	 */
-	public function sendAsyncRequest( array $params, string $content ) : int
-	{
-		$this->connect();
-
-		// Pick random number between 1 and max 16 bit unsigned int 65535
-		$requestId = mt_rand( 1, (1 << 16) - 1 );
-
-		// Using persistent sockets implies you want them kept alive by server
-		$keepAlive = intval( $this->connection->keepAlive() || $this->connection->isPersistent() );
-
-		$request = $this->packetEncoder->encodePacket(
-			self::BEGIN_REQUEST,
-			chr( 0 ) . chr( self::RESPONDER ) . chr( $keepAlive ) . str_repeat( chr( 0 ), 5 ),
-			$requestId
-		);
-
-		$paramsRequest = $this->nameValuePairEncoder->encodePairs( $params );
-
-		if ( $paramsRequest )
-		{
-			$request .= $this->packetEncoder->encodePacket( self::PARAMS, $paramsRequest, $requestId );
-		}
-
-		$request .= $this->packetEncoder->encodePacket( self::PARAMS, '', $requestId );
-
-		if ( $content )
-		{
-			$request .= $this->packetEncoder->encodePacket( self::STDIN, $content, $requestId );
-		}
-
-		$request .= $this->packetEncoder->encodePacket( self::STDIN, '', $requestId );
-
-		if ( fwrite( $this->socket, $request ) === false || fflush( $this->socket ) === false )
-		{
-			$info = stream_get_meta_data( $this->socket );
-
-			if ( $info['timed_out'] )
-			{
-				throw new TimedoutException( 'Write timed out' );
-			}
-
-			// Broken pipe, tear down so future requests might succeed
-			fclose( $this->socket );
-
-			throw new WriteFailedException( 'Failed to write request to socket [broken pipe]' );
-		}
-
-		$this->requests[ $requestId ] = [
-			'state'    => self::REQ_STATE_WRITTEN,
-			'response' => null,
-		];
-
-		return $requestId;
 	}
 
 	/**

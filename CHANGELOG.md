@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [2.0.0] - 2017-01-03
+
+### Changed
+
+ * Class constant visibility to private in class `Client`
+ * Class constant visibility to privare in class `Encoders\PacketEncoder`
+ * Class constant visibility to public in class `SocketConnections\Defaults`
+ * Composer requires php >= 7.1
+ 
+
 ## [1.0.0] - 2017-01-03
 
 Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](https://github.com/adoy/PHP-FastCGI-Client/):
@@ -27,4 +37,5 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[2.0.0]: https://github.com/hollodotme/fast-cgi-client/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/hollodotme/fast-cgi-client/tree/v1.0.0

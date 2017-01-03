@@ -28,6 +28,9 @@
 			"hollodotme\\FastCGI\\Tests\\": "tests/"
 		}
 	},
+	"require": {
+		"php": ">=7.1"
+	},
 	"require-dev": {
 		"tm/tooly-composer-script": "^1.0"
 	},

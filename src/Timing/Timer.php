@@ -42,7 +42,7 @@ final class Timer
 		$this->timeoutMs = $timeoutMs;
 	}
 
-	public function start()
+	public function start() : void
 	{
 		$this->startTime = microtime( true );
 	}
@@ -57,7 +57,7 @@ final class Timer
 		return ((microtime( true ) - $this->startTime) > ($this->timeoutMs / 1000));
 	}
 
-	public function reset()
+	public function reset() : void
 	{
 		$this->startTime = null;
 	}
