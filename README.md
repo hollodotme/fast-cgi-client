@@ -88,7 +88,7 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
 $client  = new Client( new UnixDomainSocket( 'unix:///var/run/php/php7.0-fpm.sock' ) );
-$content = http_build_query(['key' => 'value']);
+$content = http_build_query( ['key' => 'value'] );
 
 $response = $client->sendRequest(
 	[
@@ -103,7 +103,7 @@ $response = $client->sendRequest(
 		'SERVER_NAME'       => 'your-server',
 		'SERVER_PROTOCOL'   => 'HTTP/1.1',
 		'CONTENT_TYPE'      => 'application/x-www-form-urlencoded',
-		'CONTENT_LENGTH'    => mb_strlen($content)	
+		'CONTENT_LENGTH'    => strlen( $content )	
 	],
 	$content
 );
@@ -124,7 +124,7 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 $client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
-$content = http_build_query(['key' => 'value']);
+$content = http_build_query( ['key' => 'value'] );
 
 $requestId = $client->sendAsyncRequest(
 	[
@@ -139,7 +139,7 @@ $requestId = $client->sendAsyncRequest(
 		'SERVER_NAME'       => 'your-server',
 		'SERVER_PROTOCOL'   => 'HTTP/1.1',
 		'CONTENT_TYPE'      => 'application/x-www-form-urlencoded',
-		'CONTENT_LENGTH'    => mb_strlen($content)	
+		'CONTENT_LENGTH'    => strlen( $content )	
 	],
 	$content
 );
