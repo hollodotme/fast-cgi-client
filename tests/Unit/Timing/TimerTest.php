@@ -1,7 +1,7 @@
 <?php declare(strict_types = 1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2017 Holger Woltersdorf
+ * Copyright (c) 2016 Holger Woltersdorf
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -21,13 +21,48 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI\Exceptions;
+namespace hollodotme\FastCGI\Tests\Unit\Timing;
 
-/**
- * Class ForbiddenException
- * @package hollodotme\FastCGI
- */
-class ForbiddenException extends FastCGIClientException
+use hollodotme\FastCGI\Timing\Timer;
+
+class TimerTest extends \PHPUnit_Framework_TestCase
 {
+	/**
+	 * @expectedException \hollodotme\FastCGI\Timing\Exceptions\TimerNotStartedException
+	 */
+	public function testNotStartedTimerThrowsExceptionOnTimedOutCheck()
+	{
+		$timer = new Timer( 1 );
 
+		$timer->timedOut();
+	}
+
+	public function testCanTimeOut()
+	{
+		$timer = new Timer( 1000 );
+		$timer->start();
+
+		usleep( 1000 * 500 );
+
+		$this->assertFalse( $timer->timedOut() );
+
+		usleep( 1000 * 600 );
+
+		$this->assertTrue( $timer->timedOut() );
+	}
+
+	/**
+	 * @expectedException \hollodotme\FastCGI\Timing\Exceptions\TimerNotStartedException
+	 */
+	public function testCanResetTimer()
+	{
+		$timer = new Timer( 1000 );
+		$timer->start();
+
+		$this->assertFalse( $timer->timedOut() );
+
+		$timer->reset();
+
+		$timer->timedOut();
+	}
 }

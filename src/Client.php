@@ -1,7 +1,7 @@
 <?php declare(strict_types = 1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016 Holger Woltersdorf
+ * Copyright (c) 2017 Holger Woltersdorf
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -23,12 +23,15 @@
 
 namespace hollodotme\FastCGI;
 
+use hollodotme\FastCGI\Encoders\NameValuePairEncoder;
+use hollodotme\FastCGI\Encoders\PacketEncoder;
 use hollodotme\FastCGI\Exceptions\ConnectException;
 use hollodotme\FastCGI\Exceptions\ForbiddenException;
 use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
+use hollodotme\FastCGI\Timing\Timer;
 
 /**
  * Class Client
@@ -36,8 +39,6 @@ use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
  */
 class Client
 {
-	const VERSION_1         = 1;
-
 	const BEGIN_REQUEST     = 1;
 
 	const END_REQUEST       = 3;
@@ -49,10 +50,6 @@ class Client
 	const STDOUT            = 6;
 
 	const STDERR            = 7;
-
-	const GET_VALUES        = 9;
-
-	const GET_VALUES_RESULT = 10;
 
 	const RESPONDER         = 1;
 
@@ -73,10 +70,16 @@ class Client
 	const REQ_STATE_ERR     = 3;
 
 	/** @var ConfiguresSocketConnection */
-	private $socketConnection;
+	private $connection;
 
 	/** @var resource */
 	private $socket;
+
+	/** @var PacketEncoder */
+	private $packetEncoder;
+
+	/** @var NameValuePairEncoder */
+	private $nameValuePairEncoder;
 
 	/**
 	 * Outstanding request status keyed by request id
@@ -89,34 +92,43 @@ class Client
 	 */
 	private $requests = [];
 
-	public function __construct( ConfiguresSocketConnection $socketConnection )
+	public function __construct( ConfiguresSocketConnection $connection )
 	{
-		$this->socketConnection = $socketConnection;
+		$this->connection           = $connection;
+		$this->packetEncoder        = new PacketEncoder();
+		$this->nameValuePairEncoder = new NameValuePairEncoder();
 	}
 
 	private function connect()
 	{
 		if ( $this->socket === null )
 		{
-			if ( $this->socketConnection->isPersistent() )
+			try
 			{
-				$this->socket = pfsockopen(
-					$this->socketConnection->getHost(),
-					$this->socketConnection->getPort(),
-					$errorNumber,
-					$errorString,
-					$this->socketConnection->getConnectTimeout() / 1000
-				);
+				if ( $this->connection->isPersistent() )
+				{
+					$this->socket = pfsockopen(
+						$this->connection->getHost(),
+						$this->connection->getPort(),
+						$errorNumber,
+						$errorString,
+						$this->connection->getConnectTimeout() / 1000
+					);
+				}
+				else
+				{
+					$this->socket = fsockopen(
+						$this->connection->getHost(),
+						$this->connection->getPort(),
+						$errorNumber,
+						$errorString,
+						$this->connection->getConnectTimeout() / 1000
+					);
+				}
 			}
-			else
+			catch ( \Throwable $e )
 			{
-				$this->socket = fsockopen(
-					$this->socketConnection->getHost(),
-					$this->socketConnection->getPort(),
-					$errorNumber,
-					$errorString,
-					$this->socketConnection->getConnectTimeout() / 1000
-				);
+				throw new ConnectException( $e->getMessage(), $e->getCode(), $e );
 			}
 
 			if ( $this->socket === false )
@@ -124,7 +136,7 @@ class Client
 				throw new ConnectException( 'Unable to connect to FastCGI application: ' . $errorString );
 			}
 
-			if ( !$this->setStreamTimeout( $this->socketConnection->getReadWriteTimeout() ) )
+			if ( !$this->setStreamTimeout( $this->connection->getReadWriteTimeout() ) )
 			{
 				throw new ConnectException( 'Unable to set timeout on socket' );
 			}
@@ -138,152 +150,18 @@ class Client
 			return false;
 		}
 
-		return stream_set_timeout( $this->socket, floor( $timeoutMs / 1000 ), ($timeoutMs % 1000) * 1000 );
+		return stream_set_timeout( $this->socket, (int)floor( $timeoutMs / 1000 ), ($timeoutMs % 1000) * 1000 );
 	}
 
 	/**
-	 * Build a FastCGI packet
-	 *
-	 * @param int    $type      Type of the packet
-	 * @param string $content   Content of the packet
-	 * @param int    $requestId RequestId
-	 *
-	 * @return string
-	 */
-	private function buildPacket( int $type, string $content, int $requestId = 1 ) : string
-	{
-		$contentLength = strlen( $content );
-
-		return chr( self::VERSION_1 )                   /* version */
-		       . chr( $type )                           /* type */
-		       . chr( ($requestId >> 8) & 0xFF )        /* requestIdB1 */
-		       . chr( $requestId & 0xFF )               /* requestIdB0 */
-		       . chr( ($contentLength >> 8) & 0xFF )    /* contentLengthB1 */
-		       . chr( $contentLength & 0xFF )           /* contentLengthB0 */
-		       . chr( 0 )                               /* paddingLength */
-		       . chr( 0 )                               /* reserved */
-		       . $content;                              /* content */
-	}
-
-	/**
-	 * Build an FastCGI Name value pair
-	 *
-	 * @param string $name  Name
-	 * @param string $value Value
-	 *
-	 * @return string FastCGI Name value pair
-	 */
-	private function buildNameValuePair( string $name, string $value ) : string
-	{
-		$nameLength  = strlen( $name );
-		$valueLength = strlen( $value );
-
-		if ( $nameLength < 128 )
-		{
-			/* nameLengthB0 */
-			$nameValuePair = chr( $nameLength );
-		}
-		else
-		{
-			/* nameLengthB3 & nameLengthB2 & nameLengthB1 & nameLengthB0 */
-			$nameValuePair = chr( ($nameLength >> 24) | 0x80 )
-			                 . chr( ($nameLength >> 16) & 0xFF )
-			                 . chr( ($nameLength >> 8) & 0xFF )
-			                 . chr( $nameLength & 0xFF );
-		}
-		if ( $valueLength < 128 )
-		{
-			/* valueLengthB0 */
-			$nameValuePair .= chr( $valueLength );
-		}
-		else
-		{
-			/* valueLengthB3 & valueLengthB2 & valueLengthB1 & valueLengthB0 */
-			$nameValuePair .= chr( ($valueLength >> 24) | 0x80 )
-			                  . chr( ($valueLength >> 16) & 0xFF )
-			                  . chr( ($valueLength >> 8) & 0xFF )
-			                  . chr( $valueLength & 0xFF );
-		}
-
-		/* nameData & valueData */
-
-		return $nameValuePair . $name . $value;
-	}
-
-	/**
-	 * Read a set of FastCGI Name value pairs
-	 *
-	 * @param string   $data Data containing the set of FastCGI NVPair
-	 * @param int|null $length
-	 *
-	 * @return array of NVPair
-	 */
-	private function readNameValuePairs( string $data, ?int $length = null ) : array
-	{
-		$array = [];
-
-		if ( $length === null )
-		{
-			$length = strlen( $data );
-		}
-
-		$p = 0;
-
-		while ( $p != $length )
-		{
-			$nameLength = ord( $data{$p++} );
-			if ( $nameLength >= 128 )
-			{
-				$nameLength = ($nameLength & 0x7F << 24);
-				$nameLength |= (ord( $data{$p++} ) << 16);
-				$nameLength |= (ord( $data{$p++} ) << 8);
-				$nameLength |= (ord( $data{$p++} ));
-			}
-
-			$valueLength = ord( $data{$p++} );
-			if ( $valueLength >= 128 )
-			{
-				$valueLength = ($nameLength & 0x7F << 24);
-				$valueLength |= (ord( $data{$p++} ) << 16);
-				$valueLength |= (ord( $data{$p++} ) << 8);
-				$valueLength |= (ord( $data{$p++} ));
-			}
-			$array[ substr( $data, $p, $nameLength ) ] = substr( $data, $p + $nameLength, $valueLength );
-			$p += ($nameLength + $valueLength);
-		}
-
-		return $array;
-	}
-
-	/**
-	 * Decode a FastCGI Packet
-	 *
-	 * @param string $data String containing all the packet
-	 *
-	 * @return array
-	 */
-	private function decodePacketHeader( string $data ) : array
-	{
-		$ret                  = [];
-		$ret['version']       = ord( $data{0} );
-		$ret['type']          = ord( $data{1} );
-		$ret['requestId']     = (ord( $data{2} ) << 8) + ord( $data{3} );
-		$ret['contentLength'] = (ord( $data{4} ) << 8) + ord( $data{5} );
-		$ret['paddingLength'] = ord( $data{6} );
-		$ret['reserved']      = ord( $data{7} );
-
-		return $ret;
-	}
-
-	/**
-	 * Read a FastCGI Packet
+	 * Read a FastCGI PacketEncoder
 	 * @return array|null
 	 */
-	private function readPacket() : ?array
+	private function readPacket()
 	{
 		if ( $packet = fread( $this->socket, self::HEADER_LEN ) )
 		{
-			$response            = $this->decodePacketHeader( $packet );
+			$response            = $this->packetEncoder->decodeHeader( $packet );
 			$response['content'] = '';
 
 			if ( $response['contentLength'] )
@@ -311,43 +189,6 @@ class Client
 	}
 
 	/**
-	 * Get Information on the FastCGI application
-	 *
-	 * @param array $requestedInfo information to retrieve
-	 *
-	 * @throws \Exception
-	 * @return array
-	 */
-	public function getValues( array $requestedInfo ) : array
-	{
-		$this->connect();
-
-		$request = '';
-		foreach ( $requestedInfo as $info )
-		{
-			$request .= $this->buildNameValuePair( $info, '' );
-		}
-
-		fwrite( $this->socket, $this->buildPacket( self::GET_VALUES, $request, 0 ) );
-
-		$response = $this->readPacket();
-
-		if ( $response !== null )
-		{
-			if ( isset( $response['type'] ) && $response['type'] == self::GET_VALUES_RESULT )
-			{
-				return $this->readNameValuePairs( $response['content'], $response['length'] );
-			}
-			else
-			{
-				throw new ReadFailedException( 'Unexpected response type, expecting GET_VALUES_RESULT' );
-			}
-		}
-
-		throw new ReadFailedException( 'Got no response.' );
-	}
-
-	/**
 	 * Execute a request to the FastCGI application
 	 *
 	 * @param array  $params  Array of parameters
@@ -370,12 +211,11 @@ class Client
 	 * In that case it is possible that a delayed response to a request made by a previous script
 	 * invocation comes back on this socket and is mistaken for response to request made with same ID
 	 * during this request.
-
 	 *
-*@param array  $params  Array of parameters
+	 * @param array  $params  Array of parameters
 	 * @param string $content Content
 	 *
-	 * @throws TimedoutException
+*@throws TimedoutException
 	 * @throws WriteFailedException
 	 * @return int
 	 */
@@ -387,34 +227,29 @@ class Client
 		$requestId = mt_rand( 1, (1 << 16) - 1 );
 
 		// Using persistent sockets implies you want them kept alive by server
-		$keepAlive = intval( $this->socketConnection->keepAlive() || $this->socketConnection->isPersistent() );
+		$keepAlive = intval( $this->connection->keepAlive() || $this->connection->isPersistent() );
 
-		$request = $this->buildPacket(
+		$request = $this->packetEncoder->encodePacket(
 			self::BEGIN_REQUEST,
 			chr( 0 ) . chr( self::RESPONDER ) . chr( $keepAlive ) . str_repeat( chr( 0 ), 5 ),
 			$requestId
 		);
 
-		$paramsRequest = '';
-
-		foreach ( $params as $key => $value )
-		{
-			$paramsRequest .= $this->buildNameValuePair( $key, $value );
-		}
+		$paramsRequest = $this->nameValuePairEncoder->encodePairs( $params );
 
 		if ( $paramsRequest )
 		{
-			$request .= $this->buildPacket( self::PARAMS, $paramsRequest, $requestId );
+			$request .= $this->packetEncoder->encodePacket( self::PARAMS, $paramsRequest, $requestId );
 		}
 
-		$request .= $this->buildPacket( self::PARAMS, '', $requestId );
+		$request .= $this->packetEncoder->encodePacket( self::PARAMS, '', $requestId );
 
 		if ( $content )
 		{
-			$request .= $this->buildPacket( self::STDIN, $content, $requestId );
+			$request .= $this->packetEncoder->encodePacket( self::STDIN, $content, $requestId );
 		}
 
-		$request .= $this->buildPacket( self::STDIN, '', $requestId );
+		$request .= $this->packetEncoder->encodePacket( self::STDIN, '', $requestId );
 
 		if ( fwrite( $this->socket, $request ) === false || fflush( $this->socket ) === false )
 		{
@@ -441,14 +276,12 @@ class Client
 
 	/**
 	 * Blocking call that waits for response to specific request
-
 	 *
-*@param int $requestId     Request ID
+	 * @param int $requestId     Request ID
 	 * @param int $timeoutMs     [optional] the number of milliseconds to wait.
 	 *                           Defaults to the ReadWriteTimeout value set.
-
 	 *
-*@throws ForbiddenException
+	 * @throws ForbiddenException
 	 * @throws ReadFailedException
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
@@ -456,7 +289,6 @@ class Client
 	 */
 	public function waitForResponse( int $requestId, int $timeoutMs = 0 ) : string
 	{
-
 		if ( !isset( $this->requests[ $requestId ] ) )
 		{
 			throw new ReadFailedException( 'Invalid request id given' );
@@ -475,52 +307,54 @@ class Client
 		}
 		else
 		{
-			$timeoutMs = $this->socketConnection->getReadWriteTimeout();
+			$timeoutMs = $this->connection->getReadWriteTimeout();
 		}
 
 		// Need to manually check since we might do several reads none of which timeout themselves
 		// but still not get the response requested
-		$startTime = microtime( true );
+		$timer = new Timer( $timeoutMs );
+		$timer->start();
 
 		do
 		{
-			$response = $this->readPacket();
+			$packet = $this->readPacket();
 
-			if ( $response['type'] == self::STDOUT || $response['type'] == self::STDERR )
+			if ( $packet['type'] == self::STDOUT || $packet['type'] == self::STDERR )
 			{
-				if ( $response['type'] == self::STDERR )
+				if ( $packet['type'] == self::STDERR )
 				{
-					$this->requests[ $response['requestId'] ]['state'] = self::REQ_STATE_ERR;
+					$this->requests[ $packet['requestId'] ]['state'] = self::REQ_STATE_ERR;
 				}
 
-				$this->requests[ $response['requestId'] ]['response'] .= $response['content'];
+				$this->requests[ $packet['requestId'] ]['response'] .= $packet['content'];
 			}
 
-			if ( $response['type'] == self::END_REQUEST )
+			if ( $packet['type'] == self::END_REQUEST )
 			{
-				$this->requests[ $response['requestId'] ]['state'] = self::REQ_STATE_OK;
+				$this->requests[ $packet['requestId'] ]['state'] = self::REQ_STATE_OK;
 
-				if ( $response['requestId'] == $requestId )
+				if ( $packet['requestId'] == $requestId )
 				{
 					break;
 				}
 			}
 
-			if ( microtime( true ) - $startTime >= ($timeoutMs * 1000) )
+			if ( $timer->timedOut() )
 			{
 				// Reset
-				$this->setStreamTimeout( $this->socketConnection->getReadWriteTimeout() );
+				$this->setStreamTimeout( $this->connection->getReadWriteTimeout() );
+				$timer->reset();
 
 				throw new TimedoutException( 'Timed out' );
 			}
-		} while ( $response );
+		} while ( $packet );
 
-		if ( $response === null )
+		if ( $packet === null )
 		{
 			$info = stream_get_meta_data( $this->socket );
 
 			// We must reset timeout but it must be AFTER we get info
-			$this->setStreamTimeout( $this->socketConnection->getReadWriteTimeout() );
+			$this->setStreamTimeout( $this->connection->getReadWriteTimeout() );
 
 			if ( $info['timed_out'] )
 			{
@@ -536,9 +370,9 @@ class Client
 		}
 
 		// Reset timeout
-		$this->setStreamTimeout( $this->socketConnection->getReadWriteTimeout() );
+		$this->setStreamTimeout( $this->connection->getReadWriteTimeout() );
 
-		switch ( ord( $response['content']{4} ) )
+		switch ( ord( $packet['content']{4} ) )
 		{
 			case self::CANT_MPX_CONN:
 				throw new WriteFailedException( 'This app can\'t multiplex [CANT_MPX_CONN]' );

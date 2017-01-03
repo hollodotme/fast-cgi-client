@@ -23,6 +23,11 @@
 			"hollodotme\\FastCGI\\": "src/"
 		}
 	},
+	"autoload-dev": {
+		"psr-4": {
+			"hollodotme\\FastCGI\\Tests\\": "tests/"
+		}
+	},
 	"require-dev": {
 		"tm/tooly-composer-script": "^1.0"
 	},

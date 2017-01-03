@@ -1,0 +1,29 @@
+<phpunit
+	bootstrap="../tests/Unit/bootstrap.php"
+	verbose="true"
+	beStrictAboutOutputDuringTests="true"
+	beStrictAboutTestSize="true"
+	colors="true"
+	convertErrorsToExceptions="true"
+	convertNoticesToExceptions="true"
+	convertWarningsToExceptions="true">
+	<testsuites>
+		<testsuite name="FastCGIClient">
+			<directory suffix="Test.php">../tests/Unit</directory>
+		</testsuite>
+	</testsuites>
+	<filter>
+		<whitelist processUncoveredFilesFromWhitelist="true">
+			<directory suffix=".php">../src</directory>
+		</whitelist>
+		<blacklist>
+			<directory suffix=".php">../tests/Unit</directory>
+			<directory>../tests/Unit/Fixtures</directory>
+			<directory>../vendor</directory>
+		</blacklist>
+	</filter>
+	<logging>
+		<log type="coverage-html" target="logs/coverage"/>
+		<log type="coverage-clover" target="logs/clover.xml"/>
+	</logging>
+</phpunit>

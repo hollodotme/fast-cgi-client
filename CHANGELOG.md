@@ -23,3 +23,4 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CH
 
  * Unused class constants from `Client`
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
+ * Method `Client->getValues()`

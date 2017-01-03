@@ -1,7 +1,7 @@
 <?php declare(strict_types = 1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2017 Holger Woltersdorf
+ * Copyright (c) 2016 Holger Woltersdorf
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -21,13 +21,15 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI\Exceptions;
+namespace hollodotme\FastCGI\Timing\Exceptions;
+
+use hollodotme\FastCGI\Exceptions\FastCGIClientException;
 
 /**
- * Class ForbiddenException
- * @package hollodotme\FastCGI
+ * Class TimerNotStartedException
+ * @package hollodotme\FastCGI\Timing\Exceptions
  */
-class ForbiddenException extends FastCGIClientException
+final class TimerNotStartedException extends FastCGIClientException
 {
 
 }

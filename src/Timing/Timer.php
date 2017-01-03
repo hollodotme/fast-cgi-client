@@ -1,7 +1,7 @@
 <?php declare(strict_types = 1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2017 Holger Woltersdorf
+ * Copyright (c) 2016 Holger Woltersdorf
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -21,13 +21,44 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI\Exceptions;
+namespace hollodotme\FastCGI\Timing;
+
+use hollodotme\FastCGI\Timing\Exceptions\TimerNotStartedException;
 
 /**
- * Class ForbiddenException
- * @package hollodotme\FastCGI
+ * Class Timer
+ * @package hollodotme\FastCGI\Timing
  */
-class ForbiddenException extends FastCGIClientException
+final class Timer
 {
+	/** @var float */
+	private $startTime;
 
+	/** @var int */
+	private $timeoutMs;
+
+	public function __construct( int $timeoutMs )
+	{
+		$this->timeoutMs = $timeoutMs;
+	}
+
+	public function start()
+	{
+		$this->startTime = microtime( true );
+	}
+
+	public function timedOut() : bool
+	{
+		if ( null === $this->startTime )
+		{
+			throw new TimerNotStartedException( 'Timer not started.' );
+		}
+
+		return ((microtime( true ) - $this->startTime) > ($this->timeoutMs / 1000));
+	}
+
+	public function reset()
+	{
+		$this->startTime = null;
+	}
 }

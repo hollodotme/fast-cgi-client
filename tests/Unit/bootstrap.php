@@ -21,13 +21,4 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI\Exceptions;
-
-/**
- * Class ForbiddenException
- * @package hollodotme\FastCGI
- */
-class ForbiddenException extends FastCGIClientException
-{
-
-}
+require(__DIR__ . '/../../vendor/autoload.php');

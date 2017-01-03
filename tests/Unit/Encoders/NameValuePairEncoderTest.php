@@ -1,7 +1,7 @@
 <?php declare(strict_types = 1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2017 Holger Woltersdorf
+ * Copyright (c) 2016 Holger Woltersdorf
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -21,13 +21,45 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI\Exceptions;
+namespace hollodotme\FastCGI\Tests\Unit\Encoders;
 
-/**
- * Class ForbiddenException
- * @package hollodotme\FastCGI
- */
-class ForbiddenException extends FastCGIClientException
+use hollodotme\FastCGI\Encoders\NameValuePairEncoder;
+
+class NameValuePairEncoderTest extends \PHPUnit_Framework_TestCase
 {
+	/**
+	 * @param array $pairs
+	 *
+	 * @dataProvider pairProvider
+	 */
+	public function testCanEncodeAndDecodePairs( array $pairs )
+	{
+		$nameValuePairEncoder = new NameValuePairEncoder();
 
+		$encoded = $nameValuePairEncoder->encodePairs( $pairs );
+		$decoded = $nameValuePairEncoder->decodePairs( $encoded );
+
+		$this->assertEquals( $pairs, $decoded );
+	}
+
+	public function pairProvider() : array
+	{
+		return [
+			[
+				[ 'unit' => 'test' ],
+			],
+			# no strings
+			[
+				[ 10 => 12.3, 'null' => null ],
+			],
+			# name longer than 128 chars
+			[
+				[ str_repeat( 'a', 129 ) => 'unit' ],
+			],
+			# value longer than 128 chars
+			[
+				[ 'unit' => str_repeat( 'b', 129 ) ],
+			],
+		];
+	}
 }

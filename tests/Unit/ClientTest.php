@@ -21,13 +21,34 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI\Exceptions;
+namespace hollodotme\FastCGI\Tests\Unit;
 
-/**
- * Class ForbiddenException
- * @package hollodotme\FastCGI
- */
-class ForbiddenException extends FastCGIClientException
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+
+class ClientTest extends \PHPUnit_Framework_TestCase
 {
+	/**
+	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
+	 */
+	public function testConnectAttemptToNotExistingSocketThrowsException()
+	{
+		$connection = new UnixDomainSocket( 'unix:///tmp/not/existing.sock', 2000, 2000, true, true );
+		$client     = new Client( $connection );
 
+		$client->sendRequest( [], '' );
+	}
+
+	/**
+	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
+	 */
+	public function testConnectAttemptToInvalidSocketThrowsException()
+	{
+		$testSocket = realpath( __DIR__ . '/Fixtures/test.sock' );
+
+		$connection = new UnixDomainSocket( 'unix://' . $testSocket );
+		$client     = new Client( $connection );
+
+		$client->sendRequest( [], '' );
+	}
 }

@@ -1,6 +1,9 @@
+[![Build Status](https://travis-ci.org/hollodotme/fast-cgi-client.svg?branch=master)](https://travis-ci.org/hollodotme/fast-cgi-client)
+[![Coverage Status](https://coveralls.io/repos/github/hollodotme/fast-cgi-client/badge.svg?branch=master)](https://coveralls.io/github/hollodotme/fast-cgi-client?branch=master)
+
 # Fast CGI Client
 
-A PHP fast CGI client to send requests (a)synchronously to PHP-FPM.
+A PHP fast CGI client to send requests (a)synchronously to PHP-FPM using the [FastCGI Protocol](http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html).
 
 This library is based on the work of [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](https://github.com/adoy/PHP-FastCGI-Client/) 
 and was ported and modernized to PHP 7.0/PHP 7.1 and extended with unit tests.

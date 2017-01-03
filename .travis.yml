@@ -1,0 +1,25 @@
+language: php
+
+php:
+  - 7.0
+  - 7.1
+
+branches:
+  only:
+    - master
+    - development
+    - /^feature\/.+$/
+    - /^refactoring\/.+$/
+    - /^issue\/.+$/
+
+before_script:
+ - composer self-update
+ - mkdir -p vendor/bin
+ - composer install -o --prefer-dist --no-interaction
+ - mkdir build/logs
+
+script:
+ - php vendor/bin/phpunit.phar -c build/
+
+after_success:
+ - travis_retry php vendor/bin/coveralls.phar -v --exclude-no-stmt
