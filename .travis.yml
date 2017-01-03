@@ -8,6 +8,7 @@ branches:
   only:
     - master
     - development
+    - 1.x-stable
     - /^feature\/.+$/
     - /^refactoring\/.+$/
     - /^issue\/.+$/
