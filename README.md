@@ -194,6 +194,47 @@ $response = $client->waitForResponse(
 );
 ```
 
+### Responses
+
+Assuming `/path/to/target/script.php` has the following content:
+ 
+```php
+<?php declare(strict_types=1);
+
+echo "Hello World";
+```
+
+The response would look like this:
+
+```
+Content-type: text/html; charset=UTF-8
+
+Hello World
+```
+
+**Please note:**
+ * All headers sent by your script will precede the response body
+ * There won't be any HTTP specific headers like `HTTP/1.1 200 OK`, because there is no webserver involved.
+
+Custom headers will also be part of the response:
+
+```php
+<?php declare(strict_types=1);
+
+header('X-Custom: Header');
+
+echo "Hello World";
+```
+
+The response would look like this:
+
+```
+X-Custom: Header
+Content-type: text/html; charset=UTF-8
+
+Hello World
+```
+
 ---
 
 ## Command line tool (for debugging only)

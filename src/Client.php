@@ -265,7 +265,7 @@ class Client
 
 			if ( $response['paddingLength'] )
 			{
-				$response['content'] = fread( $this->socket, $response['paddingLength'] );
+				fread( $this->socket, $response['paddingLength'] );
 			}
 
 			return $response;
@@ -349,7 +349,8 @@ class Client
 
 				throw new TimedoutException( 'Timed out' );
 			}
-		} while ( $packet );
+		}
+		while ( null !== $packet );
 
 		if ( $packet === null )
 		{
