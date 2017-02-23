@@ -25,7 +25,7 @@ namespace hollodotme\FastCGI\Tests\Unit\Encoders;
 
 use hollodotme\FastCGI\Encoders\NameValuePairEncoder;
 
-class NameValuePairEncoderTest extends \PHPUnit_Framework_TestCase
+class NameValuePairEncoderTest extends \PHPUnit\Framework\TestCase
 {
 	/**
 	 * @param array $pairs

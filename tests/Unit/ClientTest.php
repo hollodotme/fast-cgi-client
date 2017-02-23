@@ -26,7 +26,7 @@ namespace hollodotme\FastCGI\Tests\Unit;
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
-class ClientTest extends \PHPUnit_Framework_TestCase
+class ClientTest extends \PHPUnit\Framework\TestCase
 {
 	/**
 	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException

@@ -25,7 +25,7 @@ namespace hollodotme\FastCGI\Tests\Unit\Encoders;
 
 use hollodotme\FastCGI\Encoders\PacketEncoder;
 
-class PacketEncoderTest extends \PHPUnit_Framework_TestCase
+class PacketEncoderTest extends \PHPUnit\Framework\TestCase
 {
 	/**
 	 * @param int    $type

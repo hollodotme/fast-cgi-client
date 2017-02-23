@@ -1,5 +1,5 @@
 <phpunit
-	bootstrap="../tests/Unit/bootstrap.php"
+	bootstrap="../tests/bootstrap.php"
 	verbose="true"
 	beStrictAboutOutputDuringTests="true"
 	beStrictAboutTestSize="true"
@@ -16,11 +16,6 @@
 		<whitelist processUncoveredFilesFromWhitelist="true">
 			<directory suffix=".php">../src</directory>
 		</whitelist>
-		<blacklist>
-			<directory suffix=".php">../tests/Unit</directory>
-			<directory>../tests/Unit/Fixtures</directory>
-			<directory>../vendor</directory>
-		</blacklist>
 	</filter>
 	<logging>
 		<log type="coverage-html" target="logs/coverage"/>
