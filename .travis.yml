@@ -12,4 +12,4 @@ branches:
     - /^issue\/.+$/
 
 before_script:
- - for file in `ls -1 ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/`; do echo "$file\n" && cat $file; done
+ - for file in `find ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/ *.conf`; do echo "$file\n" && cat $file; done
