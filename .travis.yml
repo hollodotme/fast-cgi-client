@@ -13,6 +13,7 @@ branches:
 
 before_script:
  - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
+ - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/www.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/www.conf
  - ~/.phpenv/versions/$(phpenv version-name)/sbin/php-fpm
  - git checkout "${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
  - git reset --hard "$TRAVIS_COMMIT"
