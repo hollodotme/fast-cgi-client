@@ -27,7 +27,7 @@ use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
-class UnixDomainSocketTest extends \PHPUnit_Framework_TestCase
+class UnixDomainSocketTest extends \PHPUnit\Framework\TestCase
 {
 	public function testImplementsConnectionInterface()
 	{

@@ -27,7 +27,7 @@ use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
-class NetworkSocketTest extends \PHPUnit_Framework_TestCase
+class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 {
 	public function testImplementsConnectionInterface()
 	{

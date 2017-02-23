@@ -25,7 +25,7 @@ namespace hollodotme\FastCGI\Tests\Unit\Timing;
 
 use hollodotme\FastCGI\Timing\Timer;
 
-class TimerTest extends \PHPUnit_Framework_TestCase
+class TimerTest extends \PHPUnit\Framework\TestCase
 {
 	/**
 	 * @expectedException \hollodotme\FastCGI\Timing\Exceptions\TimerNotStartedException
