@@ -8,8 +8,11 @@
 	convertNoticesToExceptions="true"
 	convertWarningsToExceptions="true">
 	<testsuites>
-		<testsuite name="FastCGIClient">
+		<testsuite name="FastCGIClient-Unit">
 			<directory suffix="Test.php">../tests/Unit</directory>
+		</testsuite>
+		<testsuite name="FastCGIClient-Integration">
+			<directory suffix="Test.php">../tests/Integration</directory>
 		</testsuite>
 	</testsuites>
 	<filter>
@@ -18,7 +21,8 @@
 		</whitelist>
 	</filter>
 	<logging>
-		<log type="coverage-html" target="logs/coverage"/>
-		<log type="coverage-clover" target="logs/clover.xml"/>
+		<log type="coverage-text" target="php://stdout" showUncoveredFiles="true" showOnlySummary="false"/>
+		<!--<log type="coverage-html" target="logs/coverage"/>-->
+		<!--<log type="coverage-clover" target="logs/clover.xml"/>-->
 	</logging>
 </phpunit>

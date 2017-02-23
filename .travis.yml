@@ -12,4 +12,14 @@ branches:
     - /^issue\/.+$/
 
 before_script:
- - for file in `find ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/ *.conf`; do echo "$file\n" && cat $file; done
+ - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
+ - ~/.phpenv/versions/$(phpenv version-name)/sbin/php-fpm
+ - git checkout "${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
+ - git reset --hard "$TRAVIS_COMMIT"
+ - composer self-update
+ - mkdir -p vendor/bin
+ - composer install -o --prefer-dist --no-interaction
+ - mkdir build/logs
+
+script:
+ - php vendor/bin/phpunit.phar -c build/
