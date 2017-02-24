@@ -21,5 +21,6 @@
  * SOFTWARE.
  */
 
+header( 'X-Powered-By: PHP/7.1.0' );
 header( 'X-Custom: Header' );
 echo $_REQUEST['test-key'] ?? '';

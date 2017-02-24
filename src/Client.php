@@ -122,13 +122,11 @@ class Client
 	 * In that case it is possible that a delayed response to a request made by a previous script
 	 * invocation comes back on this socket and is mistaken for response to request made with same ID
 	 * during this request.
-
-*
-* @param array       $params  Array of parameters
+	 *
+	 * @param array  $params  Array of parameters
 	 * @param string $content Content
-
-*
-* @throws TimedoutException
+	 *
+	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 * @return int
 	 */

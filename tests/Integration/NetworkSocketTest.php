@@ -65,7 +65,8 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 		$connection       = new NetworkSocket( '127.0.0.1', 9000 );
 		$client           = new Client( $connection );
 		$content          = http_build_query( [ 'test-key' => 'unit' ] );
-		$expectedResponse = "X-Custom: Header\nContent-Type: text/plain; charset=UTF-8\n\nunit";
+		$expectedResponse =
+			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
 
 		$requestId = $client->sendAsyncRequest(
 			[
@@ -95,7 +96,8 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 		$connection       = new NetworkSocket( '127.0.0.1', 9000 );
 		$client           = new Client( $connection );
 		$content          = http_build_query( [ 'test-key' => 'unit' ] );
-		$expectedResponse = "X-Custom: Header\nContent-Type: text/plain; charset=UTF-8\n\nunit";
+		$expectedResponse =
+			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
 
 		$response = $client->sendRequest(
 			[
