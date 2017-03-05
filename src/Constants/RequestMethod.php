@@ -29,13 +29,13 @@ namespace hollodotme\FastCGI\Constants;
  */
 abstract class RequestMethod
 {
-	const GET    = 'GET';
+	public const GET    = 'GET';
 
-	const POST   = 'POST';
+	public const POST   = 'POST';
 
-	const PUT    = 'PUT';
+	public const PUT    = 'PUT';
 
-	const PATCH  = 'PATCH';
+	public const PATCH  = 'PATCH';
 
-	const DELETE = 'DELETE';
+	public const DELETE = 'DELETE';
 }

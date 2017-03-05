@@ -29,7 +29,7 @@ namespace hollodotme\FastCGI\Constants;
  */
 abstract class ServerProtocol
 {
-	const HTTP_1_0 = 'HTTP/1.0';
+	public const HTTP_1_0 = 'HTTP/1.0';
 
-	const HTTP_1_1 = 'HTTP/1.1';
+	public const HTTP_1_1 = 'HTTP/1.1';
 }
