@@ -16,7 +16,7 @@ before_script:
  - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
  - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/www.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/www.conf
  - ~/.phpenv/versions/$(phpenv version-name)/sbin/php-fpm
- - git checkout "${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
+ - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then git checkout "$TRAVIS_BRANCH"; else git checkout -b "$TRAVIS_PULL_REQUEST_BRANCH"; fi
  - git reset --hard "$TRAVIS_COMMIT"
  - composer self-update
  - mkdir -p vendor/bin
