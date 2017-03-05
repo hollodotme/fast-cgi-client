@@ -87,15 +87,15 @@ final class NameValuePairEncoder
 
 		$p = 0;
 
-		while ( $p != $length )
+		while ( $p !== $length )
 		{
 			$nameLength = ord( $data{$p++} );
 			if ( $nameLength >= 128 )
 			{
-				$nameLength = ($nameLength & 0x7F << 24);
+				$nameLength &= (0x7F << 24);
 				$nameLength |= (ord( $data{$p++} ) << 16);
 				$nameLength |= (ord( $data{$p++} ) << 8);
-				$nameLength |= (ord( $data{$p++} ));
+				$nameLength |= ord( $data{$p++} );
 			}
 
 			$valueLength = ord( $data{$p++} );
@@ -104,7 +104,7 @@ final class NameValuePairEncoder
 				$valueLength = ($nameLength & 0x7F << 24);
 				$valueLength |= (ord( $data{$p++} ) << 16);
 				$valueLength |= (ord( $data{$p++} ) << 8);
-				$valueLength |= (ord( $data{$p++} ));
+				$valueLength |= ord( $data{$p++} );
 			}
 			$array[ substr( $data, $p, $nameLength ) ] = substr( $data, $p + $nameLength, $valueLength );
 			$p += ($nameLength + $valueLength);

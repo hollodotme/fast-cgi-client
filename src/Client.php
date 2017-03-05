@@ -195,6 +195,10 @@ class Client
 	 * @param string $content Content
 	 *
 	 * @return string
+	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 * @throws \hollodotme\FastCGI\Exceptions\ForbiddenException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
 	 */
 	public function sendRequest( array $params, string $content ) : string
 	{
@@ -211,13 +215,11 @@ class Client
 	 * In that case it is possible that a delayed response to a request made by a previous script
 	 * invocation comes back on this socket and is mistaken for response to request made with same ID
 	 * during this request.
-
-*
-* @param array       $params  Array of parameters
+	 *
+	 * @param array  $params  Array of parameters
 	 * @param string $content Content
-
-*
-* @throws TimedoutException
+	 *
+	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 * @return int
 	 */
@@ -226,10 +228,10 @@ class Client
 		$this->connect();
 
 		// Pick random number between 1 and max 16 bit unsigned int 65535
-		$requestId = mt_rand( 1, (1 << 16) - 1 );
+		$requestId = random_int( 1, (1 << 16) - 1 );
 
 		// Using persistent sockets implies you want them kept alive by server
-		$keepAlive = intval( $this->connection->keepAlive() || $this->connection->isPersistent() );
+		$keepAlive = (int)($this->connection->keepAlive() || $this->connection->isPersistent());
 
 		$request = $this->packetEncoder->encodePacket(
 			self::BEGIN_REQUEST,
@@ -297,7 +299,7 @@ class Client
 		}
 
 		// If we already read the response during an earlier call for different id, just return it
-		if ( in_array( $this->requests[ $requestId ]['state'], [ self::REQ_STATE_OK, self::REQ_STATE_ERR ] ) )
+		if ( in_array( $this->requests[ $requestId ]['state'], [ self::REQ_STATE_OK, self::REQ_STATE_ERR ], true ) )
 		{
 			return $this->requests[ $requestId ]['response'];
 		}
@@ -321,24 +323,24 @@ class Client
 		{
 			$packet = $this->readPacket();
 
-			if ( $packet['type'] == self::STDOUT || $packet['type'] == self::STDERR )
+			switch ( (int)$packet['type'] )
 			{
-				if ( $packet['type'] == self::STDERR )
-				{
-					$this->requests[ $packet['requestId'] ]['state'] = self::REQ_STATE_ERR;
-				}
-
-				$this->requests[ $packet['requestId'] ]['response'] .= $packet['content'];
-			}
-
-			if ( $packet['type'] == self::END_REQUEST )
-			{
-				$this->requests[ $packet['requestId'] ]['state'] = self::REQ_STATE_OK;
-
-				if ( $packet['requestId'] == $requestId )
-				{
+				case self::STDOUT:
+					$this->requests[ $packet['requestId'] ]['response'] .= $packet['content'];
 					break;
-				}
+
+				case self::STDERR:
+					$this->requests[ $packet['requestId'] ]['state'] = self::REQ_STATE_ERR;
+					$this->requests[ $packet['requestId'] ]['response'] .= $packet['content'];
+					break;
+
+				case self::END_REQUEST:
+					$this->requests[ $packet['requestId'] ]['state'] = self::REQ_STATE_OK;
+					if ( $packet['requestId'] === $requestId )
+					{
+						break 2;
+					}
+					break;
 			}
 
 			if ( $timer->timedOut() )
@@ -364,7 +366,7 @@ class Client
 				throw new TimedoutException( 'Read timed out' );
 			}
 
-			if ( $info['unread_bytes'] == 0 && $info['blocked'] && $info['eof'] )
+			if ( $info['unread_bytes'] === 0 && $info['blocked'] && $info['eof'] )
 			{
 				throw new ForbiddenException( 'Not in white list. Check listen.allowed_clients.' );
 			}

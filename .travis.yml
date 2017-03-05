@@ -2,7 +2,9 @@ language: php
 
 php:
   - 7.0
+  - 7.0snapshot
   - 7.1
+  - 7.1snapshot
 
 branches:
   only:
@@ -14,7 +16,10 @@ branches:
     - /^issue\/.+$/
 
 before_script:
- - git checkout "${TRAVIS_PULL_REQUEST_BRANCH:-$TRAVIS_BRANCH}"
+ - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
+ - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/www.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/www.conf
+ - ~/.phpenv/versions/$(phpenv version-name)/sbin/php-fpm
+ - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then git checkout "$TRAVIS_BRANCH"; else git checkout -b "$TRAVIS_PULL_REQUEST_BRANCH"; fi
  - git reset --hard "$TRAVIS_COMMIT"
  - composer self-update
  - mkdir -p vendor/bin
