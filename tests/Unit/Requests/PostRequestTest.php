@@ -1,7 +1,7 @@
 <?php declare(strict_types = 1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2017 Holger Woltersdorf
+ * Copyright (c) 2016 Holger Woltersdorf
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -21,35 +21,17 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI\Tests\Unit;
+namespace hollodotme\FastCGI\Tests\Unit\Requests;
 
-use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
-use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use PHPUnit\Framework\TestCase;
 
-class ClientTest extends \PHPUnit\Framework\TestCase
+final class PostRequestTest extends TestCase
 {
-	/**
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
-	 */
-	public function testConnectAttemptToNotExistingSocketThrowsException()
+	public function testRequestMethodIsPost()
 	{
-		$connection = new UnixDomainSocket( 'unix:///tmp/not/existing.sock', 2000, 2000, true, true );
-		$client     = new Client( $connection );
+		$request = new PostRequest( '/path/to/script.php', 'Unit-Test' );
 
-		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
-	}
-
-	/**
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
-	 */
-	public function testConnectAttemptToInvalidSocketThrowsException()
-	{
-		$testSocket = realpath( __DIR__ . '/Fixtures/test.sock' );
-
-		$connection = new UnixDomainSocket( 'unix://' . $testSocket );
-		$client     = new Client( $connection );
-
-		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
+		$this->assertSame( 'POST', $request->getRequestMethod() );
 	}
 }

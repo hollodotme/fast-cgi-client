@@ -31,6 +31,7 @@ use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
+use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
 use hollodotme\FastCGI\Timing\Timer;
 
 /**
@@ -191,8 +192,7 @@ class Client
 	/**
 	 * Execute a request to the FastCGI application
 	 *
-	 * @param array  $params  Array of parameters
-	 * @param string $content Content
+	 * @param ProvidesRequestData $request
 	 *
 	 * @return string
 	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
@@ -200,9 +200,9 @@ class Client
 	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
 	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
 	 */
-	public function sendRequest( array $params, string $content ) : string
+	public function sendRequest( ProvidesRequestData $request ) : string
 	{
-		$requestId = $this->sendAsyncRequest( $params, $content );
+		$requestId = $this->sendAsyncRequest( $request );
 
 		return $this->waitForResponse( $requestId );
 	}
@@ -216,14 +216,13 @@ class Client
 	 * invocation comes back on this socket and is mistaken for response to request made with same ID
 	 * during this request.
 	 *
-	 * @param array  $params  Array of parameters
-	 * @param string $content Content
+	 * @param ProvidesRequestData $request
 	 *
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 * @return int
 	 */
-	public function sendAsyncRequest( array $params, string $content ) : int
+	public function sendAsyncRequest( ProvidesRequestData $request ) : int
 	{
 		$this->connect();
 
@@ -233,29 +232,29 @@ class Client
 		// Using persistent sockets implies you want them kept alive by server
 		$keepAlive = (int)($this->connection->keepAlive() || $this->connection->isPersistent());
 
-		$request = $this->packetEncoder->encodePacket(
+		$requestPacket = $this->packetEncoder->encodePacket(
 			self::BEGIN_REQUEST,
 			chr( 0 ) . chr( self::RESPONDER ) . chr( $keepAlive ) . str_repeat( chr( 0 ), 5 ),
 			$requestId
 		);
 
-		$paramsRequest = $this->nameValuePairEncoder->encodePairs( $params );
+		$paramsRequest = $this->nameValuePairEncoder->encodePairs( $request->getParams() );
 
 		if ( $paramsRequest )
 		{
-			$request .= $this->packetEncoder->encodePacket( self::PARAMS, $paramsRequest, $requestId );
+			$requestPacket .= $this->packetEncoder->encodePacket( self::PARAMS, $paramsRequest, $requestId );
 		}
 
-		$request .= $this->packetEncoder->encodePacket( self::PARAMS, '', $requestId );
+		$requestPacket .= $this->packetEncoder->encodePacket( self::PARAMS, '', $requestId );
 
-		if ( $content )
+		if ( $request->getContent() )
 		{
-			$request .= $this->packetEncoder->encodePacket( self::STDIN, $content, $requestId );
+			$requestPacket .= $this->packetEncoder->encodePacket( self::STDIN, $request->getContent(), $requestId );
 		}
 
-		$request .= $this->packetEncoder->encodePacket( self::STDIN, '', $requestId );
+		$requestPacket .= $this->packetEncoder->encodePacket( self::STDIN, '', $requestId );
 
-		if ( fwrite( $this->socket, $request ) === false || fflush( $this->socket ) === false )
+		if ( fwrite( $this->socket, $requestPacket ) === false || fflush( $this->socket ) === false )
 		{
 			$info = stream_get_meta_data( $this->socket );
 

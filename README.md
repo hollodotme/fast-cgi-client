@@ -93,28 +93,15 @@ namespace YourVendor\YourProject;
 require( 'vendor/autoload.php' );
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
 $client  = new Client( new UnixDomainSocket( 'unix:///var/run/php/php7.0-fpm.sock' ) );
 $content = http_build_query( ['key' => 'value'] );
 
-$response = $client->sendRequest(
-	[
-		'GATEWAY_INTERFACE' => 'FastCGI/1.0',
-		'REQUEST_METHOD'    => 'POST',
-		'SCRIPT_FILENAME'   => '/path/to/target/script.php',
-		'SERVER_SOFTWARE'   => 'hollodotme/fast-cgi-client',
-		'REMOTE_ADDR'       => '127.0.0.1',
-		'REMOTE_PORT'       => '9985',
-		'SERVER_ADDR'       => '127.0.0.1',
-		'SERVER_PORT'       => '80',
-		'SERVER_NAME'       => 'your-server',
-		'SERVER_PROTOCOL'   => 'HTTP/1.1',
-		'CONTENT_TYPE'      => 'application/x-www-form-urlencoded',
-		'CONTENT_LENGTH'    => strlen( $content )	
-	],
-	$content
-);
+$request = new PostRequest('/path/to/target/script.php', $content);
+
+$response = $client->sendRequest($request);
 
 print_r( $response );
 ```
@@ -129,28 +116,15 @@ namespace YourVendor\YourProject;
 require( 'vendor/autoload.php' );
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 $client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
 $content = http_build_query( ['key' => 'value'] );
 
-$requestId = $client->sendAsyncRequest(
-	[
-		'GATEWAY_INTERFACE' => 'FastCGI/1.0',
-		'REQUEST_METHOD'    => 'POST',
-		'SCRIPT_FILENAME'   => '/path/to/target/script.php',
-		'SERVER_SOFTWARE'   => 'hollodotme/fast-cgi-client',
-		'REMOTE_ADDR'       => '127.0.0.1',
-		'REMOTE_PORT'       => '9985',
-		'SERVER_ADDR'       => '127.0.0.1',
-		'SERVER_PORT'       => '80',
-		'SERVER_NAME'       => 'your-server',
-		'SERVER_PROTOCOL'   => 'HTTP/1.1',
-		'CONTENT_TYPE'      => 'application/x-www-form-urlencoded',
-		'CONTENT_LENGTH'    => strlen( $content )	
-	],
-	$content
-);
+$request = new PostRequest('/path/to/target/script.php', $content);
+
+$requestId = $client->sendAsyncRequest($request);
 
 echo "Request sent, got ID: {$requestId}";
 ```
@@ -165,28 +139,15 @@ namespace YourVendor\YourProject;
 require( 'vendor/autoload.php' );
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 $client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
 $content = http_build_query( ['key' => 'value'] );
 
-$requestId = $client->sendAsyncRequest(
-	[
-		'GATEWAY_INTERFACE' => 'FastCGI/1.0',
-		'REQUEST_METHOD'    => 'POST',
-		'SCRIPT_FILENAME'   => '/path/to/target/script.php',
-		'SERVER_SOFTWARE'   => 'hollodotme/fast-cgi-client',
-		'REMOTE_ADDR'       => '127.0.0.1',
-		'REMOTE_PORT'       => '9985',
-		'SERVER_ADDR'       => '127.0.0.1',
-		'SERVER_PORT'       => '80',
-		'SERVER_NAME'       => 'your-server',
-		'SERVER_PROTOCOL'   => 'HTTP/1.1',
-		'CONTENT_TYPE'      => 'application/x-www-form-urlencoded',
-		'CONTENT_LENGTH'    => strlen( $content )	
-	],
-	$content
-);
+$request = new PostRequest('/path/to/target/script.php', $content);
+
+$requestId = $client->sendAsyncRequest($request);
 
 echo "Request sent, got ID: {$requestId}";
 
@@ -196,6 +157,76 @@ $response = $client->waitForResponse(
 					# defaults to read/write timeout in milliseconds set in connection
 );
 ```
+
+### Requests
+
+Request are defined by the following interface:
+
+```php
+<?php declare(strict_types=1);
+
+interface ProvidesRequestData
+{
+	public function getGatewayInterface() : string;
+
+	public function getRequestMethod() : string;
+
+	public function getScriptFilename() : string;
+
+	public function getServerSoftware() : string;
+
+	public function getRemoteAddress() : string;
+
+	public function getRemotePort() : int;
+
+	public function getServerAddress() : string;
+
+	public function getServerPort() : int;
+
+	public function getServerName() : string;
+
+	public function getServerProtocol() : string;
+
+	public function getContentType() : string;
+
+	public function getContentLength() : int;
+
+	public function getContent() : string;
+
+	public function getCustomVars() : array;
+
+	public function getParams() : array;
+}
+```
+
+Alongside with this interface, this package provides ab abstract request class, containing default values to make the API more handy for you 
+and 5 request method implementations of this abstract class:
+
+* `hollodotme\FastCGI\Requests\GetRequest`
+* `hollodotme\FastCGI\Requests\PostRequest`
+* `hollodotme\FastCGI\Requests\PutRequest`
+* `hollodotme\FastCGI\Requests\PatchRequest`
+* `hollodotme\FastCGI\Requests\DeleteRequest`
+
+So you can either implement the interface, inherit from the abstract class or simply use one of the 5 implementations.
+ 
+#### Default values
+
+The abstract request class defines several default values which you can optionally overwrite:
+ 
+| Key               | Default value                     | Comment                                                                                 |
+|-------------------|-----------------------------------|-----------------------------------------------------------------------------------------|
+| GATEWAY_INTERFACE | FastCGI/1.0                       | Cannot be overwritten, because this is the only supported version of the client.        |
+| SERVER_SOFTWARE   | hollodotme/fast-cgi-client        |                                                                                         |
+| REMOTE_ADDR       | 192.168.0.1                       |                                                                                         |
+| REMOTE_PORT       | 9985                              |                                                                                         |
+| SERVER_ADDR       | 127.0.0.1                         |                                                                                         |
+| SERVER_PORT       | 80                                |                                                                                         |
+| SERVER_NAME       | localhost                         |                                                                                         |
+| SERVER_PROTOCOL   | HTTP/1.1                          | You can use the public class constants in `hollodotme\FastCGI\Constants\ServerProtocol` |
+| CONTENT_TYPE      | application/x-www-form-urlencoded |                                                                                         |
+| CUSTOM_VARS       | empty array                       | You can use the methods `setCustomVar`, `addCustomVars` to add own key-value pairs      |
+
 
 ### Responses
 

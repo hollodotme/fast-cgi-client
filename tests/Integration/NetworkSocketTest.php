@@ -24,6 +24,7 @@
 namespace hollodotme\FastCGI\Tests\Integration;
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 /**
@@ -37,24 +38,9 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
 		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$requestId = $client->sendAsyncRequest(
-			[
-				'GATEWAY_INTERFACE' => 'FastCGI/1.0',
-				'REQUEST_METHOD'    => 'POST',
-				'SCRIPT_FILENAME'   => __DIR__ . '/Workers/worker.php',
-				'SERVER_SOFTWARE'   => 'hollodotme/fast-cgi-client',
-				'REMOTE_ADDR'       => '127.0.0.1',
-				'REMOTE_PORT'       => '9985',
-				'SERVER_ADDR'       => '127.0.0.1',
-				'SERVER_PORT'       => '80',
-				'SERVER_NAME'       => 'your-server',
-				'SERVER_PROTOCOL'   => 'HTTP/1.1',
-				'CONTENT_TYPE'      => 'application/x-www-form-urlencoded',
-				'CONTENT_LENGTH'    => strlen( $content ),
-			],
-			$content
-		);
+		$requestId = $client->sendAsyncRequest( $request );
 
 		$this->assertGreaterThanOrEqual( 1, $requestId );
 		$this->assertLessThanOrEqual( 65535, $requestId );
@@ -65,28 +51,12 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 		$connection       = new NetworkSocket( '127.0.0.1', 9000 );
 		$client           = new Client( $connection );
 		$content          = http_build_query( [ 'test-key' => 'unit' ] );
+		$request          = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
 
-		$requestId = $client->sendAsyncRequest(
-			[
-				'GATEWAY_INTERFACE' => 'FastCGI/1.0',
-				'REQUEST_METHOD'    => 'POST',
-				'SCRIPT_FILENAME'   => __DIR__ . '/Workers/worker.php',
-				'SERVER_SOFTWARE'   => 'hollodotme/fast-cgi-client',
-				'REMOTE_ADDR'       => '127.0.0.1',
-				'REMOTE_PORT'       => '9985',
-				'SERVER_ADDR'       => '127.0.0.1',
-				'SERVER_PORT'       => '80',
-				'SERVER_NAME'       => 'your-server',
-				'SERVER_PROTOCOL'   => 'HTTP/1.1',
-				'CONTENT_TYPE'      => 'application/x-www-form-urlencoded',
-				'CONTENT_LENGTH'    => strlen( $content ),
-			],
-			$content
-		);
-
-		$response = $client->waitForResponse( $requestId );
+		$requestId = $client->sendAsyncRequest( $request );
+		$response  = $client->waitForResponse( $requestId );
 
 		$this->assertEquals( $expectedResponse, $response );
 	}
@@ -96,26 +66,11 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 		$connection       = new NetworkSocket( '127.0.0.1', 9000 );
 		$client           = new Client( $connection );
 		$content          = http_build_query( [ 'test-key' => 'unit' ] );
+		$request          = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
 
-		$response = $client->sendRequest(
-			[
-				'GATEWAY_INTERFACE' => 'FastCGI/1.0',
-				'REQUEST_METHOD'    => 'POST',
-				'SCRIPT_FILENAME'   => __DIR__ . '/Workers/worker.php',
-				'SERVER_SOFTWARE'   => 'hollodotme/fast-cgi-client',
-				'REMOTE_ADDR'       => '127.0.0.1',
-				'REMOTE_PORT'       => '9985',
-				'SERVER_ADDR'       => '127.0.0.1',
-				'SERVER_PORT'       => '80',
-				'SERVER_NAME'       => 'your-server',
-				'SERVER_PROTOCOL'   => 'HTTP/1.1',
-				'CONTENT_TYPE'      => 'application/x-www-form-urlencoded',
-				'CONTENT_LENGTH'    => strlen( $content ),
-			],
-			$content
-		);
+		$response = $client->sendRequest( $request );
 
 		$this->assertEquals( $expectedResponse, $response );
 	}
