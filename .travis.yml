@@ -11,6 +11,7 @@ branches:
     - master
     - development
     - 1.x-stable
+    - 1.x-dev
     - /^feature\/.+$/
     - /^refactoring\/.+$/
     - /^issue\/.+$/
