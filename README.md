@@ -160,10 +160,12 @@ $response = $client->waitForResponse(
 
 ### Requests
 
-Request are defined by the following interface:
+As of version 1.1.0 (PHP 7.0) and 2.1.0 (PHP 7.1), request are defined by the following interface:
 
 ```php
 <?php declare(strict_types=1);
+
+namespace hollodotme\FastCGI\Interfaces;
 
 interface ProvidesRequestData
 {
@@ -230,6 +232,29 @@ The abstract request class defines several default values which you can optional
 
 ### Responses
 
+As of version 1.1.0 (PHP 7.0) and 2.1.0 (PHP 7.1), responses are defined by the following interface:
+
+```php
+<?php declare(strict_types=1);
+
+namespace hollodotme\FastCGI\Interfaces;
+
+interface ProvidesResponseData
+{
+	public function getRequestId() : int;
+
+	public function getHeaders() : array;
+
+	public function getHeader( string $headerKey ) : string;
+
+	public function getBody() : string;
+
+	public function getRawResponse() : string;
+
+	public function getDuration() : float;
+}
+```
+
 Assuming `/path/to/target/script.php` has the following content:
  
 ```php
@@ -238,7 +263,7 @@ Assuming `/path/to/target/script.php` has the following content:
 echo "Hello World";
 ```
 
-The response would look like this:
+The raw response would look like this:
 
 ```
 Content-type: text/html; charset=UTF-8
@@ -260,13 +285,47 @@ header('X-Custom: Header');
 echo "Hello World";
 ```
 
-The response would look like this:
+The raw response would look like this:
 
 ```
 X-Custom: Header
 Content-type: text/html; charset=UTF-8
 
 Hello World
+```
+
+You can retrieve all of the response data separately from the response object:
+
+```php
+# Get the request ID
+echo $response->getRequestId(); # random int set by client
+
+# Get a single response header
+echo $response->getHeader('X-Custom'); # 'Header'
+
+# Get all headers
+print_r($response->getHeaders());
+/*
+Array (
+	[X-Custom] => Header
+	[Content-type] => text/html; charset=UTF-8
+)
+*/
+
+# Get the body
+echo $response->getBody(); # 'Hello World'
+
+# Get the raw response
+echo $response->getRawResponse();
+/*
+X-Custom: Header
+Content-type: text/html; charset=UTF-8
+
+Hello World
+*/
+
+# Get the duration
+echo $response->getDuration(); # e.g. 0.0016319751739502
 ```
 
 ---

@@ -32,6 +32,8 @@ use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
+use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\Responses\Response;
 use hollodotme\FastCGI\Timing\Timer;
 
 /**
@@ -105,13 +107,13 @@ class Client
 	 *
 	 * @param ProvidesRequestData $request
 	 *
-	 * @return string
 	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
 	 * @throws \hollodotme\FastCGI\Exceptions\ForbiddenException
 	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
 	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @return ProvidesResponseData
 	 */
-	public function sendRequest( ProvidesRequestData $request ) : string
+	public function sendRequest( ProvidesRequestData $request ) : ProvidesResponseData
 	{
 		$requestId = $this->sendAsyncRequest( $request );
 
@@ -165,6 +167,8 @@ class Client
 
 		$requestPacket .= $this->packetEncoder->encodePacket( self::STDIN, '', $requestId );
 
+		$startTime = microtime( true );
+
 		if ( fwrite( $this->socket, $requestPacket ) === false || fflush( $this->socket ) === false )
 		{
 			$info = stream_get_meta_data( $this->socket );
@@ -181,8 +185,10 @@ class Client
 		}
 
 		$this->requests[ $requestId ] = [
-			'state'    => self::REQ_STATE_WRITTEN,
-			'response' => null,
+			'state'     => self::REQ_STATE_WRITTEN,
+			'response'  => null,
+			'startTime' => $startTime,
+			'duration'  => 0,
 		];
 
 		return $requestId;
@@ -288,9 +294,9 @@ class Client
 	 * @throws ReadFailedException
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
-	 * @return string
+	 * @return ProvidesResponseData
 	 */
-	public function waitForResponse( int $requestId, int $timeoutMs = 0 ) : string
+	public function waitForResponse( int $requestId, int $timeoutMs = 0 ) : ProvidesResponseData
 	{
 		if ( !isset( $this->requests[ $requestId ] ) )
 		{
@@ -300,7 +306,11 @@ class Client
 		// If we already read the response during an earlier call for different id, just return it
 		if ( in_array( $this->requests[ $requestId ]['state'], [ self::REQ_STATE_OK, self::REQ_STATE_ERR ], true ) )
 		{
-			return $this->requests[ $requestId ]['response'];
+			return new Response(
+				$requestId,
+				(string)$this->requests[ $requestId ]['response'],
+				(float)$this->requests[ $requestId ]['duration']
+			);
 		}
 
 		if ( $timeoutMs > 0 )
@@ -380,16 +390,24 @@ class Client
 		{
 			case self::CANT_MPX_CONN:
 				throw new WriteFailedException( 'This app can\'t multiplex [CANT_MPX_CONN]' );
-				break;
+
 			case self::OVERLOADED:
 				throw new WriteFailedException( 'New request rejected; too busy [OVERLOADED]' );
-				break;
+
 			case self::UNKNOWN_ROLE:
 				throw new WriteFailedException( 'Role value not known [UNKNOWN_ROLE]' );
-				break;
+
 			case self::REQUEST_COMPLETE:
-				return $this->requests[ $requestId ]['response'];
-				break;
+				$duration = microtime( true ) - (float)$this->requests[ $requestId ]['startTime'];
+
+				$this->requests[ $requestId ]['duration'] = $duration;
+
+				return new Response(
+					$requestId,
+					(string)$this->requests[ $requestId ]['response'],
+					(float)$this->requests[ $requestId ]['duration']
+				);
+
 			default:
 				throw new ReadFailedException( 'Unknown content.' );
 		}
