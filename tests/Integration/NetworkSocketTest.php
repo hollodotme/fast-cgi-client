@@ -58,7 +58,12 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 		$requestId = $client->sendAsyncRequest( $request );
 		$response  = $client->waitForResponse( $requestId );
 
-		$this->assertEquals( $expectedResponse, $response );
+		$this->assertEquals( $expectedResponse, $response->getRawResponse() );
+		$this->assertSame( 'unit', $response->getBody() );
+		$this->assertGreaterThan( 0, $response->getDuration() );
+		$this->assertSame( $requestId, $response->getRequestId() );
+
+		$this->assertEquals( $response, $client->waitForResponse( $requestId ) );
 	}
 
 	public function testCanSendSyncRequestAndReceiveResponse()
@@ -72,6 +77,13 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 
 		$response = $client->sendRequest( $request );
 
-		$this->assertEquals( $expectedResponse, $response );
+		$this->assertEquals( $expectedResponse, $response->getRawResponse() );
+		$this->assertSame( 'unit', $response->getBody() );
+		$this->assertGreaterThan( 0, $response->getDuration() );
+
+		$this->assertGreaterThanOrEqual( 1, $response->getRequestId() );
+		$this->assertLessThanOrEqual( 65535, $response->getRequestId() );
+
+		$this->assertEquals( $response, $client->waitForResponse( $response->getRequestId() ) );
 	}
 }

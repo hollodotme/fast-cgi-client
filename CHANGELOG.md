@@ -3,11 +3,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
-## [1.1.0] - 2017-03-05
+## [1.1.0] - YYYY-MM-DD
 
 ### Changed
 
 * Methods `sendRequest` and `sendAsyncRequest` expect to get an object of interface `hollodotme\FastCGI\Interfaces\ProvidesRequestData` - [#5]
+* Methods `sendRequest` and `waitForResponse` now return an object of interface `hollodotme\FastCGI\Interfaces\ProvidesResponseData` - [#2]
 
 ### Added
 
@@ -20,6 +21,7 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CH
   * `hollodotme\FastCGI\Requests\PutRequest`
   * `hollodotme\FastCGI\Requests\PatchRequest`
   * `hollodotme\FastCGI\Requests\DeleteRequest`
+* Response implementation - [#2]
 
 ## [1.0.1] - 2017-02-23
 
@@ -60,4 +62,5 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [1.0.0]: https://github.com/hollodotme/fast-cgi-client/tree/v1.0.0
 
 [#1]: https://github.com/hollodotme/fast-cgi-client/issues/1
+[#2]: https://github.com/hollodotme/fast-cgi-client/issues/2
 [#5]: https://github.com/hollodotme/fast-cgi-client/issues/5
