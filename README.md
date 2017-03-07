@@ -49,7 +49,7 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
 $connection = new UnixDomainSocket(
-	'unix:///var/run/php/php7.0-fpm.sock',  # Socket path to php-fpm
+	'unix:///var/run/php/php7.1-fpm.sock',  # Socket path to php-fpm
 	5000,                                   # Connect timeout in milliseconds (default: 5000)
 	5000,                                   # Read/write timeout in milliseconds (default: 5000)
 	false,                                  # Make socket connection persistent (default: false)
@@ -96,7 +96,7 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
-$client  = new Client( new UnixDomainSocket( 'unix:///var/run/php/php7.0-fpm.sock' ) );
+$client  = new Client( new UnixDomainSocket( 'unix:///var/run/php/php1.0-fpm.sock' ) );
 $content = http_build_query( ['key' => 'value'] );
 
 $request = new PostRequest('/path/to/target/script.php', $content);
