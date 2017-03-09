@@ -71,6 +71,9 @@ abstract class AbstractRequest implements ProvidesRequestData
 	/** @var array */
 	private $customVars = [];
 
+	/** @var null|callable */
+	private $callback;
+
 	public function __construct( string $scriptFilename, string $content )
 	{
 		$this->scriptFilename = $scriptFilename;
@@ -222,5 +225,15 @@ abstract class AbstractRequest implements ProvidesRequestData
 				'CONTENT_LENGTH'    => $this->getContentLength(),
 			]
 		);
+	}
+
+	public function getCallback() : ?callable
+	{
+		return $this->callback;
+	}
+
+	public function setCallback( callable $callback )
+	{
+		$this->callback = $callback;
 	}
 }

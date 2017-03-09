@@ -21,43 +21,37 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI\Interfaces;
+namespace hollodotme\FastCGI;
 
-/**
- * Interface ProvidesRequestData
- * @package hollodotme\FastCGI\Interfaces
- */
-interface ProvidesRequestData
+use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+$connection = new UnixDomainSocket( 'unix:///var/run/php/php7.1-fpm.sock', 5000, 5000, false, false );
+$client     = new Client( $connection );
+
+$workerPath = '/vagrant/tests/Integration/Workers/worker.php';
+$request    = new PostRequest( $workerPath, '' );
+$request->setCallback(
+	function ( ProvidesResponseData $response )
+	{
+		echo $response->getRequestId() . "\n" . $response->getBody() . "\n" . $response->getDuration() . "\n\n";
+	}
+);
+
+for ( $i = 0; $i < (int)$argv[1]; $i++ )
 {
-	public function getGatewayInterface() : string;
+	$request->setContent( http_build_query( [ 'sleep' => random_int( 1, 3 ), 'i' => $i ] ) );
 
-	public function getRequestMethod() : string;
+	$requestId = $client->sendAsyncRequest( $request );
 
-	public function getScriptFilename() : string;
-
-	public function getServerSoftware() : string;
-
-	public function getRemoteAddress() : string;
-
-	public function getRemotePort() : int;
-
-	public function getServerAddress() : string;
-
-	public function getServerPort() : int;
-
-	public function getServerName() : string;
-
-	public function getServerProtocol() : string;
-
-	public function getContentType() : string;
-
-	public function getContentLength() : int;
-
-	public function getContent() : string;
-
-	public function getCustomVars() : array;
-
-	public function getParams() : array;
-
-	public function getCallback() : ?callable;
+	echo "\nSent request {$requestId}";
 }
+
+echo "\n\nWaiting for responses...\n\n";
+
+$client->waitForResponses( 5000 );
+
+die( 'done' );
