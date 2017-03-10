@@ -43,26 +43,16 @@ class UnixDomainSocket implements ConfiguresSocketConnection
 	/** @var int */
 	private $readWriteTimeout;
 
-	/** @var bool */
-	private $persistent;
-
-	/** @var bool */
-	private $keepAlive;
-
 	public function __construct(
 		string $socketPath,
 		int $connectTimeout = Defaults::CONNECT_TIMEOUT,
-		int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT,
-		bool $persistent = Defaults::PERSISTENT,
-		bool $keepAlive = Defaults::KEEP_ALIVE
+		int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT
 	)
 	{
 		$this->host             = $socketPath;
 		$this->port             = -1;
 		$this->connectTimeout   = $connectTimeout;
 		$this->readWriteTimeout = $readWriteTimeout;
-		$this->persistent       = $persistent;
-		$this->keepAlive        = $keepAlive;
 	}
 
 	public function getHost() : string
@@ -83,15 +73,5 @@ class UnixDomainSocket implements ConfiguresSocketConnection
 	public function getReadWriteTimeout() : int
 	{
 		return $this->readWriteTimeout;
-	}
-
-	public function isPersistent() : bool
-	{
-		return $this->persistent;
-	}
-
-	public function keepAlive() : bool
-	{
-		return $this->keepAlive;
 	}
 }

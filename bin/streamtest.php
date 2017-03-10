@@ -29,17 +29,28 @@ use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
 require __DIR__ . '/../vendor/autoload.php';
 
-$connection = new UnixDomainSocket( 'unix:///var/run/php/php7.1-fpm.sock', 5000, 5000, false, false );
+$connection = new UnixDomainSocket( 'unix:///var/run/php/php7.1-fpm.sock', 5000, 5000 );
 $client     = new Client( $connection );
 
 $workerPath = '/vagrant/tests/Integration/Workers/worker.php';
 $request    = new PostRequest( $workerPath, '' );
-$request->setCallback(
+$request->addResponseCallbacks(
 	function ( ProvidesResponseData $response )
 	{
 		echo $response->getRequestId() . "\n" . $response->getBody() . "\n" . $response->getDuration() . "\n\n";
 	}
 );
+$request->addFailureCallbacks(
+	function ( \Throwable $throwable )
+	{
+		echo "!FAILURE! : {$throwable->getMessage()} (" . get_class( $throwable ) . ")\n\n";
+	}
+);
+
+$request->setContent( http_build_query( [ 'sleep' => random_int( 1, 3 ), 'i' => 0 ] ) );
+$response = $client->sendRequest( $request );
+
+echo '<pre>', htmlspecialchars( print_r( $response, true ) ), '</pre>';
 
 for ( $i = 0; $i < (int)$argv[1]; $i++ )
 {
@@ -52,6 +63,6 @@ for ( $i = 0; $i < (int)$argv[1]; $i++ )
 
 echo "\n\nWaiting for responses...\n\n";
 
-$client->waitForResponses( 5000 );
+$client->waitForResponses();
 
 die( 'done' );

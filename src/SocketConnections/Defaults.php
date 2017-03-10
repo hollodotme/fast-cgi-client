@@ -32,8 +32,4 @@ abstract class Defaults
 	public const CONNECT_TIMEOUT    = 5000;
 
 	public const READ_WRITE_TIMEOUT = 5000;
-
-	public const KEEP_ALIVE         = false;
-
-	public const PERSISTENT         = false;
 }

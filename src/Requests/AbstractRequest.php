@@ -71,8 +71,11 @@ abstract class AbstractRequest implements ProvidesRequestData
 	/** @var array */
 	private $customVars = [];
 
-	/** @var null|callable */
-	private $callback;
+	/** @var array|callable[] */
+	private $responseCallbacks = [];
+
+	/** @var array|callable[] */
+	private $failureCallbacks = [];
 
 	public function __construct( string $scriptFilename, string $content )
 	{
@@ -227,13 +230,23 @@ abstract class AbstractRequest implements ProvidesRequestData
 		);
 	}
 
-	public function getCallback() : ?callable
+	public function getResponseCallbacks() : array
 	{
-		return $this->callback;
+		return $this->responseCallbacks;
 	}
 
-	public function setCallback( callable $callback )
+	public function addResponseCallbacks( callable ...$callbacks )
 	{
-		$this->callback = $callback;
+		$this->responseCallbacks = array_merge( $this->responseCallbacks, $callbacks );
+	}
+
+	public function getFailureCallbacks() : array
+	{
+		return $this->failureCallbacks;
+	}
+
+	public function addFailureCallbacks( callable  ...$callbacks )
+	{
+		$this->failureCallbacks = array_merge( $this->failureCallbacks, $callbacks );
 	}
 }

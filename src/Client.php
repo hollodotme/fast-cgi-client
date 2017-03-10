@@ -34,7 +34,6 @@ use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Responses\Response;
-use hollodotme\FastCGI\Timing\Timer;
 
 /**
  * Class Client
@@ -81,8 +80,11 @@ class Client
 	/** @var array */
 	private $sockets;
 
-	/** @var array */
-	private $callbacks;
+	/** @var array|callable[][] */
+	private $responseCallbacks;
+
+	/** @var array|callable[][] */
+	private $failureCallbacks;
 
 	/** @var PacketEncoder */
 	private $packetEncoder;
@@ -107,20 +109,10 @@ class Client
 		$this->packetEncoder        = new PacketEncoder();
 		$this->nameValuePairEncoder = new NameValuePairEncoder();
 		$this->sockets              = [];
-		$this->callbacks            = [];
+		$this->responseCallbacks    = [];
+		$this->failureCallbacks     = [];
 	}
 
-	/**
-	 * Execute a request to the FastCGI application
-	 *
-	 * @param ProvidesRequestData $request
-	 *
-	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @throws \hollodotme\FastCGI\Exceptions\ForbiddenException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @return ProvidesResponseData
-	 */
 	public function sendRequest( ProvidesRequestData $request ) : ProvidesResponseData
 	{
 		$requestId = $this->sendAsyncRequest( $request );
@@ -128,21 +120,6 @@ class Client
 		return $this->waitForResponse( $requestId );
 	}
 
-	/**
-	 * Execute a request to the FastCGI application asyncronously
-	 * This sends request to application and returns the assigned ID for that request.
-	 * You should keep this id for later use with wait_for_response(). Ids are chosen randomly
-	 * rather than seqentially to guard against false-positives when using persistent sockets.
-	 * In that case it is possible that a delayed response to a request made by a previous script
-	 * invocation comes back on this socket and is mistaken for response to request made with same ID
-	 * during this request.
-	 *
-	 * @param ProvidesRequestData $request
-	 *
-	 * @throws TimedoutException
-	 * @throws WriteFailedException
-	 * @return int
-	 */
 	public function sendAsyncRequest( ProvidesRequestData $request ) : int
 	{
 		// Pick random number between 1 and max 16 bit unsigned int 65535
@@ -153,20 +130,21 @@ class Client
 		$requestPackets = $this->getRequestPackets( $request, $requestId );
 		$startTime      = microtime( true );
 
-		$writeResult = fwrite( $this->sockets[ $requestId ], $requestPackets );
-		$flushResult = fflush( $this->sockets[ $requestId ] );
+		$socket = $this->sockets[ $requestId ];
+
+		$writeResult = fwrite( $socket, $requestPackets );
+		$flushResult = fflush( $socket );
 
 		if ( $writeResult === false || $flushResult === false )
 		{
 			$info = stream_get_meta_data( $this->sockets[ $requestId ] );
 
+			$this->removeStream( $requestId );
+
 			if ( $info['timed_out'] )
 			{
 				throw new TimedoutException( 'Write timed out' );
 			}
-
-			// Broken pipe, tear down so future requests might succeed
-			fclose( $this->sockets[ $requestId ] );
 
 			throw new WriteFailedException( 'Failed to write request to socket [broken pipe]' );
 		}
@@ -178,10 +156,12 @@ class Client
 			'duration'  => 0,
 		];
 
-		if ( null !== $request->getCallback() )
+		if ( $request->getResponseCallbacks() )
 		{
-			$this->callbacks[ $requestId ] = $request->getCallback();
+			$this->responseCallbacks[ $requestId ] = $request->getResponseCallbacks();
 		}
+
+		$this->failureCallbacks[ $requestId ] = $request->getFailureCallbacks();
 
 		return $requestId;
 	}
@@ -192,26 +172,13 @@ class Client
 		{
 			try
 			{
-				if ( $this->connection->isPersistent() )
-				{
-					$this->sockets[ $requestId ] = pfsockopen(
-						$this->connection->getHost(),
-						$this->connection->getPort(),
-						$errorNumber,
-						$errorString,
-						$this->connection->getConnectTimeout() / 1000
-					);
-				}
-				else
-				{
-					$this->sockets[ $requestId ] = fsockopen(
-						$this->connection->getHost(),
-						$this->connection->getPort(),
-						$errorNumber,
-						$errorString,
-						$this->connection->getConnectTimeout() / 1000
-					);
-				}
+				$this->sockets[ $requestId ] = fsockopen(
+					$this->connection->getHost(),
+					$this->connection->getPort(),
+					$errorNumber,
+					$errorString,
+					$this->connection->getConnectTimeout() / 1000
+				);
 			}
 			catch ( \Throwable $e )
 			{
@@ -223,7 +190,7 @@ class Client
 				throw new ConnectException( 'Unable to connect to FastCGI application: ' . $errorString );
 			}
 
-			if ( !$this->setStreamTimeout( $requestId, $this->connection->getReadWriteTimeout() ) )
+			if ( !$this->setStreamTimeout( $this->sockets[ $requestId ], $this->connection->getReadWriteTimeout() ) )
 			{
 				throw new ConnectException( 'Unable to set timeout on socket' );
 			}
@@ -232,12 +199,10 @@ class Client
 
 	private function getRequestPackets( ProvidesRequestData $request, int $requestId ) : string
 	{
-		// Using persistent sockets implies you want them kept alive by server
-		$keepAlive = (int)($this->connection->keepAlive() || $this->connection->isPersistent());
-
+		# Keep alive bit always set to 1
 		$requestPackets = $this->packetEncoder->encodePacket(
 			self::BEGIN_REQUEST,
-			chr( 0 ) . chr( self::RESPONDER ) . chr( $keepAlive ) . str_repeat( chr( 0 ), 5 ),
+			chr( 0 ) . chr( self::RESPONDER ) . chr( 1 ) . str_repeat( chr( 0 ), 5 ),
 			$requestId
 		);
 
@@ -260,27 +225,11 @@ class Client
 		return $requestPackets;
 	}
 
-	private function setStreamTimeout( int $requestId, int $timeoutMs ) : bool
+	private function setStreamTimeout( $socket, int $timeoutMs ) : bool
 	{
-		if ( !isset( $this->sockets[ $requestId ] ) || !$this->sockets[ $requestId ] )
-		{
-			return false;
-		}
-
-		return stream_set_timeout(
-			$this->sockets[ $requestId ],
-			(int)floor( $timeoutMs / 1000 ),
-			($timeoutMs % 1000) * 1000
-		);
+		return stream_set_timeout( $socket, (int)floor( $timeoutMs / 1000 ), ($timeoutMs % 1000) * 1000 );
 	}
 
-	/**
-	 * Read a FastCGI PacketEncoder
-	 *
-	 * @param $socket
-	 *
-	 * @return array|null
-	 */
 	private function readPacket( $socket ) : ?array
 	{
 		if ( $packet = fread( $socket, self::HEADER_LEN ) )
@@ -306,17 +255,16 @@ class Client
 
 			return $packet;
 		}
-		else
-		{
-			return null;
-		}
+
+		return null;
 	}
 
-	public function waitForResponses( int $timeout = 0 ) : void
+	public function waitForResponses( ?int $timeout = null ) : void
 	{
-		while ( count( $this->callbacks ) > 0 )
+		while ( count( $this->responseCallbacks ) > 0 )
 		{
-			$reads   = $this->sockets;
+			# only select streams that have callbacks
+			$reads   = array_intersect_key( $this->sockets, $this->responseCallbacks );
 			$writes  = null;
 			$excepts = null;
 
@@ -330,7 +278,7 @@ class Client
 			if ( $available === 0 )
 			{
 				# Nothing happened
-				usleep( 200000 );
+				usleep( 2000 );
 				continue;
 			}
 
@@ -342,139 +290,54 @@ class Client
 
 				try
 				{
-					$response = $this->waitForResponse( $requestId, $timeout );
+					$response = $this->fetchResponse( $requestId, $timeout );
 
-					if ( isset( $this->callbacks[ $requestId ] ) )
+					foreach ( (array)$this->responseCallbacks[ $requestId ] as $callback )
 					{
-						call_user_func( $this->callbacks[ $requestId ], $response );
+						if ( is_callable( $callback ) )
+						{
+							$callback( $response );
+						}
 					}
 				}
 				catch ( \Throwable $e )
 				{
-					throw $e;
+					foreach ( (array)$this->failureCallbacks[ $requestId ] as $callback )
+					{
+						if ( is_callable( $callback ) )
+						{
+							$callback( $e );
+						}
+					}
 				}
 				finally
 				{
 					$this->removeStream( $requestId );
 				}
-				/*
-				$packet = $this->readPacket( $socket );
-
-				if ( $packet === null )
-				{
-					continue;
-
-					$info = stream_get_meta_data( $socket );
-
-					// We must reset timeout but it must be AFTER we get info
-					$this->setStreamTimeout( $requestId, $this->connection->getReadWriteTimeout() );
-
-					if ( $info['timed_out'] )
-					{
-						throw new TimedoutException( 'Read timed out' );
-					}
-
-					if ( $info['unread_bytes'] === 0 && $info['blocked'] && $info['eof'] )
-					{
-						throw new ForbiddenException( 'Not in white list. Check listen.allowed_clients.' );
-					}
-
-					throw new ReadFailedException( 'Read failed' );
-				}
-
-				switch ( (int)$packet['type'] )
-				{
-					case self::STDOUT:
-					{
-						$this->requests[ $packet['requestId'] ]['response'] .= $packet['content'];
-						break;
-					}
-
-					case self::STDERR:
-					{
-						$this->requests[ $packet['requestId'] ]['state'] = self::REQ_STATE_ERR;
-						$this->requests[ $packet['requestId'] ]['response'] .= $packet['content'];
-						break;
-					}
-
-					case self::END_REQUEST:
-					{
-						$this->requests[ $packet['requestId'] ]['state'] = self::REQ_STATE_OK;
-						if ( $packet['requestId'] === $requestId )
-						{
-							switch ( ord( $packet['content']{4} ) )
-							{
-								case self::CANT_MPX_CONN:
-									throw new WriteFailedException( 'This app can\'t multiplex [CANT_MPX_CONN]' );
-
-								case self::OVERLOADED:
-									throw new WriteFailedException( 'New request rejected; too busy [OVERLOADED]' );
-
-								case self::UNKNOWN_ROLE:
-									throw new WriteFailedException( 'Role value not known [UNKNOWN_ROLE]' );
-
-								case self::REQUEST_COMPLETE:
-									$duration = microtime( true ) - (float)$this->requests[ $requestId ]['startTime'];
-
-									$this->requests[ $requestId ]['duration'] = $duration;
-
-									$response = new Response(
-										$requestId,
-										(string)$this->requests[ $requestId ]['response'],
-										(float)$this->requests[ $requestId ]['duration']
-									);
-
-									if ( isset( $this->callbacks[ $requestId ] ) )
-									{
-										call_user_func( $this->callbacks[ $requestId ], $response );
-									}
-
-									$this->removeStream( $requestId );
-									break;
-							}
-						}
-						break;
-					}
-				}
-				*/
 			}
 		}
 	}
 
-	private function removeStream( $requestId )
+	public function readResponse( int $requestId, ?int $timeoutMs ) : ProvidesResponseData
 	{
-		if ( isset( $this->sockets[ $requestId ] ) )
+		try
 		{
-			if ( count( array_keys( $this->sockets, $this->sockets[ $requestId ], true ) ) === 1 )
-			{
-				fclose( $this->sockets[ $requestId ] );
-			}
-
-			unset( $this->sockets[ $requestId ] );
+			return $this->fetchResponse( $requestId, $timeoutMs );
 		}
-
-		unset( $this->callbacks[ $requestId ] );
+		catch ( \Throwable $e )
+		{
+			throw $e;
+		}
+		finally
+		{
+			$this->removeStream( $requestId );
+		}
 	}
 
-	/**
-	 * Blocking call that waits for response to specific request
-	 *
-	 * @param int $requestId     Request ID
-	 * @param int $timeoutMs     [optional] the number of milliseconds to wait.
-	 *                           Defaults to the ReadWriteTimeout value set.
-	 *
-	 * @throws ForbiddenException
-	 * @throws ReadFailedException
-	 * @throws TimedoutException
-	 * @throws WriteFailedException
-	 * @return ProvidesResponseData
-	 */
-	public function waitForResponse( int $requestId, int $timeoutMs = 0 ) : ProvidesResponseData
+	private function fetchResponse( int $requestId, ?int $timeoutMs ) : ProvidesResponseData
 	{
-		if ( !isset( $this->requests[ $requestId ] ) )
-		{
-			throw new ReadFailedException( 'Invalid request id given' );
-		}
+		$this->guardRequestIdExists( $requestId );
+		$this->guardSocketExists( $requestId );
 
 		// If we already read the response during an earlier call for different id, just return it
 		if ( in_array( $this->requests[ $requestId ]['state'], [ self::REQ_STATE_OK, self::REQ_STATE_ERR ], true ) )
@@ -486,20 +349,10 @@ class Client
 			);
 		}
 
-		if ( $timeoutMs > 0 )
-		{
-			// Reset timeout on socket for now
-			$this->setStreamTimeout( $requestId, $timeoutMs );
-		}
-		else
-		{
-			$timeoutMs = $this->connection->getReadWriteTimeout();
-		}
+		$socket = $this->sockets[ $requestId ];
 
-		// Need to manually check since we might do several reads none of which timeout themselves
-		// but still not get the response requested
-		$timer = new Timer( $timeoutMs );
-		$timer->start();
+		// Reset timeout on socket for now
+		$this->setStreamTimeout( $socket, $timeoutMs ?? $this->connection->getReadWriteTimeout() );
 
 		do
 		{
@@ -524,24 +377,12 @@ class Client
 					}
 					break;
 			}
-
-			if ( $timer->timedOut() )
-			{
-				// Reset
-				$this->setStreamTimeout( $requestId, $this->connection->getReadWriteTimeout() );
-				$timer->reset();
-
-				throw new TimedoutException( 'Timed out' );
-			}
 		}
 		while ( null !== $packet );
 
 		if ( $packet === null )
 		{
 			$info = stream_get_meta_data( $this->socket );
-
-			// We must reset timeout but it must be AFTER we get info
-			$this->setStreamTimeout( $requestId, $this->connection->getReadWriteTimeout() );
 
 			if ( $info['timed_out'] )
 			{
@@ -556,10 +397,35 @@ class Client
 			throw new ReadFailedException( 'Read failed' );
 		}
 
-		// Reset timeout
-		$this->setStreamTimeout( $requestId, $this->connection->getReadWriteTimeout() );
+		$this->guardRequestCompleted( ord( $packet['content']{4} ) );
 
-		switch ( ord( $packet['content']{4} ) )
+		$duration = microtime( true ) - (float)$this->requests[ $requestId ]['startTime'];
+
+		$this->requests[ $requestId ]['duration'] = $duration;
+
+		return new Response(
+			$requestId,
+			(string)$this->requests[ $requestId ]['response'],
+			(float)$this->requests[ $requestId ]['duration']
+		);
+	}
+
+	private function guardRequestIdExists( int $requestId )
+	{
+		if ( !isset( $this->requests[ $requestId ] ) )
+		{
+			throw new ReadFailedException( 'Invalid request id given' );
+		}
+	}
+
+	private function guardRequestCompleted( int $flag )
+	{
+		if ( $flag === self::REQUEST_COMPLETE )
+		{
+			return;
+		}
+
+		switch ( $flag )
 		{
 			case self::CANT_MPX_CONN:
 				throw new WriteFailedException( 'This app can\'t multiplex [CANT_MPX_CONN]' );
@@ -570,19 +436,66 @@ class Client
 			case self::UNKNOWN_ROLE:
 				throw new WriteFailedException( 'Role value not known [UNKNOWN_ROLE]' );
 
-			case self::REQUEST_COMPLETE:
-				$duration = microtime( true ) - (float)$this->requests[ $requestId ]['startTime'];
-
-				$this->requests[ $requestId ]['duration'] = $duration;
-
-				return new Response(
-					$requestId,
-					(string)$this->requests[ $requestId ]['response'],
-					(float)$this->requests[ $requestId ]['duration']
-				);
-
 			default:
 				throw new ReadFailedException( 'Unknown content.' );
+		}
+	}
+
+	private function removeStream( int $requestId )
+	{
+		if ( isset( $this->sockets[ $requestId ] ) )
+		{
+			fclose( $this->sockets[ $requestId ] );
+			unset( $this->sockets[ $requestId ] );
+		}
+
+		unset( $this->responseCallbacks[ $requestId ] );
+	}
+
+	/**
+	 * Blocking call that waits for response to specific request
+	 *
+	 * @param int $requestId     Request ID
+	 * @param int $timeoutMs     [optional] the number of milliseconds to wait.
+	 *                           Defaults to the ReadWriteTimeout value set.
+	 *
+	 * @throws \Throwable
+	 * @return ProvidesResponseData
+	 */
+	public function waitForResponse( int $requestId, ?int $timeoutMs = null ) : ProvidesResponseData
+	{
+		$response = null;
+
+		while ( true )
+		{
+			if ( $this->hasResponse( $requestId ) )
+			{
+				$response = $this->readResponse( $requestId, $timeoutMs );
+				break;
+			}
+
+			usleep( 2000 );
+		}
+
+		return $response;
+	}
+
+	public function hasResponse( int $requestId ) : bool
+	{
+		$this->guardSocketExists( $requestId );
+
+		$reads   = [ $this->sockets[ $requestId ] ];
+		$writes  = null;
+		$excepts = null;
+
+		return (bool)stream_select( $reads, $writes, $excepts, 0, 200000 );
+	}
+
+	private function guardSocketExists( int $requestId )
+	{
+		if ( !is_resource( $this->sockets[ $requestId ] ?? null ) )
+		{
+			throw new ReadFailedException( 'Socket not found for request ID: ' . $requestId );
 		}
 	}
 }

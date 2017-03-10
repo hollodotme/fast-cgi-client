@@ -59,5 +59,7 @@ interface ProvidesRequestData
 
 	public function getParams() : array;
 
-	public function getCallback() : ?callable;
+	public function getResponseCallbacks() : array;
+
+	public function getFailureCallbacks() : array;
 }
