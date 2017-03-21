@@ -41,35 +41,37 @@ use hollodotme\FastCGI\Responses\Response;
  */
 class Client
 {
-	private const BEGIN_REQUEST     = 1;
+	private const BEGIN_REQUEST      = 1;
 
-	private const END_REQUEST       = 3;
+	private const END_REQUEST        = 3;
 
-	private const PARAMS            = 4;
+	private const PARAMS             = 4;
 
-	private const STDIN             = 5;
+	private const STDIN              = 5;
 
-	private const STDOUT            = 6;
+	private const STDOUT             = 6;
 
-	private const STDERR            = 7;
+	private const STDERR             = 7;
 
-	private const RESPONDER         = 1;
+	private const RESPONDER          = 1;
 
-	private const REQUEST_COMPLETE  = 0;
+	private const REQUEST_COMPLETE   = 0;
 
-	private const CANT_MPX_CONN     = 1;
+	private const CANT_MPX_CONN      = 1;
 
-	private const OVERLOADED        = 2;
+	private const OVERLOADED         = 2;
 
-	private const UNKNOWN_ROLE      = 3;
+	private const UNKNOWN_ROLE       = 3;
 
-	private const HEADER_LEN        = 8;
+	private const HEADER_LEN         = 8;
 
-	private const REQ_STATE_WRITTEN = 1;
+	private const REQ_STATE_WRITTEN  = 1;
 
-	private const REQ_STATE_OK      = 2;
+	private const REQ_STATE_OK       = 2;
 
-	private const REQ_STATE_ERR     = 3;
+	private const REQ_STATE_ERR      = 3;
+
+	private const STREAM_SELECT_USEC = 20000;
 
 	/** @var ConfiguresSocketConnection */
 	private $connection;
@@ -264,25 +266,21 @@ class Client
 		while ( count( $this->responseCallbacks ) > 0 )
 		{
 			# only select streams that have callbacks
-			$reads   = array_intersect_key( $this->sockets, $this->responseCallbacks );
-			$writes  = null;
-			$excepts = null;
+			$reads = array_intersect_key( $this->sockets, $this->responseCallbacks );
 
-			$available = stream_select( $reads, $writes, $excepts, 0, 20000 );
-
-			if ( $available === false )
+			if ( count( $reads ) === 0 )
 			{
 				break;
 			}
 
-			if ( $available === 0 )
+			$available = $this->checkAvailableStreams( $reads );
+
+			if ( $available === false )
 			{
 				# Nothing happened
 				usleep( 2000 );
 				continue;
 			}
-
-			print_r( array_keys( $reads ) );
 
 			foreach ( $reads as $requestId => $socket )
 			{
@@ -318,7 +316,15 @@ class Client
 		}
 	}
 
-	public function readResponse( int $requestId, ?int $timeoutMs ) : ProvidesResponseData
+	private function checkAvailableStreams( array &$reads ) : bool
+	{
+		$writes  = null;
+		$excepts = null;
+
+		return (bool)stream_select( $reads, $writes, $excepts, 0, self::STREAM_SELECT_USEC );
+	}
+
+	public function readResponse( int $requestId, ?int $timeoutMs = null ) : ProvidesResponseData
 	{
 		try
 		{
@@ -484,11 +490,9 @@ class Client
 	{
 		$this->guardSocketExists( $requestId );
 
-		$reads   = [ $this->sockets[ $requestId ] ];
-		$writes  = null;
-		$excepts = null;
+		$reads = [ $this->sockets[ $requestId ] ];
 
-		return (bool)stream_select( $reads, $writes, $excepts, 0, 200000 );
+		return $this->checkAvailableStreams( $reads );
 	}
 
 	private function guardSocketExists( int $requestId )
@@ -497,5 +501,36 @@ class Client
 		{
 			throw new ReadFailedException( 'Socket not found for request ID: ' . $requestId );
 		}
+	}
+
+	public function getReadyRequestIds() : array
+	{
+		$reads     = $this->sockets;
+		$available = $this->checkAvailableStreams( $reads );
+
+		return $available ? array_keys( $reads ) : [];
+	}
+
+	public function readResponses( int ...$requestIds ) : array
+	{
+		$responses = [];
+		
+		foreach ( $requestIds as $requestId )
+		{
+			try
+			{
+				$responses[ $requestId ] = $this->fetchResponse( $requestId, null );
+			}
+			catch ( \Throwable $e )
+			{
+				continue;
+			}
+			finally
+			{
+				$this->removeStream( $requestId );
+			}
+		}
+
+		return $responses;
 	}
 }
