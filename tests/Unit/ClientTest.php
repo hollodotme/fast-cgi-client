@@ -25,6 +25,7 @@ namespace hollodotme\FastCGI\Tests\Unit;
 
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
 class ClientTest extends \PHPUnit\Framework\TestCase
@@ -51,5 +52,29 @@ class ClientTest extends \PHPUnit\Framework\TestCase
 		$client     = new Client( $connection );
 
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
+	}
+
+	/**
+	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 * @expectedExceptionMessage Socket not found for request ID: 12345
+	 */
+	public function testWaitingForUnknownRequestThrowsException()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$client     = new Client( $connection );
+
+		$client->waitForResponse( 12345 );
+	}
+
+	/**
+	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 * @expectedExceptionMessage No pending requests found.
+	 */
+	public function testWaitingForResponsesWithoutRequestsThrowsException()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$client     = new Client( $connection );
+
+		$client->waitForResponses();
 	}
 }

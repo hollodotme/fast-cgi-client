@@ -73,6 +73,8 @@ class Client
 
 	private const STREAM_SELECT_USEC = 20000;
 
+	private const LOOP_TICK_USEC     = 2000;
+
 	/** @var ConfiguresSocketConnection */
 	private $connection;
 
@@ -119,7 +121,7 @@ class Client
 	{
 		$requestId = $this->sendAsyncRequest( $request );
 
-		return $this->waitForResponse( $requestId );
+		return $this->readResponse( $requestId );
 	}
 
 	public function sendAsyncRequest( ProvidesRequestData $request ) : int
@@ -158,12 +160,8 @@ class Client
 			'duration'  => 0,
 		];
 
-		if ( $request->getResponseCallbacks() )
-		{
-			$this->responseCallbacks[ $requestId ] = $request->getResponseCallbacks();
-		}
-
-		$this->failureCallbacks[ $requestId ] = $request->getFailureCallbacks();
+		$this->responseCallbacks[ $requestId ] = $request->getResponseCallbacks();
+		$this->failureCallbacks[ $requestId ]  = $request->getFailureCallbacks();
 
 		return $requestId;
 	}
@@ -261,51 +259,47 @@ class Client
 		return null;
 	}
 
+	/**
+	 * @param int|null $timeout
+	 *
+	 * @throws ReadFailedException
+	 * @throws \Throwable
+	 */
 	public function waitForResponses( ?int $timeout = null ) : void
 	{
-		while ( count( $this->responseCallbacks ) > 0 )
+		if ( count( $this->sockets ) === 0 )
 		{
-			# only select streams that have callbacks
-			$reads = array_intersect_key( $this->sockets, $this->responseCallbacks );
+			throw new ReadFailedException( 'No pending requests found.' );
+		}
 
-			if ( count( $reads ) === 0 )
-			{
-				break;
-			}
-
+		while ( count( $this->sockets ) > 0 )
+		{
+			$reads     = $this->sockets;
 			$available = $this->checkAvailableStreams( $reads );
 
 			if ( $available === false )
 			{
 				# Nothing happened
-				usleep( 2000 );
+				usleep( self::LOOP_TICK_USEC );
 				continue;
 			}
 
 			foreach ( $reads as $requestId => $socket )
 			{
-				echo 'Socket: ' . (int)$socket . " - {$requestId}\n";
-
 				try
 				{
 					$response = $this->fetchResponse( $requestId, $timeout );
 
 					foreach ( (array)$this->responseCallbacks[ $requestId ] as $callback )
 					{
-						if ( is_callable( $callback ) )
-						{
-							$callback( $response );
-						}
+						$callback( $response );
 					}
 				}
 				catch ( \Throwable $e )
 				{
 					foreach ( (array)$this->failureCallbacks[ $requestId ] as $callback )
 					{
-						if ( is_callable( $callback ) )
-						{
-							$callback( $e );
-						}
+						$callback( $e );
 					}
 				}
 				finally
@@ -318,8 +312,7 @@ class Client
 
 	private function checkAvailableStreams( array &$reads ) : bool
 	{
-		$writes  = null;
-		$excepts = null;
+		$writes = $excepts = null;
 
 		return (bool)stream_select( $reads, $writes, $excepts, 0, self::STREAM_SELECT_USEC );
 	}
@@ -340,7 +333,7 @@ class Client
 		}
 	}
 
-	private function fetchResponse( int $requestId, ?int $timeoutMs ) : ProvidesResponseData
+	private function fetchResponse( int $requestId, ?int $timeoutMs = null ) : ProvidesResponseData
 	{
 		$this->guardRequestIdExists( $requestId );
 		$this->guardSocketExists( $requestId );
@@ -465,25 +458,39 @@ class Client
 	 * @param int $timeoutMs     [optional] the number of milliseconds to wait.
 	 *                           Defaults to the ReadWriteTimeout value set.
 	 *
-	 * @throws \Throwable
-	 * @return ProvidesResponseData
+	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
 	 */
-	public function waitForResponse( int $requestId, ?int $timeoutMs = null ) : ProvidesResponseData
+	public function waitForResponse( int $requestId, ?int $timeoutMs = null ) : void
 	{
-		$response = null;
-
 		while ( true )
 		{
-			if ( $this->hasResponse( $requestId ) )
+			if ( !$this->hasResponse( $requestId ) )
 			{
-				$response = $this->readResponse( $requestId, $timeoutMs );
-				break;
+				usleep( self::LOOP_TICK_USEC );
+				continue;
 			}
 
-			usleep( 2000 );
-		}
+			try
+			{
+				$response = $this->fetchResponse( $requestId, $timeoutMs );
 
-		return $response;
+				foreach ( (array)$this->responseCallbacks[ $requestId ] as $callback )
+				{
+					$callback( $response );
+				}
+			}
+			catch ( \Throwable $e )
+			{
+				foreach ( (array)$this->failureCallbacks[ $requestId ] as $callback )
+				{
+					$callback( $e );
+				}
+			}
+			finally
+			{
+				$this->removeStream( $requestId );
+			}
+		}
 	}
 
 	public function hasResponse( int $requestId ) : bool
@@ -503,7 +510,7 @@ class Client
 		}
 	}
 
-	public function getReadyRequestIds() : array
+	public function getRequestIdsHavingResponse() : array
 	{
 		$reads     = $this->sockets;
 		$available = $this->checkAvailableStreams( $reads );
@@ -511,15 +518,18 @@ class Client
 		return $available ? array_keys( $reads ) : [];
 	}
 
-	public function readResponses( int ...$requestIds ) : array
+	/**
+	 * @param int[] ...$requestIds
+	 *
+	 * @return \Generator|ProvidesResponseData[]
+	 */
+	public function readResponses( int ...$requestIds ) : \Generator
 	{
-		$responses = [];
-		
 		foreach ( $requestIds as $requestId )
 		{
 			try
 			{
-				$responses[ $requestId ] = $this->fetchResponse( $requestId, null );
+				yield $this->fetchResponse( $requestId );
 			}
 			catch ( \Throwable $e )
 			{
@@ -530,7 +540,5 @@ class Client
 				$this->removeStream( $requestId );
 			}
 		}
-
-		return $responses;
 	}
 }

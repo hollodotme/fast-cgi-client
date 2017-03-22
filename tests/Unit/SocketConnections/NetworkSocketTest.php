@@ -44,19 +44,15 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 		$this->assertSame( 9000, $connection->getPort() );
 		$this->assertSame( Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout() );
 		$this->assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
-		$this->assertSame( Defaults::KEEP_ALIVE, $connection->keepAlive() );
-		$this->assertSame( Defaults::PERSISTENT, $connection->isPersistent() );
 	}
 
 	public function testCanGetSetValues()
 	{
-		$connection = new NetworkSocket( '127.0.0.1', 9001, 2000, 3000, true, true );
+		$connection = new NetworkSocket( '127.0.0.1', 9001, 2000, 3000 );
 
 		$this->assertSame( '127.0.0.1', $connection->getHost() );
 		$this->assertSame( 9001, $connection->getPort() );
 		$this->assertSame( 2000, $connection->getConnectTimeout() );
 		$this->assertSame( 3000, $connection->getReadWriteTimeout() );
-		$this->assertSame( true, $connection->keepAlive() );
-		$this->assertSame( true, $connection->isPersistent() );
 	}
 }

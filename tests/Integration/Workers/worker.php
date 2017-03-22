@@ -23,6 +23,6 @@
 
 header( 'X-Powered-By: PHP/7.1.0' );
 header( 'X-Custom: Header' );
-sleep( (int)$_REQUEST['sleep'] );
-echo $_REQUEST['i'] . ' - ' . $_REQUEST['sleep'];
+usleep( 50000 );
+echo $_REQUEST['test-key'];
 

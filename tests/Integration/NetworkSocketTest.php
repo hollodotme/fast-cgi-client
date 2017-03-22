@@ -24,6 +24,7 @@
 namespace hollodotme\FastCGI\Tests\Integration;
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
@@ -46,7 +47,7 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 		$this->assertLessThanOrEqual( 65535, $requestId );
 	}
 
-	public function testCanSendAsyncRequestAndWaitForResponse()
+	public function testCanSendAsyncRequestAndReadResponse()
 	{
 		$connection       = new NetworkSocket( '127.0.0.1', 9000 );
 		$client           = new Client( $connection );
@@ -56,14 +57,12 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
 
 		$requestId = $client->sendAsyncRequest( $request );
-		$response  = $client->waitForResponse( $requestId );
+		$response  = $client->readResponse( $requestId );
 
 		$this->assertEquals( $expectedResponse, $response->getRawResponse() );
 		$this->assertSame( 'unit', $response->getBody() );
 		$this->assertGreaterThan( 0, $response->getDuration() );
 		$this->assertSame( $requestId, $response->getRequestId() );
-
-		$this->assertEquals( $response, $client->waitForResponse( $requestId ) );
 	}
 
 	public function testCanSendSyncRequestAndReceiveResponse()
@@ -83,7 +82,101 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 
 		$this->assertGreaterThanOrEqual( 1, $response->getRequestId() );
 		$this->assertLessThanOrEqual( 65535, $response->getRequestId() );
+	}
 
-		$this->assertEquals( $response, $client->waitForResponse( $response->getRequestId() ) );
+	public function testCanReceiveResponseInCallback()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$client     = new Client( $connection );
+		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+
+		$unitTest = $this;
+
+		$request->addResponseCallbacks(
+			function ( ProvidesResponseData $response ) use ( $unitTest )
+			{
+				$unitTest->assertSame( 'unit', $response->getBody() );
+			}
+		);
+
+		$client->sendAsyncRequest( $request );
+		$client->waitForResponses();
+	}
+
+	public function testCanHandleExceptionsInFailureCallback()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$client     = new Client( $connection );
+		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+
+		$unitTest = $this;
+
+		$request->addResponseCallbacks(
+			function ()
+			{
+				throw new \RuntimeException( 'Response callback threw exception.' );
+			}
+		);
+
+		$request->addFailureCallbacks(
+			function ( \Throwable $throwable ) use ( $unitTest )
+			{
+				$unitTest->assertInstanceOf( \RuntimeException::class, $throwable );
+				$unitTest->assertSame( 'Response callback threw exception.', $throwable->getMessage() );
+			}
+		);
+
+		$client->sendAsyncRequest( $request );
+		$client->waitForResponses();
+	}
+
+	public function testCanCheckForRequestIdsHavingResponses()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$client     = new Client( $connection );
+		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+
+		$requestId = $client->sendAsyncRequest( $request );
+
+		usleep( 60000 );
+
+		$this->assertTrue( $client->hasResponse( $requestId ) );
+		$this->assertEquals( [ $requestId ], $client->getRequestIdsHavingResponse() );
+	}
+
+	public function testCanReadResponses()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$client     = new Client( $connection );
+		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+
+		$requestIdOne = $client->sendAsyncRequest( $request );
+
+		$request->setContent( http_build_query( [ 'test-key' => 'test' ] ) );
+
+		$requestIdTwo = $client->sendAsyncRequest( $request );
+
+		usleep( 110000 );
+
+		$requestIds = [ $requestIdOne, $requestIdTwo ];
+
+		$this->assertEquals( $requestIds, $client->getRequestIdsHavingResponse() );
+
+		foreach ( $client->readResponses( ...$requestIds ) as $response )
+		{
+			if ( $response->getRequestId() === $requestIdOne )
+			{
+				$this->assertSame( 'unit', $response->getBody() );
+			}
+
+			if ( $response->getRequestId() === $requestIdTwo )
+			{
+				$this->assertSame( 'test', $response->getBody() );
+			}
+		}
 	}
 }
