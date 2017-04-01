@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2017 Holger Woltersdorf
@@ -77,9 +77,6 @@ class Client
 
 	/** @var ConfiguresSocketConnection */
 	private $connection;
-
-	/** @var resource */
-	private $socket;
 
 	/** @var array */
 	private $sockets;
@@ -172,7 +169,7 @@ class Client
 		{
 			try
 			{
-				$this->sockets[ $requestId ] = fsockopen(
+				$this->sockets[ $requestId ] = @fsockopen(
 					$this->connection->getHost(),
 					$this->connection->getPort(),
 					$errorNumber,
@@ -187,7 +184,25 @@ class Client
 
 			if ( $this->sockets[ $requestId ] === false )
 			{
-				throw new ConnectException( 'Unable to connect to FastCGI application: ' . $errorString );
+				$lastError = error_get_last();
+
+				$lastErrorException = null;
+				if ( null !== $lastError )
+				{
+					$lastErrorException = new \ErrorException(
+						$lastError['message'],
+						0,
+						$lastError['type'],
+						$lastError['file'],
+						$lastError['line']
+					);
+				}
+
+				throw new ConnectException(
+					'Unable to connect to FastCGI application: ' . $errorString,
+					$errorNumber,
+					$lastErrorException
+				);
 			}
 
 			if ( !$this->setStreamTimeout( $this->sockets[ $requestId ], $this->connection->getReadWriteTimeout() ) )
@@ -243,7 +258,7 @@ class Client
 
 				while ( $length && ($buffer = fread( $socket, $length )) !== false )
 				{
-					$length -= strlen( $buffer );
+					$length            -= strlen( $buffer );
 					$packet['content'] .= $buffer;
 				}
 			}
@@ -364,7 +379,7 @@ class Client
 					break;
 
 				case self::STDERR:
-					$this->requests[ $packet['requestId'] ]['state'] = self::REQ_STATE_ERR;
+					$this->requests[ $packet['requestId'] ]['state']    = self::REQ_STATE_ERR;
 					$this->requests[ $packet['requestId'] ]['response'] .= $packet['content'];
 					break;
 
@@ -381,7 +396,7 @@ class Client
 
 		if ( $packet === null )
 		{
-			$info = stream_get_meta_data( $this->socket );
+			$info = stream_get_meta_data( $socket );
 
 			if ( $info['timed_out'] )
 			{
