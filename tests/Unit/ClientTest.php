@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2017 Holger Woltersdorf
@@ -76,5 +76,17 @@ class ClientTest extends \PHPUnit\Framework\TestCase
 		$client     = new Client( $connection );
 
 		$client->waitForResponses();
+	}
+
+	/**
+	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @expectedExceptionMessageRegExp #^Unable to connect to FastCGI application#
+	 */
+	public function testConnectAttemptToRestrictedUnixDomainSocketThrowsException()
+	{
+		$connection = new UnixDomainSocket( 'unix:///var/run/php7.1-ruds.sock' );
+		$client     = new Client( $connection );
+
+		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
 	}
 }

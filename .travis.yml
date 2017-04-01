@@ -17,6 +17,7 @@ before_script:
  - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
  - sudo cp env/php-fpm/$(phpenv version-name)/network-socket.pool.conf ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/network-socket.pool.conf
  - sudo cp env/php-fpm/$(phpenv version-name)/unix-domain-socket.pool.conf ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/unix-domain-socket.pool.conf
+ - sudo cp env/php-fpm/$(phpenv version-name)/restricted-unix-domain-socket.pool.conf ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/restricted-unix-domain-socket.pool.conf
  - sudo ~/.phpenv/versions/$(phpenv version-name)/sbin/php-fpm
  - if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then git checkout "$TRAVIS_BRANCH"; else git checkout -b "$TRAVIS_PULL_REQUEST_BRANCH"; fi
  - git reset --hard "$TRAVIS_COMMIT"
