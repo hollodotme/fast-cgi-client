@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016 Holger Woltersdorf
@@ -32,33 +32,36 @@ require __DIR__ . '/../vendor/autoload.php';
 $connection = new UnixDomainSocket( 'unix:///var/run/php/php7.1-fpm.sock', 5000, 5000 );
 $client     = new Client( $connection );
 
-$workerPath = '/vagrant/tests/Integration/Workers/worker.php';
+$workerPath = '/vagrant/tests/Integration/Workers/sleepWorker.php';
 $request    = new PostRequest( $workerPath, '' );
 $request->addResponseCallbacks(
 	function ( ProvidesResponseData $response )
 	{
 		echo $response->getRequestId() . "\n" . $response->getBody() . "\n" . $response->getDuration() . "\n\n";
+		flush();
 	}
 );
 $request->addFailureCallbacks(
 	function ( \Throwable $throwable )
 	{
 		echo "!FAILURE! : {$throwable->getMessage()} (" . get_class( $throwable ) . ")\n\n";
+		flush();
 	}
 );
 
-$request->setContent( http_build_query( [ 'sleep' => random_int( 1, 3 ), 'i' => 0 ] ) );
+$request->setContent( http_build_query( [ 'sleep' => random_int( 1, 3 ), 'test-key' => 0 ] ) );
 $response = $client->sendRequest( $request );
 
 echo '<pre>', htmlspecialchars( print_r( $response, true ) ), '</pre>';
 
 for ( $i = 0; $i < (int)$argv[1]; $i++ )
 {
-	$request->setContent( http_build_query( [ 'sleep' => random_int( 1, 3 ), 'i' => $i ] ) );
+	$request->setContent( http_build_query( [ 'test-key' => $i, 'sleep' => random_int( 1, 3 ) ] ) );
 
 	$requestId = $client->sendAsyncRequest( $request );
 
 	echo "\nSent request {$requestId}";
+	flush();
 }
 
 echo "\n\nWaiting for responses...\n\n";

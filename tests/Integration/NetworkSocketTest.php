@@ -167,7 +167,7 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 
 		$this->assertEquals( $requestIds, $client->getRequestIdsHavingResponse() );
 
-		foreach ( $client->readResponses( ...$requestIds ) as $response )
+		foreach ( $client->readResponses( null, ...$requestIds ) as $response )
 		{
 			if ( $response->getRequestId() === $requestIdOne )
 			{
