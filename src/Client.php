@@ -159,20 +159,7 @@ class Client
 				continue;
 			}
 
-			try
-			{
-				$response = $socket->fetchResponse( $timeoutMs );
-
-				$socket->notifyResponseCallbacks( $response );
-			}
-			catch ( \Throwable $e )
-			{
-				$socket->notifyFailureCallbacks( $e );
-			}
-			finally
-			{
-				$this->removeSocket( $socket->getId() );
-			}
+			$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
 		}
 	}
 
@@ -189,28 +176,45 @@ class Client
 			throw new ReadFailedException( 'No pending requests found.' );
 		}
 
-		while ( count( $this->sockets ) > 0 )
+		while ( $this->hasUnfinishedRequests() )
 		{
 			foreach ( $this->getSocketsHavingResponse() as $socket )
 			{
-				try
-				{
-					$response = $socket->fetchResponse( $timeoutMs );
-
-					$socket->notifyResponseCallbacks( $response );
-				}
-				catch ( \Throwable $e )
-				{
-					$socket->notifyFailureCallbacks( $e );
-				}
-				finally
-				{
-					$this->removeSocket( $socket->getId() );
-				}
+				$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
 			}
 
 			usleep( self::LOOP_TICK_USEC );
 		}
+	}
+
+	/**
+	 * @param Socket   $socket
+	 * @param int|null $timeoutMs
+	 */
+	private function fetchResponseAndNotifyCallback( Socket $socket, ?int $timeoutMs = null ) : void
+	{
+		try
+		{
+			$response = $socket->fetchResponse( $timeoutMs );
+
+			$socket->notifyResponseCallbacks( $response );
+		}
+		catch ( \Throwable $e )
+		{
+			$socket->notifyFailureCallbacks( $e );
+		}
+		finally
+		{
+			$this->removeSocket( $socket->getId() );
+		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function hasUnfinishedRequests() : bool
+	{
+		return (count( $this->sockets ) > 0);
 	}
 
 	/**
@@ -289,6 +293,29 @@ class Client
 			{
 				$this->removeSocket( $requestId );
 			}
+		}
+	}
+
+	/**
+	 * @param int      $requestId
+	 * @param int|null $timeoutMs
+	 */
+	public function processResponse( int $requestId, ?int $timeoutMs = null ) : void
+	{
+		$socket = $this->getSocketWithId( $requestId );
+
+		$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
+	}
+
+	/**
+	 * @param int|null $timeoutMs
+	 * @param \int[]   ...$requestIds
+	 */
+	public function processResponses( ?int $timeoutMs = null, int ...$requestIds ) : void
+	{
+		foreach ( $requestIds as $requestId )
+		{
+			$this->processResponse( $requestId, $timeoutMs );
 		}
 	}
 }
