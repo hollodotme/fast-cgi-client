@@ -23,11 +23,13 @@
 
 namespace hollodotme\FastCGI\Encoders;
 
+use hollodotme\FastCGI\Interfaces\EncodesPacket;
+
 /**
  * Class PacketEncoder
  * @package hollodotme\FastCGI\Encoders
  */
-final class PacketEncoder
+final class PacketEncoder implements EncodesPacket
 {
 	private const VERSION = 1;
 
