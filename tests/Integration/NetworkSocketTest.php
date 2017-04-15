@@ -28,12 +28,13 @@ use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Class NetworkSocketTest
  * @package hollodotme\FastCGI\Tests\Integration
  */
-class NetworkSocketTest extends \PHPUnit\Framework\TestCase
+final class NetworkSocketTest extends TestCase
 {
 	public function testCanSendAsyncRequestAndReceiveRequestId()
 	{
@@ -198,7 +199,96 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 		$content = http_build_query( [ 'sleep' => 2, 'test-key' => 'unit' ] );
 		$request = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
 
-		$response = $client->sendRequest( $request );
-		echo $response->getDuration();
+		$client->sendRequest( $request );
+	}
+
+	public function testCanHandleReadyResponses()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
+		$client     = new Client( $connection );
+		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+
+		$unitTest = $this;
+
+		$request->addResponseCallbacks(
+			function ( ProvidesResponseData $response ) use ( $unitTest )
+			{
+				$unitTest->assertSame( 'unit', $response->getBody() );
+			}
+		);
+
+		$client->sendAsyncRequest( $request );
+
+		while ( $client->hasUnhandledResponses() )
+		{
+			$client->handleReadyResponses();
+		}
+	}
+
+	public function testCanReadReadyResponses()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
+		$client     = new Client( $connection );
+		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+
+		$client->sendAsyncRequest( $request );
+
+		while ( $client->hasUnhandledResponses() )
+		{
+			foreach ( $client->readReadyResponses() as $response )
+			{
+				echo $response->getBody();
+			}
+		}
+
+		$this->expectOutputString( 'unit' );
+	}
+
+	public function testCanWaitForResponse()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
+		$client     = new Client( $connection );
+		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+
+		$unitTest = $this;
+
+		$request->addResponseCallbacks(
+			function ( ProvidesResponseData $response ) use ( $unitTest )
+			{
+				$unitTest->assertSame( 'unit', $response->getBody() );
+			}
+		);
+
+		$requestId = $client->sendAsyncRequest( $request );
+
+		$client->waitForResponse( $requestId );
+	}
+
+	public function testReadResponsesSkipsUnknownRequestIds()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
+		$client     = new Client( $connection );
+		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+
+		$requestIds   = [];
+		$requestIds[] = $client->sendAsyncRequest( $request );
+		$requestIds[] = 12345;
+
+		sleep( 1 );
+
+		$responses = $client->readResponses( null, ...$requestIds );
+
+		foreach ( $responses as $response )
+		{
+			echo $response->getBody();
+		}
+
+		$this->assertFalse( $client->hasUnhandledResponses() );
+
+		$this->expectOutputString( 'unit' );
 	}
 }
