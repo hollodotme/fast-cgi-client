@@ -9,7 +9,7 @@
 A PHP fast CGI client to send requests (a)synchronously to PHP-FPM using the [FastCGI Protocol](http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html).
 
 This library is based on the work of [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](https://github.com/adoy/PHP-FastCGI-Client/) 
-and was ported and modernized to PHP 7.0/PHP 7.1 and extended with unit tests.
+and was ported and modernized to PHP 7.0/PHP 7.1, extended with some features for handling multiple requests (in loops) and unit and integration tests as well.
 
 You can find an experimental use-case in my related blog posts:
  
@@ -34,7 +34,16 @@ composer require hollodotme/fast-cgi-client:^2.0
 
 ---
 
-## Usage
+## Usage - single request
+
+The following examples assume a that the content of `/path/to/target/script.php` looks like this:
+
+```php
+<?php declare(strict_types=1);
+
+sleep((int)$_REQUEST['sleep'] ?? 0);
+echo $_REQUEST['key'] ?? '';
+```
 
 ### Init client with a unix domain socket connection
 
@@ -43,17 +52,13 @@ composer require hollodotme/fast-cgi-client:^2.0
 
 namespace YourVendor\YourProject;
 
-require( 'vendor/autoload.php' );
-
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
 $connection = new UnixDomainSocket(
 	'unix:///var/run/php/php7.1-fpm.sock',  # Socket path to php-fpm
 	5000,                                   # Connect timeout in milliseconds (default: 5000)
-	5000,                                   # Read/write timeout in milliseconds (default: 5000)
-	false,                                  # Make socket connection persistent (default: false)
-	false                                   # Keep socket connection alive (default: false) 
+	5000                                    # Read/write timeout in milliseconds (default: 5000)
 );
 
 $client = new Client( $connection );
@@ -66,8 +71,6 @@ $client = new Client( $connection );
 
 namespace YourVendor\YourProject;
 
-require( 'vendor/autoload.php' );
-
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
@@ -75,9 +78,7 @@ $connection = new NetworkSocket(
 	'127.0.0.1',    # Hostname
 	9000,           # Port
 	5000,           # Connect timeout in milliseconds (default: 5000)
-	5000,           # Read/write timeout in milliseconds (default: 5000)
-	false,          # Make socket connection persistent (default: false)
-	false           # Keep socket connection alive (default: false) 
+	5000            # Read/write timeout in milliseconds (default: 5000)
 );
 
 $client = new Client( $connection );
@@ -90,37 +91,37 @@ $client = new Client( $connection );
 
 namespace YourVendor\YourProject;
 
-require( 'vendor/autoload.php' );
-
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
 $client  = new Client( new UnixDomainSocket( 'unix:///var/run/php/php1.0-fpm.sock' ) );
-$content = http_build_query( ['key' => 'value'] );
+$content = http_build_query(['key' => 'value']);
 
 $request = new PostRequest('/path/to/target/script.php', $content);
 
 $response = $client->sendRequest($request);
 
-print_r( $response );
+echo $response->getBody();
+```
+```
+# prints
+value
 ```
 
-### Send request asynchronously
+### Send request asynchronously (Fire and forget)
 
 ```php
 <?php declare(strict_types=1);
 
 namespace YourVendor\YourProject;
 
-require( 'vendor/autoload.php' );
-
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 $client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
-$content = http_build_query( ['key' => 'value'] );
+$content = http_build_query(['key' => 'value']);
 
 $request = new PostRequest('/path/to/target/script.php', $content);
 
@@ -129,21 +130,19 @@ $requestId = $client->sendAsyncRequest($request);
 echo "Request sent, got ID: {$requestId}";
 ```
 
-### Optionally wait for a response, after sending the async request
+### Read the response, after sending the async request
 
 ```php
 <?php declare(strict_types=1);
 
 namespace YourVendor\YourProject;
 
-require( 'vendor/autoload.php' );
-
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 $client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
-$content = http_build_query( ['key' => 'value'] );
+$content = http_build_query(['key' => 'value']);
 
 $request = new PostRequest('/path/to/target/script.php', $content);
 
@@ -151,12 +150,293 @@ $requestId = $client->sendAsyncRequest($request);
 
 echo "Request sent, got ID: {$requestId}";
 
-$response = $client->waitForResponse( 
+# Do something else here in the meanwhile
+
+# Blocking call until response is received or read timed out
+$response = $client->readResponse( 
 	$requestId,     # The request ID 
 	3000            # Optional timeout to wait for response,
 					# defaults to read/write timeout in milliseconds set in connection
 );
+
+echo $response->getBody();
 ```
+
+```
+# prints
+value
+```
+
+### Notify a callback when async request responded
+
+As of versions 1.2.0 and 2.2.0 you can register response and failure callbacks for each request.
+In order to notify the callbacks when a response was received instead of returning it, 
+you need to use the `waitForResponse(int $requestId, ?int $timeoutMs = null)` method.
+
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
+$content = http_build_query(['key' => 'value']);
+
+$request = new PostRequest('/path/to/target/script.php', $content);
+
+# Register a response callback, expects a `ProvidesResponseData` instance as the only paramter
+$request->addResponseCallbacks(
+	function( ProvidesResponseData $response )
+	{
+		echo $response->getBody();	
+	}
+);
+
+# Register a failure callback, expects a `\Throwable` instance as the only parameter
+$request->addFailureCallbacks(
+	function ( \Throwable $throwable )
+	{
+		echo $throwable->getMessage();	
+	}
+);
+
+$requestId = $client->sendAsyncRequest($request);
+
+echo "Request sent, got ID: {$requestId}";
+
+# Do something else here in the meanwhile
+
+# Blocking call until response is received or read timed out
+# If response was received all registered response callbacks will be notified
+$client->waitForResponse( 
+	$requestId,     # The request ID 
+	3000            # Optional timeout to wait for response,
+					# defaults to read/write timeout in milliseconds set in connection
+);
+
+# ... is the same as
+
+while(true)
+{
+	if ($client->hasResponse($requestId))
+	{
+		$client->handleResponse($requestId, 3000);
+		break;
+	}
+}
+```
+
+```
+# prints
+value
+```
+
+---
+
+## Usage - multiple requests
+
+### Sending multiple requests and reading their responses (order preserved)
+
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
+
+$request1 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '1']));
+$request2 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '2']));
+$request3 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '3']));
+
+$requestIds = [];
+
+$requestIds[] = $client->sendAsyncRequest($request1);
+$requestIds[] = $client->sendAsyncRequest($request2);
+$requestIds[] = $client->sendAsyncRequest($request3);
+
+echo 'Sent requests with IDs: ' . implode( ', ', $requestIds ) . "\n";
+
+# Do something else here in the meanwhile
+
+# Blocking call until all responses are received or read timed out
+# Responses are read in same order the requests were sent
+foreach ($client->readResponses(3000, ...$requestIds) as $response)
+{
+	echo $response->getBody() . "\n";	
+}
+```
+```
+# prints
+1
+2
+3
+```
+
+### Sending multiple requests and reading their responses (reactive)
+
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
+
+$request1 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '1', 'sleep' => 3]));
+$request2 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '2', 'sleep' => 2]));
+$request3 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '3', 'sleep' => 1]));
+
+$requestIds = [];
+
+$requestIds[] = $client->sendAsyncRequest($request1);
+$requestIds[] = $client->sendAsyncRequest($request2);
+$requestIds[] = $client->sendAsyncRequest($request3);
+
+echo 'Sent requests with IDs: ' . implode( ', ', $requestIds ) . "\n";
+
+# Do something else here in the meanwhile
+
+# Loop until all responses were received
+while ( $client->hasUnhandledResponses() )
+{
+	# read all ready responses
+	foreach ( $client->readReadyResponses( 3000 ) as $response )
+	{
+		echo $response->getBody() . "\n";
+	}
+	
+	echo '.';
+}
+
+# ... is the same as
+
+while ( $client->hasUnhandledResponses() )
+{
+	$readyRequestIds = $client->getRequestIdsHavingResponse();
+	
+	# read all ready responses
+	foreach ( $client->readResponses( 3000, ...$readyRequestIds ) as $response )
+	{
+		echo $response->getBody() . "\n";
+	}
+	
+	echo '.';
+}
+
+# ... is the same as
+
+while ( $client->hasUnhandledResponses() )
+{
+	$readyRequestIds = $client->getRequestIdsHavingResponse();
+	
+	# read all ready responses
+	foreach ($readyRequestIds as $requestId)
+	{
+		$response = $client->readResponse($requestId, 3000);
+		echo $response->getBody() . "\n";
+	}
+	
+	echo '.';
+}
+```
+
+```
+# prints
+...............................................3
+...............................................2
+...............................................1
+```
+
+### Sending multiple requests and notifying callbacks (reactive)
+
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
+
+$responseCallback = function( ProvidesResponseData $response )
+{
+	echo $response->getBody();	
+};
+
+$failureCallback = function ( \Throwable $throwable )
+{
+	echo $throwable->getMessage();	
+};
+
+$request1 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '1', 'sleep' => 3]));
+$request2 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '2', 'sleep' => 2]));
+$request3 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '3', 'sleep' => 1]));
+
+$request1->addResponseCallbacks($responseCallback);
+$request1->addFailureCallbacks($failureCallback);
+
+$request2->addResponseCallbacks($responseCallback);
+$request2->addFailureCallbacks($failureCallback);
+
+$request3->addResponseCallbacks($responseCallback);
+$request3->addFailureCallbacks($failureCallback);
+
+$requestIds = [];
+
+$requestIds[] = $client->sendAsyncRequest($request1);
+$requestIds[] = $client->sendAsyncRequest($request2);
+$requestIds[] = $client->sendAsyncRequest($request3);
+
+echo 'Sent requests with IDs: ' . implode( ', ', $requestIds ) . "\n";
+
+# Do something else here in the meanwhile
+
+# Blocking call until all responses were received and all callbacks notified
+$client->waitForResponses(3000);
+
+# ... is the same as
+
+while ( $client->hasUnhandledResponses() )
+{
+	$client->handleReadyResponses(3000);
+}
+
+# ... is the same as
+
+while ( $client->hasUnhandledResponses() )
+{
+	$readyRequestIds = $client->getRequestIdsHavingResponse();
+	
+	# read all ready responses
+	foreach ($readyRequestIds as $requestId)
+	{
+		$client->handleResponse($requestId, 3000);
+	}
+}
+```
+
+```
+# prints
+3
+2
+1
+```
+
+----
 
 ### Requests
 
@@ -198,6 +478,8 @@ interface ProvidesRequestData
 	public function getCustomVars() : array;
 
 	public function getParams() : array;
+	
+	public function getRequestUri() : string;
 }
 ```
 
@@ -227,6 +509,7 @@ The abstract request class defines several default values which you can optional
 | SERVER_NAME       | localhost                         |                                                                                         |
 | SERVER_PROTOCOL   | HTTP/1.1                          | You can use the public class constants in `hollodotme\FastCGI\Constants\ServerProtocol` |
 | CONTENT_TYPE      | application/x-www-form-urlencoded |                                                                                         |
+| REQUEST_URI       | <empty string>                    |                                                                                         |
 | CUSTOM_VARS       | empty array                       | You can use the methods `setCustomVar`, `addCustomVars` to add own key-value pairs      |
 
 
@@ -329,6 +612,10 @@ echo $response->getDuration(); # e.g. 0.0016319751739502
 ```
 
 ---
+
+## Run examples
+
+	php bin/examples.php
 
 ## Command line tool (for debugging only)
 
