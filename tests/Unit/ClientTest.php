@@ -27,8 +27,13 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use PHPUnit\Framework\TestCase;
 
-class ClientTest extends \PHPUnit\Framework\TestCase
+/**
+ * Class ClientTest
+ * @package hollodotme\FastCGI\Tests\Unit
+ */
+final class ClientTest extends TestCase
 {
 	/**
 	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
@@ -76,6 +81,30 @@ class ClientTest extends \PHPUnit\Framework\TestCase
 		$client     = new Client( $connection );
 
 		$client->waitForResponses();
+	}
+
+	/**
+	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 * @expectedExceptionMessage Socket not found for request ID: 12345
+	 */
+	public function testHandlingUnknownRequestThrowsException()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$client     = new Client( $connection );
+
+		$client->handleResponse( 12345 );
+	}
+
+	/**
+	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 * @expectedExceptionMessage Socket not found for request ID: 12345
+	 */
+	public function testHandlingUnknownRequestsThrowsException()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$client     = new Client( $connection );
+
+		$client->handleResponses( null, 12345, 12346 );
 	}
 
 	/**
