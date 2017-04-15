@@ -324,9 +324,9 @@ final class Socket
 
 	private function readPacket() : ?array
 	{
-		if ( $packet = fread( $this->resource, self::HEADER_LEN ) )
+		if ( $header = fread( $this->resource, self::HEADER_LEN ) )
 		{
-			$packet            = $this->packetEncoder->decodeHeader( $packet );
+			$packet            = $this->packetEncoder->decodeHeader( $header );
 			$packet['content'] = '';
 
 			if ( $packet['contentLength'] )
