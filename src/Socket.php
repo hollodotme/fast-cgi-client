@@ -23,14 +23,14 @@
 
 namespace hollodotme\FastCGI;
 
-use hollodotme\FastCGI\Encoders\NameValuePairEncoder;
-use hollodotme\FastCGI\Encoders\PacketEncoder;
 use hollodotme\FastCGI\Exceptions\ConnectException;
 use hollodotme\FastCGI\Exceptions\ForbiddenException;
 use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
+use hollodotme\FastCGI\Interfaces\EncodesNameValuePair;
+use hollodotme\FastCGI\Interfaces\EncodesPacket;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Responses\Response;
@@ -73,7 +73,7 @@ final class Socket
 
 	private const REQ_STATE_UNKNOWN  = 4;
 
-	private const STREAM_SELECT_USEC = 20000;
+	public const  STREAM_SELECT_USEC = 20000;
 
 	/** @var int */
 	private $id;
@@ -82,12 +82,12 @@ final class Socket
 	private $connection;
 
 	/** @var resource */
-	private $ressource;
+	private $resource;
 
-	/** @var PacketEncoder */
+	/** @var EncodesPacket */
 	private $packetEncoder;
 
-	/** @var NameValuePairEncoder */
+	/** @var EncodesNameValuePair */
 	private $nameValuePairEncoder;
 
 	/** @var callable[] */
@@ -107,8 +107,8 @@ final class Socket
 
 	public function __construct(
 		ConfiguresSocketConnection $connection,
-		PacketEncoder $packetEncoder,
-		NameValuePairEncoder $nameValuePairEncoder
+		EncodesPacket $packetEncoder,
+		EncodesNameValuePair $nameValuePairEncoder
 	)
 	{
 		$this->id                   = random_int( 1, (1 << 16) - 1 );
@@ -127,7 +127,7 @@ final class Socket
 
 	public function hasResponse() : bool
 	{
-		$reads  = [ $this->ressource ];
+		$reads  = [ $this->resource ];
 		$writes = $excepts = null;
 
 		return (bool)stream_select( $reads, $writes, $excepts, 0, self::STREAM_SELECT_USEC );
@@ -150,57 +150,66 @@ final class Socket
 
 	private function connect()
 	{
-		if ( null === $this->ressource )
+		if ( is_resource( $this->resource ) )
 		{
-			try
-			{
-				$this->ressource = @fsockopen(
-					$this->connection->getHost(),
-					$this->connection->getPort(),
-					$errorNumber,
-					$errorString,
-					$this->connection->getConnectTimeout() / 1000
-				);
-			}
-			catch ( \Throwable $e )
-			{
-				throw new ConnectException( $e->getMessage(), $e->getCode(), $e );
-			}
-
-			if ( $this->ressource === false )
-			{
-				$lastError = error_get_last();
-
-				$lastErrorException = null;
-				if ( null !== $lastError )
-				{
-					$lastErrorException = new \ErrorException(
-						$lastError['message'] ?? '[No message available]',
-						0,
-						$lastError['type'] ?? E_ERROR,
-						$lastError['file'] ?? '[No file available]',
-						$lastError['line'] ?? '[No line available]'
-					);
-				}
-
-				throw new ConnectException(
-					'Unable to connect to FastCGI application: ' . $errorString,
-					$errorNumber,
-					$lastErrorException
-				);
-			}
-
-			if ( !$this->setStreamTimeout( $this->connection->getReadWriteTimeout() ) )
-			{
-				throw new ConnectException( 'Unable to set timeout on socket' );
-			}
+			return;
 		}
+
+		try
+		{
+			$this->resource = @fsockopen(
+				$this->connection->getHost(),
+				$this->connection->getPort(),
+				$errorNumber,
+				$errorString,
+				$this->connection->getConnectTimeout() / 1000
+			);
+		}
+		catch ( \Throwable $e )
+		{
+			throw new ConnectException( $e->getMessage(), $e->getCode(), $e );
+		}
+
+		$this->handleFailedResource( $errorNumber, $errorString );
+
+		if ( !$this->setStreamTimeout( $this->connection->getReadWriteTimeout() ) )
+		{
+			throw new ConnectException( 'Unable to set timeout on socket' );
+		}
+	}
+
+	private function handleFailedResource( $errorNumber, $errorString ) : void
+	{
+		if ( $this->resource !== false )
+		{
+			return;
+		}
+
+		$lastError          = error_get_last();
+		$lastErrorException = null;
+
+		if ( null !== $lastError )
+		{
+			$lastErrorException = new \ErrorException(
+				$lastError['message'] ?? '[No message available]',
+				0,
+				$lastError['type'] ?? E_ERROR,
+				$lastError['file'] ?? '[No file available]',
+				$lastError['line'] ?? '[No line available]'
+			);
+		}
+
+		throw new ConnectException(
+			'Unable to connect to FastCGI application: ' . $errorString,
+			$errorNumber,
+			$lastErrorException
+		);
 	}
 
 	private function setStreamTimeout( int $timeoutMs ) : bool
 	{
 		return stream_set_timeout(
-			$this->ressource,
+			$this->resource,
 			(int)floor( $timeoutMs / 1000 ),
 			($timeoutMs % 1000) * 1000
 		);
@@ -236,12 +245,12 @@ final class Socket
 
 	private function write( string $data ) : void
 	{
-		$writeResult = fwrite( $this->ressource, $data );
-		$flushResult = fflush( $this->ressource );
+		$writeResult = fwrite( $this->resource, $data );
+		$flushResult = fflush( $this->resource );
 
 		if ( $writeResult === false || $flushResult === false )
 		{
-			$info = stream_get_meta_data( $this->ressource );
+			$info = stream_get_meta_data( $this->resource );
 
 			if ( $info['timed_out'] )
 			{
@@ -315,7 +324,7 @@ final class Socket
 
 	private function readPacket() : ?array
 	{
-		if ( $packet = fread( $this->ressource, self::HEADER_LEN ) )
+		if ( $packet = fread( $this->resource, self::HEADER_LEN ) )
 		{
 			$packet            = $this->packetEncoder->decodeHeader( $packet );
 			$packet['content'] = '';
@@ -324,7 +333,7 @@ final class Socket
 			{
 				$length = $packet['contentLength'];
 
-				while ( $length && ($buffer = fread( $this->ressource, $length )) !== false )
+				while ( $length && ($buffer = fread( $this->resource, $length )) !== false )
 				{
 					$length            -= strlen( $buffer );
 					$packet['content'] .= $buffer;
@@ -333,7 +342,7 @@ final class Socket
 
 			if ( $packet['paddingLength'] )
 			{
-				fread( $this->ressource, $packet['paddingLength'] );
+				fread( $this->resource, $packet['paddingLength'] );
 			}
 
 			return $packet;
@@ -346,7 +355,7 @@ final class Socket
 	{
 		if ( $packet === null )
 		{
-			$info = stream_get_meta_data( $this->ressource );
+			$info = stream_get_meta_data( $this->resource );
 
 			if ( $info['timed_out'] )
 			{
@@ -385,9 +394,9 @@ final class Socket
 
 	private function disconnect() : void
 	{
-		if ( is_resource( $this->ressource ) )
+		if ( is_resource( $this->resource ) )
 		{
-			fclose( $this->ressource );
+			fclose( $this->resource );
 		}
 	}
 
@@ -409,6 +418,14 @@ final class Socket
 		foreach ( $this->failureCallbacks as $failureCallback )
 		{
 			$failureCallback( $throwable );
+		}
+	}
+
+	public function collectResource( array &$resources ) : void
+	{
+		if ( null !== $this->resource )
+		{
+			$resources[ $this->id ] = $this->resource;
 		}
 	}
 }

@@ -28,6 +28,8 @@ use hollodotme\FastCGI\Encoders\PacketEncoder;
 use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
+use hollodotme\FastCGI\Interfaces\EncodesNameValuePair;
+use hollodotme\FastCGI\Interfaces\EncodesPacket;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 
@@ -45,10 +47,10 @@ class Client
 	/** @var array|Socket[] */
 	private $sockets;
 
-	/** @var PacketEncoder */
+	/** @var EncodesPacket */
 	private $packetEncoder;
 
-	/** @var NameValuePairEncoder */
+	/** @var EncodesNameValuePair */
 	private $nameValuePairEncoder;
 
 	/**
@@ -153,13 +155,13 @@ class Client
 
 		while ( true )
 		{
-			if ( !$socket->hasResponse() )
+			if ( $socket->hasResponse() )
 			{
-				usleep( self::LOOP_TICK_USEC );
-				continue;
+				$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
+				break;
 			}
 
-			$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
+			usleep( self::LOOP_TICK_USEC );
 		}
 	}
 
@@ -176,7 +178,7 @@ class Client
 			throw new ReadFailedException( 'No pending requests found.' );
 		}
 
-		while ( $this->hasUnfinishedRequests() )
+		while ( $this->hasUnhandledResponses() )
 		{
 			foreach ( $this->getSocketsHavingResponse() as $socket )
 			{
@@ -212,7 +214,7 @@ class Client
 	/**
 	 * @return bool
 	 */
-	public function hasUnfinishedRequests() : bool
+	public function hasUnhandledResponses() : bool
 	{
 		return (count( $this->sockets ) > 0);
 	}
@@ -222,12 +224,9 @@ class Client
 	 */
 	private function getSocketsHavingResponse() : \Generator
 	{
-		foreach ( $this->sockets as $socket )
+		foreach ( $this->getRequestIdsHavingResponse() as $requestId )
 		{
-			if ( $socket->hasResponse() )
-			{
-				yield $socket;
-			}
+			yield $this->getSocketWithId( $requestId );
 		}
 	}
 
@@ -259,14 +258,17 @@ class Client
 	 */
 	public function getRequestIdsHavingResponse() : array
 	{
-		$requestIds = [];
+		$resources = [];
+		$writes    = $excepts = null;
 
-		foreach ( $this->getSocketsHavingResponse() as $socket )
+		foreach ( $this->sockets as $socket )
 		{
-			$requestIds[] = $socket->getId();
+			$socket->collectResource( $resources );
 		}
 
-		return $requestIds;
+		stream_select( $resources, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
+
+		return array_keys( $resources );
 	}
 
 	/**
@@ -297,10 +299,25 @@ class Client
 	}
 
 	/**
+	 * @param int|null $timeoutMs
+	 *
+	 * @return \Generator|ProvidesResponseData[]
+	 */
+	public function readReadyResponses( ?int $timeoutMs = null ) : \Generator
+	{
+		$requestIds = $this->getRequestIdsHavingResponse();
+
+		if ( count( $requestIds ) > 0 )
+		{
+			yield from $this->readResponses( $timeoutMs, ...$requestIds );
+		}
+	}
+
+	/**
 	 * @param int      $requestId
 	 * @param int|null $timeoutMs
 	 */
-	public function processResponse( int $requestId, ?int $timeoutMs = null ) : void
+	public function handleResponse( int $requestId, ?int $timeoutMs = null ) : void
 	{
 		$socket = $this->getSocketWithId( $requestId );
 
@@ -311,11 +328,24 @@ class Client
 	 * @param int|null $timeoutMs
 	 * @param \int[]   ...$requestIds
 	 */
-	public function processResponses( ?int $timeoutMs = null, int ...$requestIds ) : void
+	public function handleResponses( ?int $timeoutMs = null, int ...$requestIds ) : void
 	{
 		foreach ( $requestIds as $requestId )
 		{
-			$this->processResponse( $requestId, $timeoutMs );
+			$this->handleResponse( $requestId, $timeoutMs );
+		}
+	}
+
+	/**
+	 * @param int|null $timeoutMs
+	 */
+	public function handleReadyResponses( ?int $timeoutMs = null ) : void
+	{
+		$requestIds = $this->getRequestIdsHavingResponse();
+
+		if ( count( $requestIds ) > 0 )
+		{
+			$this->handleResponses( $timeoutMs, ...$requestIds );
 		}
 	}
 }
