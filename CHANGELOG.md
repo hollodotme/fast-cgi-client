@@ -11,12 +11,18 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CH
 * Method `addFailureCallbacks(callable ...$callbacks)` to all request classes to enable exception handling delegation
 * Method `readResponse(int $requestId, ?int $timeoutMs = null) : ProvidesResponseData` to read and retrieve a single response
 * Method `readResponses(?int $imeoutMs = null, int ...$requestIds) : \Generator` to read and yield multiple responses
+* Method `readReadyResponses(?int $imeoutMs = null) : \Generator` to check for ready responses, read and yield them
 * Method `waitForResponses(?int $timeout = null)` to `Client` class for waiting for multiple responses and calling the respective response callbacks - [#5]
-* Method `getRequestIdsHavingResponse()` to enable reactive read of responses as they occur
+* Method `getRequestIdsHavingResponse() : array` to enable reactive read of responses as they occur
+* Method `hasUnhandledResponses() : bool` to check for outstanding responses
+* Method `handleResponse(int $requestId, ?int $timeoutMs = null)` to fetch a specific response and notify the respective response callback
+* Method `handleResponses(?int $timeoutMs = null, int ...$requestIds)` to fetch a specific responses and notify the respective response callbacks
+* Method `handleReadyResponses(?int $timeoutMs = null)` to check for ready responses, fetch them and notify the respective response callbacks
 
 ### Changed
 
-* Method `waitForResponse(int $requestId, ?int $timeoutMs = null)` is not returning a response anymore (use `readResponse()` for that), but will call the response callback
+* Method `waitForResponse(int $requestId, ?int $timeoutMs = null)` is not returning a response anymore, but will call the response callback  
+  Use `readResponse(int $requestId, ?int $timeoutMs = null): ProvidesResponseData` if you want to get the response directly.
 
 ### Removed
 
