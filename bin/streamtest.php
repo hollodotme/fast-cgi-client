@@ -71,9 +71,6 @@ $client->waitForResponses();
 echo "Sending another {$argv[1]} requests...\n\n";
 
 $request->setContent( http_build_query( [ 'sleep' => random_int( 1, 3 ), 'test-key' => 0 ] ) );
-$response = $client->sendRequest( $request );
-
-echo '<pre>', htmlspecialchars( print_r( $response, true ) ), '</pre>';
 
 for ( $i = 0; $i < (int)$argv[1]; $i++ )
 {
@@ -85,7 +82,7 @@ for ( $i = 0; $i < (int)$argv[1]; $i++ )
 	flush();
 }
 
-while ( $client->hasUnfinishedRequests() )
+while ( $client->hasUnhandledResponses() )
 {
 	$requestIds = $client->getRequestIdsHavingResponse();
 
@@ -100,7 +97,26 @@ while ( $client->hasUnfinishedRequests() )
 
 	echo 'Request-IDs with response: ' . implode( ', ', $requestIds ) . "\n\n";
 
-	$client->processResponses( null, ...$requestIds );
+	$client->handleResponses( null, ...$requestIds );
+}
+
+echo "Sending another {$argv[1]} requests...\n\n";
+
+$request->setContent( http_build_query( [ 'sleep' => random_int( 1, 3 ), 'test-key' => 0 ] ) );
+
+for ( $i = 0; $i < (int)$argv[1]; $i++ )
+{
+	$request->setContent( http_build_query( [ 'test-key' => $i, 'sleep' => random_int( 1, 3 ) ] ) );
+
+	$requestId = $client->sendAsyncRequest( $request );
+
+	echo "\nSent request {$requestId}";
+	flush();
+}
+
+while ( $client->hasUnhandledResponses() )
+{
+	$client->handleReadyResponses();
 }
 
 die( 'done' );
