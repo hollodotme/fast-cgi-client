@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016 Holger Woltersdorf
@@ -70,6 +70,9 @@ abstract class AbstractRequest implements ProvidesRequestData
 
 	/** @var array */
 	private $customVars = [];
+
+	/** @var string */
+	private $requestUri = '';
 
 	/** @var array|callable[] */
 	private $responseCallbacks = [];
@@ -216,6 +219,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 			[
 				'GATEWAY_INTERFACE' => $this->getGatewayInterface(),
 				'REQUEST_METHOD'    => $this->getRequestMethod(),
+				'REQUEST_URI'       => $this->getRequestUri(),
 				'SCRIPT_FILENAME'   => $this->getScriptFilename(),
 				'SERVER_SOFTWARE'   => $this->getServerSoftware(),
 				'REMOTE_ADDR'       => $this->getRemoteAddress(),
@@ -228,6 +232,16 @@ abstract class AbstractRequest implements ProvidesRequestData
 				'CONTENT_LENGTH'    => $this->getContentLength(),
 			]
 		);
+	}
+
+	public function getRequestUri() : string
+	{
+		return $this->requestUri;
+	}
+
+	public function setRequestUri( string $requestUri )
+	{
+		$this->requestUri = $requestUri;
 	}
 
 	public function getResponseCallbacks() : array

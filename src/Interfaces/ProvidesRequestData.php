@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016 Holger Woltersdorf
@@ -58,6 +58,8 @@ interface ProvidesRequestData
 	public function getCustomVars() : array;
 
 	public function getParams() : array;
+
+	public function getRequestUri() : string;
 
 	public function getResponseCallbacks() : array;
 
