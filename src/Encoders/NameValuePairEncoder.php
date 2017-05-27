@@ -23,11 +23,13 @@
 
 namespace hollodotme\FastCGI\Encoders;
 
+use hollodotme\FastCGI\Interfaces\EncodesNameValuePair;
+
 /**
  * Class NameValuePairEncoder
  * @package hollodotme\FastCGI\Encoders
  */
-final class NameValuePairEncoder
+final class NameValuePairEncoder implements EncodesNameValuePair
 {
 	public function encodePairs( array $pairs ) : string
 	{

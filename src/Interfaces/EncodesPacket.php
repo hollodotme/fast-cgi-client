@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016 Holger Woltersdorf
@@ -21,15 +21,15 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI\Timing\Exceptions;
-
-use hollodotme\FastCGI\Exceptions\FastCGIClientException;
+namespace hollodotme\FastCGI\Interfaces;
 
 /**
- * Class TimerNotStartedException
- * @package hollodotme\FastCGI\Timing\Exceptions
+ * Interface PacketEncoder
+ * @package hollodotme\FastCGI\Encoders
  */
-final class TimerNotStartedException extends FastCGIClientException
+interface EncodesPacket
 {
+	public function encodePacket( int $type, string $content, int $requestId ) : string;
 
+	public function decodeHeader( string $data ) : array;
 }

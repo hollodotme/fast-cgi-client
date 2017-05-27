@@ -44,19 +44,15 @@ class UnixDomainSocketTest extends \PHPUnit\Framework\TestCase
 		$this->assertSame( -1, $connection->getPort() );
 		$this->assertSame( Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout() );
 		$this->assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
-		$this->assertSame( Defaults::KEEP_ALIVE, $connection->keepAlive() );
-		$this->assertSame( Defaults::PERSISTENT, $connection->isPersistent() );
 	}
 
 	public function testCanGetSetValues()
 	{
-		$connection = new UnixDomainSocket( 'unix:///var/run/php/php7.1-fpm.sock', 2000, 3000, true, true );
+		$connection = new UnixDomainSocket( 'unix:///var/run/php/php7.1-fpm.sock', 2000, 3000 );
 
 		$this->assertSame( 'unix:///var/run/php/php7.1-fpm.sock', $connection->getHost() );
 		$this->assertSame( -1, $connection->getPort() );
 		$this->assertSame( 2000, $connection->getConnectTimeout() );
 		$this->assertSame( 3000, $connection->getReadWriteTimeout() );
-		$this->assertSame( true, $connection->keepAlive() );
-		$this->assertSame( true, $connection->isPersistent() );
 	}
 }

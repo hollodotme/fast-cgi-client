@@ -1,5 +1,5 @@
 #!/usr/bin/env php
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2017 Holger Woltersdorf
@@ -62,12 +62,10 @@ if ( preg_match( '#^unix:(.*.sock)(/.*)$#', $_SERVER['argv'][1], $reg ) )
 	{
 		die( "UDS {$sock} not found\n" );
 	}
-	else
+
+	if ( !is_writable( $sock ) )
 	{
-		if ( !is_writable( $sock ) )
-		{
-			die( "UDS {$sock} is not writable\n" );
-		}
+		die( "UDS {$sock} is not writable\n" );
 	}
 }
 else

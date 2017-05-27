@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016 Holger Woltersdorf
@@ -21,48 +21,7 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI\Tests\Unit\Timing;
-
-use hollodotme\FastCGI\Timing\Timer;
-
-class TimerTest extends \PHPUnit\Framework\TestCase
-{
-	/**
-	 * @expectedException \hollodotme\FastCGI\Timing\Exceptions\TimerNotStartedException
-	 */
-	public function testNotStartedTimerThrowsExceptionOnTimedOutCheck()
-	{
-		$timer = new Timer( 1 );
-
-		$timer->timedOut();
-	}
-
-	public function testCanTimeOut()
-	{
-		$timer = new Timer( 1000 );
-		$timer->start();
-
-		usleep( 1000 * 500 );
-
-		$this->assertFalse( $timer->timedOut() );
-
-		usleep( 1000 * 600 );
-
-		$this->assertTrue( $timer->timedOut() );
-	}
-
-	/**
-	 * @expectedException \hollodotme\FastCGI\Timing\Exceptions\TimerNotStartedException
-	 */
-	public function testCanResetTimer()
-	{
-		$timer = new Timer( 1000 );
-		$timer->start();
-
-		$this->assertFalse( $timer->timedOut() );
-
-		$timer->reset();
-
-		$timer->timedOut();
-	}
-}
+header( 'X-Powered-By: PHP/7.1.0' );
+header( 'X-Custom: Header' );
+sleep( (int)($_REQUEST['sleep'] ?? 0) );
+echo $_REQUEST['test-key'], ' - ', ($_REQUEST['sleep'] ?? 0);

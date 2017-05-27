@@ -3,6 +3,37 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [1.2.0] - 2017-05-27
+
+### Added
+
+* Method `addResponseCallbacks(callable ...$callbacks)` to all request classes to enable response evaluation delegation - [#6]
+* Method `addFailureCallbacks(callable ...$callbacks)` to all request classes to enable exception handling delegation
+* Method `readResponse(int $requestId, $timeoutMs = null) : ProvidesResponseData` to read and retrieve a single response
+* Method `readResponses(?int $imeoutMs = null, int ...$requestIds) : \Generator` to read and yield multiple responses
+* Method `readReadyResponses($imeoutMs = null) : \Generator` to check for ready responses, read and yield them
+* Method `waitForResponses($timeout = null)` to `Client` class for waiting for multiple responses and calling the respective response callbacks - [#5]
+* Method `getRequestIdsHavingResponse() : array` to enable reactive read of responses as they occur
+* Method `hasUnhandledResponses() : bool` to check for outstanding responses
+* Method `handleResponse(int $requestId, $timeoutMs = null)` to fetch a specific response and notify the respective response callback
+* Method `handleResponses($timeoutMs = null, int ...$requestIds)` to fetch a specific responses and notify the respective response callbacks
+* Method `handleReadyResponses($timeoutMs = null)` to check for ready responses, fetch them and notify the respective response callbacks
+
+### Changed
+
+* Method `waitForResponse(int $requestId, $timeoutMs = null)` is not returning a response anymore, but will call the response callback  
+  Use `readResponse(int $requestId, $timeoutMs = null): ProvidesResponseData` if you want to get the response directly.
+
+### Removed
+
+* Optional flag to make a connection persistent (is now always disabled in favour of better timeout handling and FPM pool-children-scalability)
+* Optional flag to keep the server-side connection alive (is now always enabled, affects only network sockets)
+
+### Improved
+
+* Code coverage by automated integration tests
+* Timeout handling on multiple requests
+
 ## [1.1.0] - 2017-03-07
 
 ### Changed
@@ -57,6 +88,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[1.2.0]: https://github.com/hollodotme/fast-cgi-client/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/hollodotme/fast-cgi-client/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/hollodotme/fast-cgi-client/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/hollodotme/fast-cgi-client/tree/v1.0.0
@@ -64,3 +96,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#1]: https://github.com/hollodotme/fast-cgi-client/issues/1
 [#2]: https://github.com/hollodotme/fast-cgi-client/issues/2
 [#5]: https://github.com/hollodotme/fast-cgi-client/issues/5
+[#6]: https://github.com/hollodotme/fast-cgi-client/issues/6

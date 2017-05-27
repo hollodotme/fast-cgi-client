@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016 Holger Woltersdorf
@@ -51,6 +51,7 @@ final class AbstractRequestTest extends TestCase
 		$this->assertSame( $requestMethod, $request->getRequestMethod() );
 		$this->assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
 		$this->assertSame( [], $request->getCustomVars() );
+		$this->assertSame( '', $request->getRequestUri() );
 	}
 
 	private function getRequest( string $requestMethod, string $scriptFilename, string $content ) : AbstractRequest
@@ -93,11 +94,13 @@ final class AbstractRequestTest extends TestCase
 	{
 		$request = $this->getRequest( $requestMethod, '/path/to/script.php', 'Unit-Test' );
 		$request->setCustomVar( 'UNIT', 'Test' );
+		$request->setRequestUri( '/unit/test/' );
 
 		$expectedParams = [
 			'UNIT'              => 'Test',
 			'GATEWAY_INTERFACE' => 'FastCGI/1.0',
 			'REQUEST_METHOD'    => $requestMethod,
+			'REQUEST_URI'       => '/unit/test/',
 			'SCRIPT_FILENAME'   => '/path/to/script.php',
 			'SERVER_SOFTWARE'   => 'hollodotme/fast-cgi-client',
 			'REMOTE_ADDR'       => '192.168.0.1',
@@ -135,19 +138,19 @@ final class AbstractRequestTest extends TestCase
 		$request->setServerName( 'www.fast-cgi-client.de' );
 		$request->setServerProtocol( 'HTTP/1.0' );
 		$request->setContentType( 'text/plain' );
+		$request->setRequestUri( '/path/to/handler' );
 		$request->setCustomVar( 'UNIT', 'Test' );
 		$request->addCustomVars(
 			[
-				'REQUEST_URI' => '/path/to/handler',
-				'UNIT'        => 'Testing',
+				'UNIT' => 'Testing',
 			]
 		);
 
 		$expectedParams = [
 			'UNIT'              => 'Testing',
-			'REQUEST_URI'       => '/path/to/handler',
 			'GATEWAY_INTERFACE' => 'FastCGI/1.0',
 			'REQUEST_METHOD'    => 'POST',
+			'REQUEST_URI'       => '/path/to/handler',
 			'SCRIPT_FILENAME'   => '/path/to/script.php',
 			'SERVER_SOFTWARE'   => 'unit/test',
 			'REMOTE_ADDR'       => '10.100.10.1',

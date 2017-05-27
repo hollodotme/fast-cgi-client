@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016 Holger Woltersdorf
@@ -21,44 +21,17 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI\Timing;
-
-use hollodotme\FastCGI\Timing\Exceptions\TimerNotStartedException;
+namespace hollodotme\FastCGI\Interfaces;
 
 /**
- * Class Timer
- * @package hollodotme\FastCGI\Timing
+ * Class NameValuePairEncoder
+ * @package hollodotme\FastCGI\Encoders
  */
-final class Timer
+interface EncodesNameValuePair
 {
-	/** @var float */
-	private $startTime;
+	public function encodePairs( array $pairs ) : string;
 
-	/** @var int */
-	private $timeoutMs;
+	public function encodePair( string $name, string $value ) : string;
 
-	public function __construct( int $timeoutMs )
-	{
-		$this->timeoutMs = $timeoutMs;
-	}
-
-	public function start()
-	{
-		$this->startTime = microtime( true );
-	}
-
-	public function timedOut() : bool
-	{
-		if ( null === $this->startTime )
-		{
-			throw new TimerNotStartedException( 'Timer not started.' );
-		}
-
-		return ((microtime( true ) - $this->startTime) > ($this->timeoutMs / 1000));
-	}
-
-	public function reset()
-	{
-		$this->startTime = null;
-	}
+	public function decodePairs( string $data, int $length = -1 ) : array;
 }
