@@ -613,6 +613,33 @@ echo $response->getDuration(); # e.g. 0.0016319751739502
 
 ---
 
+## Trouble shooting
+
+### "File not found." response
+
+If you're facing a `File not found.` response after issuing a request to PHP-FPM, please make sure
+the given path to the script you want to call is an absolute path / realpath.
+
+### Doesn't work
+
+```php
+<?php
+
+$request = new PostRequest( __DIR__ . '/../../run/script.php', $content );
+$request = new PostRequest( '/var/www/example.com/../../run/script.php', $content );
+```
+
+### Does work
+
+```php
+<?php
+
+$request = new PostRequest( dirname(__DIR__, 2). '/run/script.php', $content );
+$request = new PostRequest( '/var/run/script.php', $content );
+```
+
+---
+
 ## Run examples
 
 	php bin/examples.php
