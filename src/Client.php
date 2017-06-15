@@ -137,7 +137,7 @@ class Client
 		return $this->sockets[ $requestId ];
 	}
 
-	private function guardSocketExists( int $requestId )
+	private function guardSocketExists( int $requestId ) : void
 	{
 		if ( !isset( $this->sockets[ $requestId ] ) )
 		{

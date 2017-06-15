@@ -37,7 +37,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class SocketTest extends TestCase
 {
-	public function testCanGetIdAfterConstruction()
+	public function testCanGetIdAfterConstruction() : void
 	{
 		$socket = $this->getSocket();
 
@@ -49,17 +49,17 @@ final class SocketTest extends TestCase
 	{
 		$nameValuePairEncoder = new NameValuePairEncoder();
 		$packetEncoder        = new PacketEncoder();
-		$connection           = new UnixDomainSocket( 'unix:///var/run/php-uds.sock' );
+		$connection           = new UnixDomainSocket( '/var/run/php-uds.sock' );
 
 		return new Socket( $connection, $packetEncoder, $nameValuePairEncoder );
 	}
 
-	public function testCanSendRequestAndFetchResponse()
+	public function testCanSendRequestAndFetchResponse() : void
 	{
 		$socket  = $this->getSocket();
 		$data    = [ 'test-key' => 'unit' ];
 		$request = new PostRequest(
-			realpath( __DIR__ . '/../Integration/Workers/worker.php' ),
+			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 
@@ -74,13 +74,13 @@ final class SocketTest extends TestCase
 		$this->assertSame( $response, $response2 );
 	}
 
-	public function testCanCollectResource()
+	public function testCanCollectResource() : void
 	{
 		$resources = [];
 		$socket    = $this->getSocket();
 		$data      = [ 'test-key' => 'unit' ];
 		$request   = new PostRequest(
-			realpath( __DIR__ . '/../Integration/Workers/worker.php' ),
+			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 
@@ -95,12 +95,12 @@ final class SocketTest extends TestCase
 		$this->assertInternalType( 'resource', $resources[ $socket->getId() ] );
 	}
 
-	public function testCanNotifyResponseCallback()
+	public function testCanNotifyResponseCallback() : void
 	{
 		$socket  = $this->getSocket();
 		$data    = [ 'test-key' => 'unit' ];
 		$request = new PostRequest(
-			realpath( __DIR__ . '/../Integration/Workers/worker.php' ),
+			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 		$request->addResponseCallbacks(
@@ -117,12 +117,12 @@ final class SocketTest extends TestCase
 		$this->expectOutputString( 'unit' );
 	}
 
-	public function testCanNotifyFailureCallback()
+	public function testCanNotifyFailureCallback() : void
 	{
 		$socket  = $this->getSocket();
 		$data    = [ 'test-key' => 'unit' ];
 		$request = new PostRequest(
-			realpath( __DIR__ . '/../Integration/Workers/worker.php' ),
+			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 		$request->addFailureCallbacks(

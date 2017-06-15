@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
 
 final class PostRequestTest extends TestCase
 {
-	public function testRequestMethodIsPost()
+	public function testRequestMethodIsPost() : void
 	{
 		$request = new PostRequest( '/path/to/script.php', 'Unit-Test' );
 

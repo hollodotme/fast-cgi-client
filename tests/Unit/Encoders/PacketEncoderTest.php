@@ -24,8 +24,9 @@
 namespace hollodotme\FastCGI\Tests\Unit\Encoders;
 
 use hollodotme\FastCGI\Encoders\PacketEncoder;
+use PHPUnit\Framework\TestCase;
 
-class PacketEncoderTest extends \PHPUnit\Framework\TestCase
+class PacketEncoderTest extends TestCase
 {
 	/**
 	 * @param int    $type
@@ -35,7 +36,7 @@ class PacketEncoderTest extends \PHPUnit\Framework\TestCase
 	 *
 	 * @dataProvider packetContentProvider
 	 */
-	public function testCanEncodeAndDecodePacket( int $type, string $content, int $requestId, array $expectedHeader )
+	public function testCanEncodeAndDecodePacket( int $type, string $content, int $requestId, array $expectedHeader ) : void
 	{
 		$packetEncoder = new PacketEncoder();
 

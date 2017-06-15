@@ -59,7 +59,7 @@ class Response implements ProvidesResponseData
 		$this->parseHeadersAndBody();
 	}
 
-	private function parseHeadersAndBody()
+	private function parseHeadersAndBody() : void
 	{
 		$lines  = explode( PHP_EOL, $this->rawResponse );
 		$offset = 0;

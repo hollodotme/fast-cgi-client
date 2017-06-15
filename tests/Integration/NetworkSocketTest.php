@@ -36,7 +36,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class NetworkSocketTest extends TestCase
 {
-	public function testCanSendAsyncRequestAndReceiveRequestId()
+	public function testCanSendAsyncRequestAndReceiveRequestId() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
@@ -49,7 +49,7 @@ final class NetworkSocketTest extends TestCase
 		$this->assertLessThanOrEqual( 65535, $requestId );
 	}
 
-	public function testCanSendAsyncRequestAndReadResponse()
+	public function testCanSendAsyncRequestAndReadResponse() : void
 	{
 		$connection       = new NetworkSocket( '127.0.0.1', 9000 );
 		$client           = new Client( $connection );
@@ -67,7 +67,7 @@ final class NetworkSocketTest extends TestCase
 		$this->assertSame( $requestId, $response->getRequestId() );
 	}
 
-	public function testCanSendSyncRequestAndReceiveResponse()
+	public function testCanSendSyncRequestAndReceiveResponse() : void
 	{
 		$connection       = new NetworkSocket( '127.0.0.1', 9000 );
 		$client           = new Client( $connection );
@@ -86,7 +86,7 @@ final class NetworkSocketTest extends TestCase
 		$this->assertLessThanOrEqual( 65535, $response->getRequestId() );
 	}
 
-	public function testCanReceiveResponseInCallback()
+	public function testCanReceiveResponseInCallback() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
@@ -106,7 +106,7 @@ final class NetworkSocketTest extends TestCase
 		$client->waitForResponses();
 	}
 
-	public function testCanHandleExceptionsInFailureCallback()
+	public function testCanHandleExceptionsInFailureCallback() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
@@ -134,7 +134,7 @@ final class NetworkSocketTest extends TestCase
 		$client->waitForResponses();
 	}
 
-	public function testCanCheckForRequestIdsHavingResponses()
+	public function testCanCheckForRequestIdsHavingResponses() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
@@ -149,7 +149,7 @@ final class NetworkSocketTest extends TestCase
 		$this->assertEquals( [ $requestId ], $client->getRequestIdsHavingResponse() );
 	}
 
-	public function testCanReadResponses()
+	public function testCanReadResponses() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
@@ -185,7 +185,7 @@ final class NetworkSocketTest extends TestCase
 	/**
 	 * @expectedException \hollodotme\FastCGI\Exceptions\TimedoutException
 	 */
-	public function testReadingSyncResponseCanTimeOut()
+	public function testReadingSyncResponseCanTimeOut() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
 		$client     = new Client( $connection );
@@ -202,7 +202,7 @@ final class NetworkSocketTest extends TestCase
 		$client->sendRequest( $request );
 	}
 
-	public function testCanHandleReadyResponses()
+	public function testCanHandleReadyResponses() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
 		$client     = new Client( $connection );
@@ -226,7 +226,7 @@ final class NetworkSocketTest extends TestCase
 		}
 	}
 
-	public function testCanReadReadyResponses()
+	public function testCanReadReadyResponses() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
 		$client     = new Client( $connection );
@@ -246,7 +246,7 @@ final class NetworkSocketTest extends TestCase
 		$this->expectOutputString( 'unit' );
 	}
 
-	public function testCanWaitForResponse()
+	public function testCanWaitForResponse() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
 		$client     = new Client( $connection );
@@ -267,7 +267,7 @@ final class NetworkSocketTest extends TestCase
 		$client->waitForResponse( $requestId );
 	}
 
-	public function testReadResponsesSkipsUnknownRequestIds()
+	public function testReadResponsesSkipsUnknownRequestIds() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
 		$client     = new Client( $connection );

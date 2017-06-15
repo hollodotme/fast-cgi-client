@@ -3,6 +3,15 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [2.3.0] - 2017-06-15
+
+### Changed
+
+* Replaced methods `getHost()` and `getPort()` with `getSocketAddress()` in interface `hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection` - [#9]
+* The transport protocol `unix://` must be omitted for the first parameter of `hollodotme\FastCGI\SocketConnections\UnixDomainSocket`  
+  Only the socket path must be passed. - [#9]
+* Replaced `fsockopen()` with `stream_socket_client()` for connecting to php-fpm. - [#9]
+
 ## [2.2.0] - 2017-04-15
 
 ### Added
@@ -98,6 +107,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[2.3.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.0.1...v2.1.0
 [2.0.1]: https://github.com/hollodotme/fast-cgi-client/compare/v2.0.0...v2.0.1
@@ -108,3 +118,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#2]: https://github.com/hollodotme/fast-cgi-client/issues/2
 [#5]: https://github.com/hollodotme/fast-cgi-client/issues/5
 [#6]: https://github.com/hollodotme/fast-cgi-client/issues/6
+[#9]: https://github.com/hollodotme/fast-cgi-client/issues/9

@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
 
 final class PatchRequestTest extends TestCase
 {
-	public function testRequestMethodIsGet()
+	public function testRequestMethodIsGet() : void
 	{
 		$request = new PatchRequest( '/path/to/script.php', 'Unit-Test' );
 

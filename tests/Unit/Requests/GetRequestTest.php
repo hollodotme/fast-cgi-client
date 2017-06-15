@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
 
 final class GetRequestTest extends TestCase
 {
-	public function testRequestMethodIsGet()
+	public function testRequestMethodIsGet() : void
 	{
 		$request = new GetRequest( '/path/to/script.php', 'Unit-Test' );
 

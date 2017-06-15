@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2017 Holger Woltersdorf
@@ -29,9 +29,7 @@ namespace hollodotme\FastCGI\Interfaces;
  */
 interface ConfiguresSocketConnection
 {
-	public function getHost() : string;
-
-	public function getPort() : int;
+	public function getSocketAddress() : string;
 
 	public function getConnectTimeout() : int;
 

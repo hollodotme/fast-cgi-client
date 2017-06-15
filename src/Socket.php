@@ -148,18 +148,12 @@ final class Socket
 		$this->startTime = microtime( true );
 	}
 
-	private function connect()
+	private function connect() : void
 	{
-		if ( is_resource( $this->resource ) )
-		{
-			return;
-		}
-
 		try
 		{
-			$this->resource = @fsockopen(
-				$this->connection->getHost(),
-				$this->connection->getPort(),
+			$this->resource = @stream_socket_client(
+				$this->connection->getSocketAddress(),
 				$errorNumber,
 				$errorString,
 				$this->connection->getConnectTimeout() / 1000
@@ -351,7 +345,7 @@ final class Socket
 		return null;
 	}
 
-	private function handleNullPacket( $packet )
+	private function handleNullPacket( $packet ) : void
 	{
 		if ( $packet === null )
 		{
@@ -371,7 +365,7 @@ final class Socket
 		}
 	}
 
-	private function guardRequestCompleted( int $flag )
+	private function guardRequestCompleted( int $flag ) : void
 	{
 		switch ( $flag )
 		{

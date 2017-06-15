@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
 
 final class ResponseTest extends TestCase
 {
-	public function testCanGetHeaders()
+	public function testCanGetHeaders() : void
 	{
 		$rawResponse = "X-Powered-By: PHP/7.1.0\r\n"
 		               . "X-Custom: Header\r\n"
@@ -51,7 +51,7 @@ final class ResponseTest extends TestCase
 		$this->assertSame( 'text/html; charset=UTF-8', $response->getHeader( 'Content-type' ) );
 	}
 
-	public function testCanGetBody()
+	public function testCanGetBody() : void
 	{
 		$rawResponse = "X-Powered-By: PHP/7.1.0\r\n"
 		               . "X-Custom: Header\r\n"
@@ -68,7 +68,7 @@ final class ResponseTest extends TestCase
 		$this->assertSame( $expectedBody, $response->getBody() );
 	}
 
-	public function testCanGetRawResponse()
+	public function testCanGetRawResponse() : void
 	{
 		$rawResponse = "X-Powered-By: PHP/7.1.0\r\n"
 		               . "X-Custom: Header\r\n"

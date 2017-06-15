@@ -50,7 +50,7 @@ if ( $_SERVER['argc'] < 2 )
 {
 	echo 'Usage: ' . $_SERVER['argv'][0] . "  URI\n\n";
 	echo 'Ex: ' . $_SERVER['argv'][0] . " localhost:9000/status\n";
-	echo 'Ex: ' . $_SERVER['argv'][0] . " unix:/var/run/php-fpm/web.sock/status\n";
+	echo 'Ex: ' . $_SERVER['argv'][0] . " /var/run/php-fpm/web.sock/status\n";
 	exit( 1 );
 }
 
@@ -92,8 +92,8 @@ else
 }
 if ( $sock )
 {
-	$client = new Client( new UnixDomainSocket( "unix://{$sock}" ) );
-	echo "Call: {$uri} on UDS {$sock}\n\n";
+	$client = new Client( new UnixDomainSocket( (string)$sock ) );
+	echo "Call: {$uri} on UDS unix://{$sock}\n\n";
 }
 else
 {

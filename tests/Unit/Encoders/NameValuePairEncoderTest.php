@@ -24,15 +24,16 @@
 namespace hollodotme\FastCGI\Tests\Unit\Encoders;
 
 use hollodotme\FastCGI\Encoders\NameValuePairEncoder;
+use PHPUnit\Framework\TestCase;
 
-class NameValuePairEncoderTest extends \PHPUnit\Framework\TestCase
+class NameValuePairEncoderTest extends TestCase
 {
 	/**
 	 * @param array $pairs
 	 *
 	 * @dataProvider pairProvider
 	 */
-	public function testCanEncodeAndDecodePairs( array $pairs )
+	public function testCanEncodeAndDecodePairs( array $pairs ) : void
 	{
 		$nameValuePairEncoder = new NameValuePairEncoder();
 

@@ -91,7 +91,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->serverSoftware;
 	}
 
-	public function setServerSoftware( string $serverSoftware )
+	public function setServerSoftware( string $serverSoftware ) : void
 	{
 		$this->serverSoftware = $serverSoftware;
 	}
@@ -101,7 +101,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->remoteAddress;
 	}
 
-	public function setRemoteAddress( string $remoteAddress )
+	public function setRemoteAddress( string $remoteAddress ) : void
 	{
 		$this->remoteAddress = $remoteAddress;
 	}
@@ -111,7 +111,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->remotePort;
 	}
 
-	public function setRemotePort( int $remotePort )
+	public function setRemotePort( int $remotePort ) : void
 	{
 		$this->remotePort = $remotePort;
 	}
@@ -121,7 +121,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->serverAddress;
 	}
 
-	public function setServerAddress( string $serverAddress )
+	public function setServerAddress( string $serverAddress ) : void
 	{
 		$this->serverAddress = $serverAddress;
 	}
@@ -131,7 +131,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->serverPort;
 	}
 
-	public function setServerPort( int $serverPort )
+	public function setServerPort( int $serverPort ) : void
 	{
 		$this->serverPort = $serverPort;
 	}
@@ -141,7 +141,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->serverName;
 	}
 
-	public function setServerName( string $serverName )
+	public function setServerName( string $serverName ) : void
 	{
 		$this->serverName = $serverName;
 	}
@@ -151,7 +151,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->serverProtocol;
 	}
 
-	public function setServerProtocol( string $serverProtocol )
+	public function setServerProtocol( string $serverProtocol ) : void
 	{
 		$this->serverProtocol = $serverProtocol;
 	}
@@ -161,7 +161,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->contentType;
 	}
 
-	public function setContentType( string $contentType )
+	public function setContentType( string $contentType ) : void
 	{
 		$this->contentType = $contentType;
 	}
@@ -171,23 +171,23 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->content;
 	}
 
-	public function setContent( string $content )
+	public function setContent( string $content ) : void
 	{
 		$this->content       = $content;
 		$this->contentLength = strlen( $content );
 	}
 
-	public function setCustomVar( string $key, $value )
+	public function setCustomVar( string $key, $value ) : void
 	{
 		$this->customVars[ $key ] = $value;
 	}
 
-	public function addCustomVars( array $vars )
+	public function addCustomVars( array $vars ) : void
 	{
 		$this->customVars = array_merge( $this->customVars, $vars );
 	}
 
-	public function resetCustomVars()
+	public function resetCustomVars() : void
 	{
 		$this->customVars = [];
 	}
@@ -239,7 +239,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->requestUri;
 	}
 
-	public function setRequestUri( string $requestUri )
+	public function setRequestUri( string $requestUri ) : void
 	{
 		$this->requestUri = $requestUri;
 	}
@@ -249,7 +249,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->responseCallbacks;
 	}
 
-	public function addResponseCallbacks( callable ...$callbacks )
+	public function addResponseCallbacks( callable ...$callbacks ) : void
 	{
 		$this->responseCallbacks = array_merge( $this->responseCallbacks, $callbacks );
 	}
@@ -259,7 +259,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->failureCallbacks;
 	}
 
-	public function addFailureCallbacks( callable  ...$callbacks )
+	public function addFailureCallbacks( callable  ...$callbacks ) : void
 	{
 		$this->failureCallbacks = array_merge( $this->failureCallbacks, $callbacks );
 	}

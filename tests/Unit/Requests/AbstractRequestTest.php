@@ -33,7 +33,7 @@ final class AbstractRequestTest extends TestCase
 	 *
 	 * @dataProvider requestMethodProvider
 	 */
-	public function testCanGetDefaultValues( string $requestMethod )
+	public function testCanGetDefaultValues( string $requestMethod ) : void
 	{
 		$request = $this->getRequest( $requestMethod, '/path/to/script.php', 'Unit-Test' );
 
@@ -90,7 +90,7 @@ final class AbstractRequestTest extends TestCase
 	 *
 	 * @dataProvider requestMethodProvider
 	 */
-	public function testCanGetParametersArray( string $requestMethod )
+	public function testCanGetParametersArray( string $requestMethod ) : void
 	{
 		$request = $this->getRequest( $requestMethod, '/path/to/script.php', 'Unit-Test' );
 		$request->setCustomVar( 'UNIT', 'Test' );
@@ -116,7 +116,7 @@ final class AbstractRequestTest extends TestCase
 		$this->assertSame( $expectedParams, $request->getParams() );
 	}
 
-	public function testContentLengthChangesWithContent()
+	public function testContentLengthChangesWithContent() : void
 	{
 		$request = $this->getRequest( 'GET', '/path/to/script.php', 'Some content' );
 
@@ -127,7 +127,7 @@ final class AbstractRequestTest extends TestCase
 		$this->assertSame( 16, $request->getContentLength() );
 	}
 
-	public function testCanOverwriteVars()
+	public function testCanOverwriteVars() : void
 	{
 		$request = $this->getRequest( 'POST', '/path/to/script.php', 'Unit-Test' );
 		$request->setRemoteAddress( '10.100.10.1' );
@@ -166,7 +166,7 @@ final class AbstractRequestTest extends TestCase
 		$this->assertSame( $expectedParams, $request->getParams() );
 	}
 
-	public function testCanResetCustomVars()
+	public function testCanResetCustomVars() : void
 	{
 		$request = $this->getRequest( 'POST', '/path/to/script.php', 'Unit-Test' );
 		$request->setCustomVar( 'UNIT', 'Test' );

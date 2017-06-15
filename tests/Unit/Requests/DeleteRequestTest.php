@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
 
 final class DeleteRequestTest extends TestCase
 {
-	public function testRequestMethodIsGet()
+	public function testRequestMethodIsGet() : void
 	{
 		$request = new DeleteRequest( '/path/to/script.php', 'Unit-Test' );
 
