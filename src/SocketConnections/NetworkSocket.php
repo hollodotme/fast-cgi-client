@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2017 Holger Woltersdorf
@@ -56,14 +56,9 @@ class NetworkSocket implements ConfiguresSocketConnection
 		$this->readWriteTimeout = $readWriteTimeout;
 	}
 
-	public function getHost() : string
+	public function getSocketAddress() : string
 	{
-		return $this->host;
-	}
-
-	public function getPort() : int
-	{
-		return $this->port;
+		return sprintf( 'tcp://%s:%d', $this->host, $this->port );
 	}
 
 	public function getConnectTimeout() : int

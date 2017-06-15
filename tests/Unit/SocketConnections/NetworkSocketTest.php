@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2017 Holger Woltersdorf
@@ -40,8 +40,7 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 	{
 		$connection = new NetworkSocket( 'localhost', 9000 );
 
-		$this->assertSame( 'localhost', $connection->getHost() );
-		$this->assertSame( 9000, $connection->getPort() );
+		$this->assertSame( 'tcp://localhost:9000', $connection->getSocketAddress() );
 		$this->assertSame( Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout() );
 		$this->assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
 	}
@@ -50,8 +49,7 @@ class NetworkSocketTest extends \PHPUnit\Framework\TestCase
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9001, 2000, 3000 );
 
-		$this->assertSame( '127.0.0.1', $connection->getHost() );
-		$this->assertSame( 9001, $connection->getPort() );
+		$this->assertSame( 'tcp://127.0.0.1:9001', $connection->getSocketAddress() );
 		$this->assertSame( 2000, $connection->getConnectTimeout() );
 		$this->assertSame( 3000, $connection->getReadWriteTimeout() );
 	}

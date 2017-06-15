@@ -38,7 +38,7 @@ final class UnixDomainSocketTest extends TestCase
 {
 	public function testCanSendAsyncRequestAndReceiveRequestId()
 	{
-		$connection = new UnixDomainSocket( 'unix:///var/run/php-uds.sock' );
+		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
 		$client     = new Client( $connection );
 		$content    = http_build_query( [ 'test-key' => 'unit' ] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
@@ -51,7 +51,7 @@ final class UnixDomainSocketTest extends TestCase
 
 	public function testCanSendAsyncRequestAndReadResponse()
 	{
-		$connection       = new UnixDomainSocket( 'unix:///var/run/php-uds.sock' );
+		$connection       = new UnixDomainSocket( '/var/run/php-uds.sock' );
 		$client           = new Client( $connection );
 		$content          = http_build_query( [ 'test-key' => 'unit' ] );
 		$request          = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
@@ -69,7 +69,7 @@ final class UnixDomainSocketTest extends TestCase
 
 	public function testCanSendSyncRequestAndReceiveResponse()
 	{
-		$connection       = new UnixDomainSocket( 'unix:///var/run/php-uds.sock' );
+		$connection       = new UnixDomainSocket( '/var/run/php-uds.sock' );
 		$client           = new Client( $connection );
 		$content          = http_build_query( [ 'test-key' => 'unit' ] );
 		$request          = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
@@ -88,7 +88,7 @@ final class UnixDomainSocketTest extends TestCase
 
 	public function testCanReceiveResponseInCallback()
 	{
-		$connection = new UnixDomainSocket( 'unix:///var/run/php-uds.sock' );
+		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
 		$client     = new Client( $connection );
 		$content    = http_build_query( [ 'test-key' => 'unit' ] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
@@ -108,7 +108,7 @@ final class UnixDomainSocketTest extends TestCase
 
 	public function testCanHandleExceptionsInFailureCallback()
 	{
-		$connection = new UnixDomainSocket( 'unix:///var/run/php-uds.sock' );
+		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
 		$client     = new Client( $connection );
 		$content    = http_build_query( [ 'test-key' => 'unit' ] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
@@ -136,7 +136,7 @@ final class UnixDomainSocketTest extends TestCase
 
 	public function testCanCheckForRequestIdsHavingResponses()
 	{
-		$connection = new UnixDomainSocket( 'unix:///var/run/php-uds.sock' );
+		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
 		$client     = new Client( $connection );
 		$content    = http_build_query( [ 'test-key' => 'unit' ] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
@@ -151,7 +151,7 @@ final class UnixDomainSocketTest extends TestCase
 
 	public function testCanReadResponses()
 	{
-		$connection = new UnixDomainSocket( 'unix:///var/run/php-uds.sock' );
+		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
 		$client     = new Client( $connection );
 		$content    = http_build_query( [ 'test-key' => 'unit' ] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
@@ -187,7 +187,7 @@ final class UnixDomainSocketTest extends TestCase
 	 */
 	public function testReadingSyncResponseCanTimeOut()
 	{
-		$connection = new UnixDomainSocket( 'unix:///var/run/php-uds.sock', Defaults::CONNECT_TIMEOUT, 1000 );
+		$connection = new UnixDomainSocket( '/var/run/php-uds.sock', Defaults::CONNECT_TIMEOUT, 1000 );
 		$client     = new Client( $connection );
 		$content    = http_build_query( [ 'test-key' => 'unit' ] );
 		$request    = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
@@ -204,7 +204,7 @@ final class UnixDomainSocketTest extends TestCase
 
 	public function testCanHandleReadyResponses()
 	{
-		$connection = new UnixDomainSocket( 'unix:///var/run/php-uds.sock' );
+		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
 		$client     = new Client( $connection );
 		$content    = http_build_query( [ 'test-key' => 'unit' ] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
@@ -228,7 +228,7 @@ final class UnixDomainSocketTest extends TestCase
 
 	public function testCanReadReadyResponses()
 	{
-		$connection = new UnixDomainSocket( 'unix:///var/run/php-uds.sock' );
+		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
 		$client     = new Client( $connection );
 		$content    = http_build_query( [ 'test-key' => 'unit' ] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
@@ -248,7 +248,7 @@ final class UnixDomainSocketTest extends TestCase
 
 	public function testCanWaitForResponse()
 	{
-		$connection = new UnixDomainSocket( 'unix:///var/run/php-uds.sock' );
+		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
 		$client     = new Client( $connection );
 		$content    = http_build_query( [ 'test-key' => 'unit' ] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
@@ -269,7 +269,7 @@ final class UnixDomainSocketTest extends TestCase
 
 	public function testReadResponsesSkipsUnknownRequestIds()
 	{
-		$connection = new UnixDomainSocket( 'unix:///var/run/php-uds.sock' );
+		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
 		$client     = new Client( $connection );
 		$content    = http_build_query( [ 'test-key' => 'unit' ] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );

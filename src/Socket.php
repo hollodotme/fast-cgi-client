@@ -150,16 +150,10 @@ final class Socket
 
 	private function connect()
 	{
-		if ( is_resource( $this->resource ) )
-		{
-			return;
-		}
-
 		try
 		{
-			$this->resource = @fsockopen(
-				$this->connection->getHost(),
-				$this->connection->getPort(),
+			$this->resource = @stream_socket_client(
+				$this->connection->getSocketAddress(),
 				$errorNumber,
 				$errorString,
 				$this->connection->getConnectTimeout() / 1000

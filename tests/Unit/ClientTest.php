@@ -40,7 +40,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testConnectAttemptToNotExistingSocketThrowsException()
 	{
-		$connection = new UnixDomainSocket( 'unix:///tmp/not/existing.sock', 2000, 2000, true, true );
+		$connection = new UnixDomainSocket( '/tmp/not/existing.sock', 2000, 2000, true, true );
 		$client     = new Client( $connection );
 
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
@@ -53,7 +53,7 @@ final class ClientTest extends TestCase
 	{
 		$testSocket = realpath( __DIR__ . '/Fixtures/test.sock' );
 
-		$connection = new UnixDomainSocket( 'unix://' . $testSocket );
+		$connection = new UnixDomainSocket( '' . $testSocket );
 		$client     = new Client( $connection );
 
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
@@ -109,11 +109,11 @@ final class ClientTest extends TestCase
 
 	/**
 	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @expectedExceptionMessageRegExp #^Unable to connect to FastCGI application#
+	 * @expectedExceptionMessageRegExp #.*unable to connect to.*#i
 	 */
 	public function testConnectAttemptToRestrictedUnixDomainSocketThrowsException()
 	{
-		$connection = new UnixDomainSocket( 'unix:///var/run/php7.1-ruds.sock' );
+		$connection = new UnixDomainSocket( '/var/run/php7.0-ruds.sock' );
 		$client     = new Client( $connection );
 
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );

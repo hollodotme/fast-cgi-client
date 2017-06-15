@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2017 Holger Woltersdorf
@@ -32,10 +32,7 @@ use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 class UnixDomainSocket implements ConfiguresSocketConnection
 {
 	/** @var string */
-	private $host;
-
-	/** @var int */
-	private $port;
+	private $socketPath;
 
 	/** @var int */
 	private $connectTimeout;
@@ -49,20 +46,14 @@ class UnixDomainSocket implements ConfiguresSocketConnection
 		int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT
 	)
 	{
-		$this->host             = $socketPath;
-		$this->port             = -1;
+		$this->socketPath       = $socketPath;
 		$this->connectTimeout   = $connectTimeout;
 		$this->readWriteTimeout = $readWriteTimeout;
 	}
 
-	public function getHost() : string
+	public function getSocketAddress() : string
 	{
-		return $this->host;
-	}
-
-	public function getPort() : int
-	{
-		return $this->port;
+		return 'unix://' . $this->socketPath;
 	}
 
 	public function getConnectTimeout() : int

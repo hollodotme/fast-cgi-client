@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/hollodotme/fast-cgi-client.svg?branch=master)](https://travis-ci.org/hollodotme/fast-cgi-client)
+[![Build Status](https://travis-ci.org/hollodotme/fast-cgi-client.svg?branch=1.x-stable)](https://travis-ci.org/hollodotme/fast-cgi-client)
 [![Tested PHP versions](https://php-eye.com/badge/hollodotme/fast-cgi-client/tested.svg?branch=1.x-stable)](https://php-eye.com/package/hollodotme/fast-cgi-client)
 [![Latest Stable Version](https://poser.pugx.org/hollodotme/fast-cgi-client/v/stable)](https://packagist.org/packages/hollodotme/fast-cgi-client) 
 [![Total Downloads](https://poser.pugx.org/hollodotme/fast-cgi-client/downloads)](https://packagist.org/packages/hollodotme/fast-cgi-client) 
@@ -15,6 +15,8 @@ You can find an experimental use-case in my related blog posts:
  
 * [Experimental async PHP vol. 1](http://bit.ly/eapv1)
 * [Experimental async PHP vol. 2](http://bit.ly/eapv2)
+
+You can also find slides of my talks about this project on [speakerdeck.com](https://speakerdeck.com/hollodotme).
 
 ---
 
@@ -41,7 +43,7 @@ The following examples assume a that the content of `/path/to/target/script.php`
 ```php
 <?php declare(strict_types=1);
 
-sleep((int)$_REQUEST['sleep'] ?? 0);
+sleep((int)($_REQUEST['sleep'] ?? 0));
 echo $_REQUEST['key'] ?? '';
 ```
 
@@ -56,13 +58,15 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
 $connection = new UnixDomainSocket(
-	'unix:///var/run/php/php7.0-fpm.sock',  # Socket path to php-fpm
+	'/var/run/php/php7.0-fpm.sock',  # Socket path to php-fpm
 	5000,                                   # Connect timeout in milliseconds (default: 5000)
 	5000                                    # Read/write timeout in milliseconds (default: 5000)
 );
 
 $client = new Client( $connection );
 ```
+
+**PLEASE NOTE:** In versions before 1.3.0 you also need to provide the transport protocol `unix://` in the first parameter.
 
 ### Init client with a network socket connection
 
@@ -95,7 +99,7 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
-$client  = new Client( new UnixDomainSocket( 'unix:///var/run/php/php7.0-fpm.sock' ) );
+$client  = new Client( new UnixDomainSocket( '/var/run/php/php7.0-fpm.sock' ) );
 $content = http_build_query(['key' => 'value']);
 
 $request = new PostRequest('/path/to/target/script.php', $content);
@@ -652,4 +656,6 @@ Run a call through a network socket:
 
 Run a call through a Unix Domain Socket
 
-    bin/fcgiget unix:/var/run/php/php7.0-fpm.sock/status
+    bin/fcgiget /var/run/php/php7.0-fpm.sock/status
+
+This shows the response of the php-fpm status page, if enabled.
