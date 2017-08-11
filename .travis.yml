@@ -15,7 +15,9 @@ branches:
     - /^issue\/.+$/
 
 before_script:
+ - echo $(phpenv version-name)
  - sudo mkdir -pm 0777 /var/run
+ - sudo usermod -a -G travis www-data
  - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
  - sudo cp env/php-fpm/$(phpenv version-name)/network-socket.pool.conf ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/network-socket.pool.conf
  - sudo cp env/php-fpm/$(phpenv version-name)/unix-domain-socket.pool.conf ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/unix-domain-socket.pool.conf
@@ -25,8 +27,8 @@ before_script:
  - git reset --hard "$TRAVIS_COMMIT"
  - composer self-update
  - mkdir -p vendor/bin
+ - mkdir -p build/logs
  - composer install -o --prefer-dist --no-interaction
- - mkdir build/logs
 
 script:
  - php vendor/bin/phpunit.phar -c build/
