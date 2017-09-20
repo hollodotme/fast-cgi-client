@@ -26,3 +26,11 @@ header( 'X-Custom: Header' );
 usleep( 50000 );
 echo $_REQUEST['test-key'];
 
+if (isset( $_REQUEST['test-second-key']) )
+{
+	echo $_REQUEST['test-second-key'];
+}
+if (isset( $_REQUEST['test-third-key']) )
+{
+	echo $_REQUEST['test-third-key'];
+}
