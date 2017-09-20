@@ -22,8 +22,8 @@ We accept contributions via pull requests on [GitHub](https://github.com/hollodo
 ## Running Tests
 
  - Add the relevant pools to a working php-fpm service:
- 
-    https://github.com/hollodotme/fast-cgi-client/tree/master/env/php-fpm
+   - [for PHP-FPM 7.0](./env/php-fpm/7.0)
+   - [for PHP-FPM 7.1](./env/php-fpm/7.1)
  
  - Then run tests:
 
