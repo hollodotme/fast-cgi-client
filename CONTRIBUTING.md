@@ -21,4 +21,10 @@ We accept contributions via pull requests on [GitHub](https://github.com/hollodo
 
 ## Running Tests
 
+ - Add the relevant pools to a working php-fpm service:
+ 
+    https://github.com/hollodotme/fast-cgi-client/tree/master/env/php-fpm
+ 
+ - Then run tests:
+
     $ php vendor/bin/phpunit.phar -c build/
