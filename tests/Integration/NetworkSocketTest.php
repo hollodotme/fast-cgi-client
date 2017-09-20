@@ -291,4 +291,37 @@ final class NetworkSocketTest extends TestCase
 
 		$this->expectOutputString( 'unit' );
 	}
+	public function testCanReceivePacketInPassThroughCallback()
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$client     = new Client( $connection );
+		$data       = [ 'test-key' => str_repeat( 'test-first-key', 5000 ), 'test-second-key' => 'test-second-key', 'test-third-key' => str_repeat( 'test-third-key', 5000 ) ];
+		$content    = http_build_query( $data );
+		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+
+		$unitTest = $this;
+
+		$request->addPassThroughCallbacks(
+			function ( $packet ) use ( $unitTest, $data )
+			{
+				static $pass = 0;
+				if ( $pass === 0 )
+				{
+					/* The first key is large enough to be dumped immediately with all headers */
+					$unitTest->assertContains( $data['test-key'], $packet );
+				}
+				elseif ( $pass === 1 )
+				{
+					/* The second key is too small to be dumped, hence the second packet will show both second AND third keys */
+					$unitTest->assertNotContains( $data['test-key'], $packet );
+					$unitTest->assertContains( $data['test-second-key'], $packet );
+					$unitTest->assertContains( $data['test-third-key'], $packet );
+				}
+				$pass++;
+			}
+		);
+
+		$client->sendAsyncRequest( $request );
+		$client->waitForResponses();
+	}
 }
