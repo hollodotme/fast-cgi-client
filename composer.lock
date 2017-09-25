@@ -4,21 +4,21 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "01a254284928aaead1b0dd620bcc8797",
+    "content-hash": "1384917e8458978a03d7015d3e558cdb",
     "packages": [],
     "packages-dev": [
         {
             "name": "tm/tooly-composer-script",
-            "version": "1.2.4",
+            "version": "1.2.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tommy-muehle/tooly-composer-script.git",
-                "reference": "f6aeb39bb2212c5ddac494c9bb780b0171e90297"
+                "reference": "d75cf732edc3a807df47b0c16cb34ca993b420c8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tommy-muehle/tooly-composer-script/zipball/f6aeb39bb2212c5ddac494c9bb780b0171e90297",
-                "reference": "f6aeb39bb2212c5ddac494c9bb780b0171e90297",
+                "url": "https://api.github.com/repos/tommy-muehle/tooly-composer-script/zipball/d75cf732edc3a807df47b0c16cb34ca993b420c8",
+                "reference": "d75cf732edc3a807df47b0c16cb34ca993b420c8",
                 "shasum": ""
             },
             "require": {
@@ -84,7 +84,7 @@
                 "phar-handling",
                 "phar-management"
             ],
-            "time": "2017-01-07T12:16:24+00:00"
+            "time": "2017-07-21T20:16:48+00:00"
         }
     ],
     "aliases": [],
