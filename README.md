@@ -440,6 +440,67 @@ while ( $client->hasUnhandledResponses() )
 1
 ```
 
+### Reading request as it goes back piece by piece (pass-through)
+
+It may be useful to see the progression of a request, such as a batch. Say you have a PHP script like:
+```php
+<?php
+ob_implicit_flush(); // needed so that every echo() is flushed when length of echo'ed text is over ini:output_buffering's value
+function show($string)
+{
+	echo str_repeat("\033[0m", max(1, ceil((4096 - strlen($string) % 4096) / 4))).$string.PHP_EOL; // replace 4096 with your output_buffering's value if different
+	flush();
+}
+show('Very long script to run');
+// one long task
+show('First long task ended');
+// another long task
+show('Second long task ended');
+
+echo 'End of script'; // no need of show() here, as the script will end and send the final text.
+```
+
+The `caller.php` file which is run from the console:
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\GetRequest;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+ob_implicit_flush(); // needed here too
+
+$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
+
+$passThroughCallback = function( $packet )
+{
+	echo 'Batch script: ', $packet;
+};
+
+$request = new GetRequest('/path/to/target/batch/script.php', http_build_query(['key' => '1', 'sleep' => 3]));
+$request->addPassThroughCallbacks($passThroughCallback);
+
+$client->sendAsyncRequest($request);
+$client->waitForResponses();
+```
+
+Call the batch script in your console:
+```
+php /path/to/batch/caller.php
+```
+
+```
+# prints immediately
+Very long script to run
+# after first task is done
+First long task ended
+# after second task is done
+Second long task ended
+End of script
+```
+
 ----
 
 ### Requests

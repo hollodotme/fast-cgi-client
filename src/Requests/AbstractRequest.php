@@ -80,6 +80,9 @@ abstract class AbstractRequest implements ProvidesRequestData
 	/** @var array|callable[] */
 	private $failureCallbacks = [];
 
+	/** @var array|callable[] */
+	private $passThroughCallbacks = [];
+
 	public function __construct( string $scriptFilename, string $content )
 	{
 		$this->scriptFilename = $scriptFilename;
@@ -262,5 +265,15 @@ abstract class AbstractRequest implements ProvidesRequestData
 	public function addFailureCallbacks( callable  ...$callbacks )
 	{
 		$this->failureCallbacks = array_merge( $this->failureCallbacks, $callbacks );
+	}
+
+	public function getPassThroughCallbacks() : array
+	{
+		return $this->passThroughCallbacks;
+	}
+
+	public function addPassThroughCallbacks( callable ...$callbacks )
+	{
+		$this->passThroughCallbacks = array_merge( $this->passThroughCallbacks, $callbacks );
 	}
 }

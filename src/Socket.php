@@ -96,6 +96,9 @@ final class Socket
 	/** @var callable[] */
 	private $failureCallbacks;
 
+	/** @var callable[] */
+	private $passThroughCallbacks;
+
 	/** @var float */
 	private $startTime;
 
@@ -117,6 +120,7 @@ final class Socket
 		$this->nameValuePairEncoder = $nameValuePairEncoder;
 		$this->responseCallbacks    = [];
 		$this->failureCallbacks     = [];
+		$this->passThroughCallbacks = [];
 		$this->status               = self::REQ_STATE_UNKNOWN;
 	}
 
@@ -137,6 +141,7 @@ final class Socket
 	{
 		$this->responseCallbacks = $request->getResponseCallbacks();
 		$this->failureCallbacks  = $request->getFailureCallbacks();
+		$this->passThroughCallbacks  = $request->getPassThroughCallbacks();
 
 		$this->connect();
 
@@ -273,13 +278,15 @@ final class Socket
 
 			switch ( (int)$packet['type'] )
 			{
-				case self::STDOUT:
-					$responseContent .= $packet['content'];
-					break;
-
 				case self::STDERR:
 					$this->status    = self::REQ_STATE_ERR;
+					/* falls through */
+				case self::STDOUT:
 					$responseContent .= $packet['content'];
+					foreach ( $this->passThroughCallbacks as $passThroughCallback )
+					{
+						$passThroughCallback( $packet['content'] );
+					}
 					break;
 
 				case self::END_REQUEST:
