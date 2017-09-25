@@ -291,33 +291,39 @@ final class NetworkSocketTest extends TestCase
 
 		$this->expectOutputString( 'unit' );
 	}
-	public function testCanReceivePacketInPassThroughCallback()
+
+	public function testCanReceiveBufferInPassThroughCallback()
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
-		$data       = [ 'test-key' => str_repeat( 'test-first-key', 5000 ), 'test-second-key' => 'test-second-key', 'test-third-key' => str_repeat( 'test-third-key', 5000 ) ];
+		$data       = [
+			'test-key'        => str_repeat( 'test-first-key', 5000 ),
+			'test-second-key' => 'test-second-key',
+			'test-third-key'  => str_repeat( 'test-third-key', 5000 ),
+		];
 		$content    = http_build_query( $data );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$unitTest = $this;
+		$unitTest    = $this;
+		$passCounter = 0;
 
 		$request->addPassThroughCallbacks(
-			function ( $packet ) use ( $unitTest, $data )
+			function ( $buffer ) use ( $unitTest, $data, &$passCounter )
 			{
-				static $pass = 0;
-				if ( $pass === 0 )
+				if ( 0 === $passCounter++ )
 				{
-					/* The first key is large enough to be dumped immediately with all headers */
-					$unitTest->assertContains( $data['test-key'], $packet );
+					# The first key is large enough to be dumped immediately with all headers
+					$unitTest->assertContains( $data['test-key'], $buffer );
+
+					return;
 				}
-				elseif ( $pass === 1 )
-				{
-					/* The second key is too small to be dumped, hence the second packet will show both second AND third keys */
-					$unitTest->assertNotContains( $data['test-key'], $packet );
-					$unitTest->assertContains( $data['test-second-key'], $packet );
-					$unitTest->assertContains( $data['test-third-key'], $packet );
-				}
-				$pass++;
+
+				# The second key is too small to be dumped,
+				# hence the second packet will show both second AND third keys
+
+				$unitTest->assertNotContains( $data['test-key'], $buffer );
+				$unitTest->assertContains( $data['test-second-key'], $buffer );
+				$unitTest->assertContains( $data['test-third-key'], $buffer );
 			}
 		);
 
