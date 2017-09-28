@@ -440,6 +440,68 @@ while ( $client->hasUnhandledResponses() )
 1
 ```
 
+### Reading output buffer from worker script using pass through callbacks
+
+It may be useful to see the progression of a requested script by having access to the flushed output of that script.
+The php.ini default output buffering for php-fpm is 4096 bytes and is (hard-coded) disabled for CLI mode. ([See documentation](http://php.net/manual/en/outcontrol.configuration.php#ini.output-buffering))
+Calling `ob_implicit_flush()` causes every call to `echo` or `print` to immediately be flushed.  
+
+The callee script could look like this:
+```php
+<?php declare(strict_types=1);
+
+ob_implicit_flush();
+
+function show( string $string )
+{
+	echo $string . str_repeat( "\r", 4096 - strlen( $string ) ) . PHP_EOL;
+	sleep( 1 );
+}
+
+show( 'One' );
+show( 'Two' );
+show( 'Three' );
+
+echo 'End';
+```
+
+The caller than could look like this:
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\GetRequest;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
+
+$passThroughCallback = function( string $buffer )
+{
+	echo 'Buffer: ' . $buffer;
+};
+
+$request = new GetRequest('/path/to/target/script.php', '');
+$request->addPassThroughCallbacks( $passThroughCallback );
+
+$client->sendAsyncRequest($request);
+$client->waitForResponses();
+```
+
+```
+# prints immediately
+Buffer: Content-type: text/html; charset=UTF-8
+
+One
+# sleeps 1 sec
+Buffer: Two
+# sleeps 1 sec
+Buffer: Three
+# sleeps 1 sec
+Buffer: End
+```
+
 ----
 
 ### Requests

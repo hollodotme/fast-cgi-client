@@ -96,6 +96,9 @@ final class Socket
 	/** @var callable[] */
 	private $failureCallbacks;
 
+	/** @var callable[] */
+	private $passThroughCallbacks;
+
 	/** @var float */
 	private $startTime;
 
@@ -117,6 +120,7 @@ final class Socket
 		$this->nameValuePairEncoder = $nameValuePairEncoder;
 		$this->responseCallbacks    = [];
 		$this->failureCallbacks     = [];
+		$this->passThroughCallbacks = [];
 		$this->status               = self::REQ_STATE_UNKNOWN;
 	}
 
@@ -135,8 +139,9 @@ final class Socket
 
 	public function sendRequest( ProvidesRequestData $request ) : void
 	{
-		$this->responseCallbacks = $request->getResponseCallbacks();
-		$this->failureCallbacks  = $request->getFailureCallbacks();
+		$this->responseCallbacks    = $request->getResponseCallbacks();
+		$this->failureCallbacks     = $request->getFailureCallbacks();
+		$this->passThroughCallbacks = $request->getPassThroughCallbacks();
 
 		$this->connect();
 
@@ -273,13 +278,15 @@ final class Socket
 
 			switch ( (int)$packet['type'] )
 			{
-				case self::STDOUT:
-					$responseContent .= $packet['content'];
-					break;
-
 				case self::STDERR:
 					$this->status    = self::REQ_STATE_ERR;
 					$responseContent .= $packet['content'];
+					$this->notifyPassThroughCallbacks( $packet['content'] );
+					break;
+
+				case self::STDOUT:
+					$responseContent .= $packet['content'];
+					$this->notifyPassThroughCallbacks( $packet['content'] );
 					break;
 
 				case self::END_REQUEST:
@@ -301,7 +308,7 @@ final class Socket
 			$this->response = new Response(
 				$this->id,
 				$responseContent,
-				microtime( true ) - (float)$this->startTime
+				microtime( true ) - $this->startTime
 			);
 
 			return $this->response;
@@ -343,6 +350,14 @@ final class Socket
 		}
 
 		return null;
+	}
+
+	private function notifyPassThroughCallbacks( string $buffer ) : void
+	{
+		foreach ( $this->passThroughCallbacks as $passThroughCallback )
+		{
+			$passThroughCallback( $buffer );
+		}
 	}
 
 	private function handleNullPacket( $packet ) : void
