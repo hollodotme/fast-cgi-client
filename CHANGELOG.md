@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [2.4.0] - 2017-09-28
+
+### Added
+
+* Ability to add pass through callbacks in order to access output buffer from a long running callee - [#11]  
+  See an [example in the documentation](./README.md#reading-output-buffer-from-worker-script-using-pass-through-callbacks) for further informaiton.
+
 ## [2.3.0] - 2017-06-15
 
 ### Changed
@@ -107,6 +114,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[2.4.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.0.1...v2.1.0
@@ -119,3 +127,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#5]: https://github.com/hollodotme/fast-cgi-client/issues/5
 [#6]: https://github.com/hollodotme/fast-cgi-client/issues/6
 [#9]: https://github.com/hollodotme/fast-cgi-client/issues/9
+[#11]: https://github.com/hollodotme/fast-cgi-client/issues/11
