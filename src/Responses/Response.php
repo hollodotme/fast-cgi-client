@@ -76,7 +76,7 @@ class Response implements ProvidesResponseData
 			break;
 		}
 
-		$this->body = implode( PHP_EOL, array_slice( $lines, $offset + 2 ) );
+		$this->body = implode( PHP_EOL, \array_slice( $lines, $offset + 2 ) );
 	}
 
 	public function getRequestId() : int

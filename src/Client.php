@@ -173,7 +173,7 @@ class Client
 	 */
 	public function waitForResponses( $timeoutMs = null )
 	{
-		if ( count( $this->sockets ) === 0 )
+		if ( \count( $this->sockets ) === 0 )
 		{
 			throw new ReadFailedException( 'No pending requests found.' );
 		}
@@ -216,7 +216,7 @@ class Client
 	 */
 	public function hasUnhandledResponses() : bool
 	{
-		return (count( $this->sockets ) > 0);
+		return (\count( $this->sockets ) > 0);
 	}
 
 	/**
@@ -307,7 +307,7 @@ class Client
 	{
 		$requestIds = $this->getRequestIdsHavingResponse();
 
-		if ( count( $requestIds ) > 0 )
+		if ( \count( $requestIds ) > 0 )
 		{
 			yield from $this->readResponses( $timeoutMs, ...$requestIds );
 		}
@@ -343,7 +343,7 @@ class Client
 	{
 		$requestIds = $this->getRequestIdsHavingResponse();
 
-		if ( count( $requestIds ) > 0 )
+		if ( \count( $requestIds ) > 0 )
 		{
 			$this->handleResponses( $timeoutMs, ...$requestIds );
 		}
