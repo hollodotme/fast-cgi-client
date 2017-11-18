@@ -177,7 +177,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 	public function setContent( string $content ) : void
 	{
 		$this->content       = $content;
-		$this->contentLength = strlen( $content );
+		$this->contentLength = \strlen( $content );
 	}
 
 	public function setCustomVar( string $key, $value ) : void

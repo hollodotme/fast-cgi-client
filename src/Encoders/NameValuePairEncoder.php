@@ -45,34 +45,34 @@ final class NameValuePairEncoder implements EncodesNameValuePair
 
 	public function encodePair( string $name, string $value ) : string
 	{
-		$nameLength  = strlen( $name );
-		$valueLength = strlen( $value );
+		$nameLength  = \strlen( $name );
+		$valueLength = \strlen( $value );
 
 		if ( $nameLength < 128 )
 		{
 			/* nameLengthB0 */
-			$nameValuePair = chr( $nameLength );
+			$nameValuePair = \chr( $nameLength );
 		}
 		else
 		{
 			/* nameLengthB3 & nameLengthB2 & nameLengthB1 & nameLengthB0 */
-			$nameValuePair = chr( ($nameLength >> 24) | 0x80 )
-			                 . chr( ($nameLength >> 16) & 0xFF )
-			                 . chr( ($nameLength >> 8) & 0xFF )
-			                 . chr( $nameLength & 0xFF );
+			$nameValuePair = \chr( ($nameLength >> 24) | 0x80 )
+							 . \chr( ($nameLength >> 16) & 0xFF )
+							 . \chr( ($nameLength >> 8) & 0xFF )
+							 . \chr( $nameLength & 0xFF );
 		}
 		if ( $valueLength < 128 )
 		{
 			/* valueLengthB0 */
-			$nameValuePair .= chr( $valueLength );
+			$nameValuePair .= \chr( $valueLength );
 		}
 		else
 		{
 			/* valueLengthB3 & valueLengthB2 & valueLengthB1 & valueLengthB0 */
-			$nameValuePair .= chr( ($valueLength >> 24) | 0x80 )
-			                  . chr( ($valueLength >> 16) & 0xFF )
-			                  . chr( ($valueLength >> 8) & 0xFF )
-			                  . chr( $valueLength & 0xFF );
+			$nameValuePair .= \chr( ($valueLength >> 24) | 0x80 )
+							  . \chr( ($valueLength >> 16) & 0xFF )
+							  . \chr( ($valueLength >> 8) & 0xFF )
+							  . \chr( $valueLength & 0xFF );
 		}
 
 		return $nameValuePair . $name . $value;
@@ -84,29 +84,29 @@ final class NameValuePairEncoder implements EncodesNameValuePair
 
 		if ( $length === -1 )
 		{
-			$length = strlen( $data );
+			$length = \strlen( $data );
 		}
 
 		$p = 0;
 
 		while ( $p !== $length )
 		{
-			$nameLength = ord( $data{$p++} );
+			$nameLength = \ord( $data{$p++} );
 			if ( $nameLength >= 128 )
 			{
 				$nameLength &= (0x7F << 24);
-				$nameLength |= (ord( $data{$p++} ) << 16);
-				$nameLength |= (ord( $data{$p++} ) << 8);
-				$nameLength |= ord( $data{$p++} );
+				$nameLength |= (\ord( $data{$p++} ) << 16);
+				$nameLength |= (\ord( $data{$p++} ) << 8);
+				$nameLength |= \ord( $data{$p++} );
 			}
 
-			$valueLength = ord( $data{$p++} );
+			$valueLength = \ord( $data{$p++} );
 			if ( $valueLength >= 128 )
 			{
 				$valueLength = ($nameLength & 0x7F << 24);
-				$valueLength |= (ord( $data{$p++} ) << 16);
-				$valueLength |= (ord( $data{$p++} ) << 8);
-				$valueLength |= ord( $data{$p++} );
+				$valueLength |= (\ord( $data{$p++} ) << 16);
+				$valueLength |= (\ord( $data{$p++} ) << 8);
+				$valueLength |= \ord( $data{$p++} );
 			}
 			$array[ substr( $data, $p, $nameLength ) ] = substr( $data, $p + $nameLength, $valueLength );
 			$p += ($nameLength + $valueLength);

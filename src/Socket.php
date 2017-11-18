@@ -219,7 +219,7 @@ final class Socket
 		# Keep alive bit always set to 1
 		$requestPackets = $this->packetEncoder->encodePacket(
 			self::BEGIN_REQUEST,
-			chr( 0 ) . chr( self::RESPONDER ) . chr( 1 ) . str_repeat( chr( 0 ), 5 ),
+			\chr( 0 ) . \chr( self::RESPONDER ) . \chr( 1 ) . str_repeat( \chr( 0 ), 5 ),
 			$this->id
 		);
 
@@ -303,7 +303,7 @@ final class Socket
 		try
 		{
 			$this->handleNullPacket( $packet );
-			$this->guardRequestCompleted( ord( $packet['content']{4} ) );
+			$this->guardRequestCompleted( \ord( $packet['content']{4} ) );
 
 			$this->response = new Response(
 				$this->id,
@@ -336,7 +336,7 @@ final class Socket
 
 				while ( $length && ($buffer = fread( $this->resource, $length )) !== false )
 				{
-					$length            -= strlen( $buffer );
+					$length            -= \strlen( $buffer );
 					$packet['content'] .= $buffer;
 				}
 			}
@@ -403,7 +403,7 @@ final class Socket
 
 	private function disconnect() : void
 	{
-		if ( is_resource( $this->resource ) )
+		if ( \is_resource( $this->resource ) )
 		{
 			fclose( $this->resource );
 		}
