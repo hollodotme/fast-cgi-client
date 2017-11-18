@@ -39,8 +39,6 @@ use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
  */
 class Client
 {
-	private const LOOP_TICK_USEC = 2000;
-
 	/** @var ConfiguresSocketConnection */
 	private $connection;
 
@@ -160,8 +158,6 @@ class Client
 				$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
 				break;
 			}
-
-			usleep( self::LOOP_TICK_USEC );
 		}
 	}
 
@@ -173,7 +169,7 @@ class Client
 	 */
 	public function waitForResponses( ?int $timeoutMs = null ) : void
 	{
-		if ( count( $this->sockets ) === 0 )
+		if ( \count( $this->sockets ) === 0 )
 		{
 			throw new ReadFailedException( 'No pending requests found.' );
 		}
@@ -184,8 +180,6 @@ class Client
 			{
 				$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
 			}
-
-			usleep( self::LOOP_TICK_USEC );
 		}
 	}
 
@@ -216,7 +210,7 @@ class Client
 	 */
 	public function hasUnhandledResponses() : bool
 	{
-		return (count( $this->sockets ) > 0);
+		return (\count( $this->sockets ) > 0);
 	}
 
 	/**
@@ -258,6 +252,11 @@ class Client
 	 */
 	public function getRequestIdsHavingResponse() : array
 	{
+		if ( \count( $this->sockets ) === 0 )
+		{
+			return [];
+		}
+
 		$resources = [];
 		$writes    = $excepts = null;
 
@@ -307,7 +306,7 @@ class Client
 	{
 		$requestIds = $this->getRequestIdsHavingResponse();
 
-		if ( count( $requestIds ) > 0 )
+		if ( \count( $requestIds ) > 0 )
 		{
 			yield from $this->readResponses( $timeoutMs, ...$requestIds );
 		}
@@ -343,9 +342,6 @@ class Client
 	{
 		$requestIds = $this->getRequestIdsHavingResponse();
 
-		if ( count( $requestIds ) > 0 )
-		{
-			$this->handleResponses( $timeoutMs, ...$requestIds );
-		}
+		$this->handleResponses( $timeoutMs, ...$requestIds );
 	}
 }

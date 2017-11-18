@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [2.4.1] - 2017-11-19
+
+### Fixes
+
+* PHP warning when trying to get ready request IDs - [#14]
+
+### Improves
+
+* Loop performance 
+
 ## [2.4.0] - 2017-09-28
 
 ### Added
@@ -114,6 +124,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[2.4.1]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.2.0...v2.3.0
 [2.2.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.1.0...v2.2.0
@@ -128,3 +139,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#6]: https://github.com/hollodotme/fast-cgi-client/issues/6
 [#9]: https://github.com/hollodotme/fast-cgi-client/issues/9
 [#11]: https://github.com/hollodotme/fast-cgi-client/issues/11
+[#14]: https://github.com/hollodotme/fast-cgi-client/issues/14

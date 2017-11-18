@@ -35,28 +35,28 @@ final class PacketEncoder implements EncodesPacket
 
 	public function encodePacket( int $type, string $content, int $requestId ) : string
 	{
-		$contentLength = strlen( $content );
+		$contentLength = \strlen( $content );
 
-		return chr( self::VERSION )                     /* version */
-		       . chr( $type )                           /* type */
-		       . chr( ($requestId >> 8) & 0xFF )        /* requestIdB1 */
-		       . chr( $requestId & 0xFF )               /* requestIdB0 */
-		       . chr( ($contentLength >> 8) & 0xFF )    /* contentLengthB1 */
-		       . chr( $contentLength & 0xFF )           /* contentLengthB0 */
-		       . chr( 0 )                               /* paddingLength */
-		       . chr( 0 )                               /* reserved */
-		       . $content;                              /* content */
+		return \chr( self::VERSION )                     /* version */
+			   . \chr( $type )                           /* type */
+			   . \chr( ($requestId >> 8) & 0xFF )        /* requestIdB1 */
+			   . \chr( $requestId & 0xFF )               /* requestIdB0 */
+			   . \chr( ($contentLength >> 8) & 0xFF )    /* contentLengthB1 */
+			   . \chr( $contentLength & 0xFF )           /* contentLengthB0 */
+			   . \chr( 0 )                               /* paddingLength */
+			   . \chr( 0 )                               /* reserved */
+			   . $content;                              /* content */
 	}
 
 	public function decodeHeader( string $data ) : array
 	{
 		$header                  = [];
-		$header['version']       = ord( $data{0} );
-		$header['type']          = ord( $data{1} );
-		$header['requestId']     = (ord( $data{2} ) << 8) + ord( $data{3} );
-		$header['contentLength'] = (ord( $data{4} ) << 8) + ord( $data{5} );
-		$header['paddingLength'] = ord( $data{6} );
-		$header['reserved']      = ord( $data{7} );
+		$header['version']       = \ord( $data{0} );
+		$header['type']          = \ord( $data{1} );
+		$header['requestId']     = (\ord( $data{2} ) << 8) + \ord( $data{3} );
+		$header['contentLength'] = (\ord( $data{4} ) << 8) + \ord( $data{5} );
+		$header['paddingLength'] = \ord( $data{6} );
+		$header['reserved']      = \ord( $data{7} );
 
 		return $header;
 	}
