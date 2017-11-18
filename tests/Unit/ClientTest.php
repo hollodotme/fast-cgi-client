@@ -40,7 +40,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testConnectAttemptToNotExistingSocketThrowsException() : void
 	{
-		$connection = new UnixDomainSocket( '/tmp/not/existing.sock', 2000, 2000, true, true );
+		$connection = new UnixDomainSocket( '/tmp/not/existing.sock', 2000, 2000 );
 		$client     = new Client( $connection );
 
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
@@ -117,5 +117,15 @@ final class ClientTest extends TestCase
 		$client     = new Client( $connection );
 
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
+	}
+
+	public function testHandlingReadyResponsesJustReturnsIfClientGotNoRequests() : void
+	{
+		$connection = new UnixDomainSocket( '/var/run/php7.1-ruds.sock' );
+		$client     = new Client( $connection );
+
+		$this->assertFalse( $client->hasUnhandledResponses() );
+
+		$client->handleReadyResponses();
 	}
 }
