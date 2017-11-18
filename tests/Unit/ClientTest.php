@@ -118,4 +118,14 @@ final class ClientTest extends TestCase
 
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
 	}
+
+	public function testHandlingReadyResponsesJustReturnsIfClientGotNoRequests()
+	{
+		$connection = new UnixDomainSocket( '/var/run/php7.0-ruds.sock' );
+		$client     = new Client( $connection );
+
+		$this->assertFalse( $client->hasUnhandledResponses() );
+
+		$client->handleReadyResponses();
+	}
 }

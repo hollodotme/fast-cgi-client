@@ -258,6 +258,11 @@ class Client
 	 */
 	public function getRequestIdsHavingResponse() : array
 	{
+		if ( \count( $this->sockets ) === 0 )
+		{
+			return [];
+		}
+
 		$resources = [];
 		$writes    = $excepts = null;
 
@@ -343,9 +348,6 @@ class Client
 	{
 		$requestIds = $this->getRequestIdsHavingResponse();
 
-		if ( \count( $requestIds ) > 0 )
-		{
-			$this->handleResponses( $timeoutMs, ...$requestIds );
-		}
+		$this->handleResponses( $timeoutMs, ...$requestIds );
 	}
 }
