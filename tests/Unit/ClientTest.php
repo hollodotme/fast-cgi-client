@@ -40,7 +40,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testConnectAttemptToNotExistingSocketThrowsException()
 	{
-		$connection = new UnixDomainSocket( '/tmp/not/existing.sock', 2000, 2000, true, true );
+		$connection = new UnixDomainSocket( '/tmp/not/existing.sock', 2000, 2000 );
 		$client     = new Client( $connection );
 
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
