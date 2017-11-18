@@ -5,7 +5,13 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CH
 
 ## [1.4.1] - 2017-11-19
 
-* Fixes PHP warning when trying to get ready request IDs - [#14] 
+### Fixes
+
+* PHP warning when trying to get ready request IDs - [#14]
+
+### Improves
+
+* Loop performance  
 
 ## [1.4.0] - 2017-09-28
 

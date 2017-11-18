@@ -39,8 +39,6 @@ use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
  */
 class Client
 {
-	const LOOP_TICK_USEC = 2000;
-
 	/** @var ConfiguresSocketConnection */
 	private $connection;
 
@@ -160,8 +158,6 @@ class Client
 				$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
 				break;
 			}
-
-			usleep( self::LOOP_TICK_USEC );
 		}
 	}
 
@@ -184,8 +180,6 @@ class Client
 			{
 				$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
 			}
-
-			usleep( self::LOOP_TICK_USEC );
 		}
 	}
 
