@@ -18,7 +18,16 @@ We accept contributions via pull requests on [GitHub](https://github.com/hollodo
 
 - **Send coherent history** - Make sure each individual commit in your pull request is meaningful. If you had to make multiple intermediate commits while developing, please squash them before submitting.
 
+## Running tests
 
-## Running Tests
+```bash
+$ php vendor/bin/phpunit.phar -c build/
+```
 
-    $ php vendor/bin/phpunit.phar -c build/
+This includes a code coverage report in HTML and Clover XML.
+
+## Analyze code
+
+```bash
+$ php vendor/bin/phpmetrics.phar --report-html=build/logs/phpmetrics src/
+```
