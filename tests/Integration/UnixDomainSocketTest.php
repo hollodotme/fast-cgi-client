@@ -36,6 +36,12 @@ use PHPUnit\Framework\TestCase;
  */
 final class UnixDomainSocketTest extends TestCase
 {
+	/**
+	 * @throws \Exception
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanSendAsyncRequestAndReceiveRequestId()
 	{
 		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
@@ -49,6 +55,13 @@ final class UnixDomainSocketTest extends TestCase
 		$this->assertLessThanOrEqual( 65535, $requestId );
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanSendAsyncRequestAndReadResponse()
 	{
 		$connection       = new UnixDomainSocket( '/var/run/php-uds.sock' );
@@ -67,6 +80,13 @@ final class UnixDomainSocketTest extends TestCase
 		$this->assertSame( $requestId, $response->getRequestId() );
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanSendSyncRequestAndReceiveResponse()
 	{
 		$connection       = new UnixDomainSocket( '/var/run/php-uds.sock' );
@@ -86,6 +106,14 @@ final class UnixDomainSocketTest extends TestCase
 		$this->assertLessThanOrEqual( 65535, $response->getRequestId() );
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanReceiveResponseInCallback()
 	{
 		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
@@ -106,6 +134,14 @@ final class UnixDomainSocketTest extends TestCase
 		$client->waitForResponses();
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanHandleExceptionsInFailureCallback()
 	{
 		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
@@ -134,6 +170,14 @@ final class UnixDomainSocketTest extends TestCase
 		$client->waitForResponses();
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \PHPUnit\Framework\AssertionFailedError
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanCheckForRequestIdsHavingResponses()
 	{
 		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
@@ -149,6 +193,12 @@ final class UnixDomainSocketTest extends TestCase
 		$this->assertEquals( [$requestId], $client->getRequestIdsHavingResponse() );
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanReadResponses()
 	{
 		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
@@ -183,6 +233,12 @@ final class UnixDomainSocketTest extends TestCase
 	}
 
 	/**
+	 * @throws \Exception
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 *
 	 * @expectedException \hollodotme\FastCGI\Exceptions\TimedoutException
 	 */
 	public function testReadingSyncResponseCanTimeOut()
@@ -202,6 +258,13 @@ final class UnixDomainSocketTest extends TestCase
 		$client->sendRequest( $request );
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanHandleReadyResponses()
 	{
 		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
@@ -226,6 +289,13 @@ final class UnixDomainSocketTest extends TestCase
 		}
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \PHPUnit\Framework\Exception
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanReadReadyResponses()
 	{
 		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
@@ -246,6 +316,13 @@ final class UnixDomainSocketTest extends TestCase
 		$this->expectOutputString( 'unit' );
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanWaitForResponse()
 	{
 		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
@@ -267,6 +344,14 @@ final class UnixDomainSocketTest extends TestCase
 		$client->waitForResponse( $requestId );
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \PHPUnit\Framework\AssertionFailedError
+	 * @throws \PHPUnit\Framework\Exception
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testReadResponsesSkipsUnknownRequestIds()
 	{
 		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
@@ -292,6 +377,14 @@ final class UnixDomainSocketTest extends TestCase
 		$this->expectOutputString( 'unit' );
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanReceiveBufferInPassThroughCallback()
 	{
 		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );

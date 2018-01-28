@@ -65,8 +65,11 @@ class Client
 	/**
 	 * @param ProvidesRequestData $request
 	 *
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \Exception
 	 * @throws \Throwable
 	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
 	 * @return ProvidesResponseData
 	 */
 	public function sendRequest( ProvidesRequestData $request ) : ProvidesResponseData
@@ -79,8 +82,11 @@ class Client
 	/**
 	 * @param ProvidesRequestData $request
 	 *
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
 	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
 	 * @return int
+	 * @throws \Exception
 	 */
 	public function sendAsyncRequest( ProvidesRequestData $request ) : int
 	{
@@ -128,6 +134,12 @@ class Client
 		}
 	}
 
+	/**
+	 * @param int $requestId
+	 *
+	 * @return Socket
+	 * @throws ReadFailedException
+	 */
 	private function getSocketWithId( int $requestId ) : Socket
 	{
 		$this->guardSocketExists( $requestId );
@@ -135,6 +147,11 @@ class Client
 		return $this->sockets[ $requestId ];
 	}
 
+	/**
+	 * @param int $requestId
+	 *
+	 * @throws ReadFailedException
+	 */
 	private function guardSocketExists( int $requestId )
 	{
 		if ( !isset( $this->sockets[ $requestId ] ) )
@@ -146,6 +163,8 @@ class Client
 	/**
 	 * @param int      $requestId
 	 * @param int|null $timeoutMs
+	 *
+	 * @throws ReadFailedException
 	 */
 	public function waitForResponse( int $requestId, $timeoutMs = null )
 	{
@@ -215,6 +234,7 @@ class Client
 
 	/**
 	 * @return \Generator|Socket[]
+	 * @throws ReadFailedException
 	 */
 	private function getSocketsHavingResponse() : \Generator
 	{
@@ -239,6 +259,7 @@ class Client
 	 * @param int $requestId
 	 *
 	 * @return bool
+	 * @throws ReadFailedException
 	 */
 	public function hasResponse( int $requestId ) : bool
 	{
@@ -315,6 +336,8 @@ class Client
 	/**
 	 * @param int      $requestId
 	 * @param int|null $timeoutMs
+	 *
+	 * @throws ReadFailedException
 	 */
 	public function handleResponse( int $requestId, $timeoutMs = null )
 	{
@@ -326,6 +349,8 @@ class Client
 	/**
 	 * @param int|null $timeoutMs
 	 * @param \int[]   ...$requestIds
+	 *
+	 * @throws ReadFailedException
 	 */
 	public function handleResponses( $timeoutMs = null, int ...$requestIds )
 	{
@@ -337,6 +362,8 @@ class Client
 
 	/**
 	 * @param int|null $timeoutMs
+	 *
+	 * @throws ReadFailedException
 	 */
 	public function handleReadyResponses( $timeoutMs = null )
 	{

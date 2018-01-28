@@ -26,9 +26,13 @@ namespace hollodotme\FastCGI\Tests\Unit\SocketConnections;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+use PHPUnit\Framework\TestCase;
 
-class NetworkSocketTest extends \PHPUnit\Framework\TestCase
+class NetworkSocketTest extends TestCase
 {
+	/**
+	 * @throws \PHPUnit\Framework\Exception
+	 */
 	public function testImplementsConnectionInterface()
 	{
 		$connection = new NetworkSocket( 'localhost', 9000 );

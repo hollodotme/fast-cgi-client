@@ -24,8 +24,9 @@
 namespace hollodotme\FastCGI\Tests\Unit\Encoders;
 
 use hollodotme\FastCGI\Encoders\PacketEncoder;
+use PHPUnit\Framework\TestCase;
 
-class PacketEncoderTest extends \PHPUnit\Framework\TestCase
+class PacketEncoderTest extends TestCase
 {
 	/**
 	 * @param int    $type
@@ -44,7 +45,7 @@ class PacketEncoderTest extends \PHPUnit\Framework\TestCase
 		$header = $packetEncoder->decodeHeader( $packet );
 
 		$this->assertEquals( $expectedHeader, $header );
-		$this->assertEquals( substr( $packet, -1 * strlen( $content ) ), $content );
+		$this->assertEquals( substr( $packet, -1 * \strlen( $content ) ), $content );
 	}
 
 	public function packetContentProvider() : array

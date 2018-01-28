@@ -21,4 +21,11 @@
  * SOFTWARE.
  */
 
-require(__DIR__ . '/../vendor/autoload.php');
+if ( PHP_VERSION_ID >= 70200 && extension_loaded( 'xdebug' ) )
+{
+	/** @noinspection PhpUndefinedFunctionInspection */
+	/** @noinspection PhpUndefinedConstantInspection */
+	xdebug_set_filter( XDEBUG_FILTER_CODE_COVERAGE, XDEBUG_PATH_WHITELIST, [__DIR__ . '/../src'] );
+}
+
+require __DIR__ . '/../vendor/autoload.php';

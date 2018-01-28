@@ -26,9 +26,13 @@ namespace hollodotme\FastCGI\Tests\Unit\SocketConnections;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use PHPUnit\Framework\TestCase;
 
-class UnixDomainSocketTest extends \PHPUnit\Framework\TestCase
+class UnixDomainSocketTest extends TestCase
 {
+	/**
+	 * @throws \PHPUnit\Framework\Exception
+	 */
 	public function testImplementsConnectionInterface()
 	{
 		$connection = new UnixDomainSocket( '/var/run/php/php7.0-fpm.sock' );

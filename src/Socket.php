@@ -110,6 +110,13 @@ final class Socket
 	/** @var int */
 	private $status;
 
+	/**
+	 * @param ConfiguresSocketConnection $connection
+	 * @param EncodesPacket              $packetEncoder
+	 * @param EncodesNameValuePair       $nameValuePairEncoder
+	 *
+	 * @throws \Exception
+	 */
 	public function __construct(
 		ConfiguresSocketConnection $connection,
 		EncodesPacket $packetEncoder,
@@ -139,6 +146,13 @@ final class Socket
 		return (bool)stream_select( $reads, $writes, $excepts, 0, self::STREAM_SELECT_USEC );
 	}
 
+	/**
+	 * @param ProvidesRequestData $request
+	 *
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 */
 	public function sendRequest( ProvidesRequestData $request )
 	{
 		$this->responseCallbacks    = $request->getResponseCallbacks();
@@ -155,6 +169,9 @@ final class Socket
 		$this->startTime = microtime( true );
 	}
 
+	/**
+	 * @throws ConnectException
+	 */
 	private function connect()
 	{
 		try
@@ -179,6 +196,12 @@ final class Socket
 		}
 	}
 
+	/**
+	 * @param $errorNumber
+	 * @param $errorString
+	 *
+	 * @throws ConnectException
+	 */
 	private function handleFailedResource( $errorNumber, $errorString )
 	{
 		if ( $this->resource !== false )
@@ -250,6 +273,12 @@ final class Socket
 		return $requestPackets;
 	}
 
+	/**
+	 * @param string $data
+	 *
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 */
 	private function write( string $data )
 	{
 		$writeResult = fwrite( $this->resource, $data );
@@ -268,6 +297,12 @@ final class Socket
 		}
 	}
 
+	/**
+	 * @param null $timeoutMs
+	 *
+	 * @return ProvidesResponseData
+	 * @throws \Throwable
+	 */
 	public function fetchResponse( $timeoutMs = null ) : ProvidesResponseData
 	{
 		if ( null !== $this->response )
@@ -368,6 +403,13 @@ final class Socket
 		}
 	}
 
+	/**
+	 * @param $packet
+	 *
+	 * @throws ForbiddenException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 */
 	private function handleNullPacket( $packet )
 	{
 		if ( $packet === null )
@@ -388,6 +430,12 @@ final class Socket
 		}
 	}
 
+	/**
+	 * @param int $flag
+	 *
+	 * @throws ReadFailedException
+	 * @throws WriteFailedException
+	 */
 	private function guardRequestCompleted( int $flag )
 	{
 		switch ( $flag )

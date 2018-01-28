@@ -37,6 +37,9 @@ use PHPUnit\Framework\TestCase;
  */
 final class SocketTest extends TestCase
 {
+	/**
+	 * @throws \Exception
+	 */
 	public function testCanGetIdAfterConstruction()
 	{
 		$socket = $this->getSocket();
@@ -45,6 +48,10 @@ final class SocketTest extends TestCase
 		$this->assertLessThanOrEqual( (1 << 16) - 1, $socket->getId() );
 	}
 
+	/**
+	 * @return Socket
+	 * @throws \Exception
+	 */
 	private function getSocket() : Socket
 	{
 		$nameValuePairEncoder = new NameValuePairEncoder();
@@ -54,12 +61,19 @@ final class SocketTest extends TestCase
 		return new Socket( $connection, $packetEncoder, $nameValuePairEncoder );
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanSendRequestAndFetchResponse()
 	{
 		$socket  = $this->getSocket();
-		$data    = [ 'test-key' => 'unit' ];
+		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
-			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
+			\dirname( __DIR__ ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 
@@ -74,13 +88,21 @@ final class SocketTest extends TestCase
 		$this->assertSame( $response, $response2 );
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \PHPUnit\Framework\AssertionFailedError
+	 * @throws \PHPUnit\Framework\Exception
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanCollectResource()
 	{
 		$resources = [];
 		$socket    = $this->getSocket();
-		$data      = [ 'test-key' => 'unit' ];
+		$data      = ['test-key' => 'unit'];
 		$request   = new PostRequest(
-			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
+			\dirname( __DIR__ ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 
@@ -95,12 +117,20 @@ final class SocketTest extends TestCase
 		$this->assertInternalType( 'resource', $resources[ $socket->getId() ] );
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \PHPUnit\Framework\Exception
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanNotifyResponseCallback()
 	{
 		$socket  = $this->getSocket();
-		$data    = [ 'test-key' => 'unit' ];
+		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
-			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
+			\dirname( __DIR__ ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 		$request->addResponseCallbacks(
@@ -117,12 +147,19 @@ final class SocketTest extends TestCase
 		$this->expectOutputString( 'unit' );
 	}
 
+	/**
+	 * @throws \Exception
+	 * @throws \PHPUnit\Framework\Exception
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 */
 	public function testCanNotifyFailureCallback()
 	{
 		$socket  = $this->getSocket();
-		$data    = [ 'test-key' => 'unit' ];
+		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
-			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
+			\dirname( __DIR__ ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 		$request->addFailureCallbacks(
