@@ -330,4 +330,63 @@ final class NetworkSocketTest extends TestCase
 		$client->sendAsyncRequest( $request );
 		$client->waitForResponses();
 	}
+
+	/**
+	 * @param int $length
+	 *
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 *
+	 * @dataProvider contentLengthProvider
+	 */
+	public function testCanGetLengthOfSentContent( int $length ) : void
+	{
+		$content    = str_repeat( 'a', $length );
+		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$client     = new Client( $connection );
+		$request    = new PostRequest( __DIR__ . '/Workers/lengthWorker.php', $content );
+		$request->setContentType( '*/*' );
+		$result = $client->sendRequest( $request );
+
+		$this->assertEquals( $length, $result->getBody() );
+	}
+
+	public function contentLengthProvider() : array
+	{
+		return [
+			[
+				'length' => 1024,
+			],
+			[
+				'length' => 2048,
+			],
+			[
+				'length' => 4096,
+			],
+			[
+				'length' => 8192,
+			],
+			[
+				'length' => 16384,
+			],
+			[
+				'length' => 32768,
+			],
+			[
+				'length' => 65535,
+			],
+			[
+				'length' => 65536,
+			],
+			[
+				'length' => 131072,
+			],
+			[
+				'length' => 262144,
+			],
+			[
+				'length' => 524288,
+			],
+		];
+	}
 }
