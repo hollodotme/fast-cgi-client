@@ -40,7 +40,7 @@ final class NetworkSocketTest extends TestCase
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
-		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$requestId = $client->sendAsyncRequest( $request );
@@ -53,7 +53,7 @@ final class NetworkSocketTest extends TestCase
 	{
 		$connection       = new NetworkSocket( '127.0.0.1', 9000 );
 		$client           = new Client( $connection );
-		$content          = http_build_query( [ 'test-key' => 'unit' ] );
+		$content          = http_build_query( ['test-key' => 'unit'] );
 		$request          = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
@@ -71,7 +71,7 @@ final class NetworkSocketTest extends TestCase
 	{
 		$connection       = new NetworkSocket( '127.0.0.1', 9000 );
 		$client           = new Client( $connection );
-		$content          = http_build_query( [ 'test-key' => 'unit' ] );
+		$content          = http_build_query( ['test-key' => 'unit'] );
 		$request          = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
@@ -90,7 +90,7 @@ final class NetworkSocketTest extends TestCase
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
-		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$unitTest = $this;
@@ -110,7 +110,7 @@ final class NetworkSocketTest extends TestCase
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
-		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$unitTest = $this;
@@ -138,7 +138,7 @@ final class NetworkSocketTest extends TestCase
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
-		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$requestId = $client->sendAsyncRequest( $request );
@@ -146,25 +146,25 @@ final class NetworkSocketTest extends TestCase
 		usleep( 60000 );
 
 		$this->assertTrue( $client->hasResponse( $requestId ) );
-		$this->assertEquals( [ $requestId ], $client->getRequestIdsHavingResponse() );
+		$this->assertEquals( [$requestId], $client->getRequestIdsHavingResponse() );
 	}
 
 	public function testCanReadResponses() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
-		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$requestIdOne = $client->sendAsyncRequest( $request );
 
-		$request->setContent( http_build_query( [ 'test-key' => 'test' ] ) );
+		$request->setContent( http_build_query( ['test-key' => 'test'] ) );
 
 		$requestIdTwo = $client->sendAsyncRequest( $request );
 
 		usleep( 110000 );
 
-		$requestIds = [ $requestIdOne, $requestIdTwo ];
+		$requestIds = [$requestIdOne, $requestIdTwo];
 
 		$this->assertEquals( $requestIds, $client->getRequestIdsHavingResponse() );
 
@@ -189,14 +189,14 @@ final class NetworkSocketTest extends TestCase
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
 		$client     = new Client( $connection );
-		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
 
 		$response = $client->sendRequest( $request );
 
 		$this->assertSame( 'unit - 0', $response->getBody() );
 
-		$content = http_build_query( [ 'sleep' => 2, 'test-key' => 'unit' ] );
+		$content = http_build_query( ['sleep' => 2, 'test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
 
 		$client->sendRequest( $request );
@@ -206,7 +206,7 @@ final class NetworkSocketTest extends TestCase
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
 		$client     = new Client( $connection );
-		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$unitTest = $this;
@@ -230,7 +230,7 @@ final class NetworkSocketTest extends TestCase
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
 		$client     = new Client( $connection );
-		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$client->sendAsyncRequest( $request );
@@ -250,7 +250,7 @@ final class NetworkSocketTest extends TestCase
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
 		$client     = new Client( $connection );
-		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$unitTest = $this;
@@ -271,7 +271,7 @@ final class NetworkSocketTest extends TestCase
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
 		$client     = new Client( $connection );
-		$content    = http_build_query( [ 'test-key' => 'unit' ] );
+		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$requestIds   = [];
@@ -329,5 +329,64 @@ final class NetworkSocketTest extends TestCase
 
 		$client->sendAsyncRequest( $request );
 		$client->waitForResponses();
+	}
+
+	/**
+	 * @param int $length
+	 *
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 *
+	 * @dataProvider contentLengthProvider
+	 */
+	public function testCanGetLengthOfSentContent( int $length ) : void
+	{
+		$content    = str_repeat( 'a', $length );
+		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$client     = new Client( $connection );
+		$request    = new PostRequest( __DIR__ . '/Workers/lengthWorker.php', $content );
+		$request->setContentType( '*/*' );
+		$result = $client->sendRequest( $request );
+
+		$this->assertEquals( $length, $result->getBody() );
+	}
+
+	public function contentLengthProvider() : array
+	{
+		return [
+			[
+				'length' => 1024,
+			],
+			[
+				'length' => 2048,
+			],
+			[
+				'length' => 4096,
+			],
+			[
+				'length' => 8192,
+			],
+			[
+				'length' => 16384,
+			],
+			[
+				'length' => 32768,
+			],
+			[
+				'length' => 65535,
+			],
+			[
+				'length' => 65536,
+			],
+			[
+				'length' => 131072,
+			],
+			[
+				'length' => 262144,
+			],
+			[
+				'length' => 524288,
+			],
+		];
 	}
 }
