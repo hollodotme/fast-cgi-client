@@ -1,5 +1,4 @@
 [![Build Status](https://travis-ci.org/hollodotme/fast-cgi-client.svg?branch=1.x-stable)](https://travis-ci.org/hollodotme/fast-cgi-client)
-[![Tested PHP versions](https://php-eye.com/badge/hollodotme/fast-cgi-client/tested.svg?branch=1.x-stable)](https://php-eye.com/package/hollodotme/fast-cgi-client)
 [![Latest Stable Version](https://poser.pugx.org/hollodotme/fast-cgi-client/v/stable)](https://packagist.org/packages/hollodotme/fast-cgi-client) 
 [![Total Downloads](https://poser.pugx.org/hollodotme/fast-cgi-client/downloads)](https://packagist.org/packages/hollodotme/fast-cgi-client) 
 [![Coverage Status](https://coveralls.io/repos/github/hollodotme/fast-cgi-client/badge.svg?branch=1.x-stable)](https://coveralls.io/github/hollodotme/fast-cgi-client?branch=1.x-stable)
@@ -28,7 +27,9 @@ You can also find slides of my talks about this project on [speakerdeck.com](htt
 composer require hollodotme/fast-cgi-client:^1.0
 ```
 
-### Use version 2.x for compatibility with PHP 7.1.x
+**PLEASE NOTE:** Version 1.4.2 is the last release supporting PHP 7.0.x.
+
+### Use version 2.x for compatibility with PHP >= 7.1
 
 ```bash
 composer require hollodotme/fast-cgi-client:^2.0

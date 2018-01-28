@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [1.4.2] - 2018-01-28
+
+### Fixes
+
+* Missing data in `php://input` on worker side when client sends content larger than 65535 bytes - [#15]
+
 ## [1.4.1] - 2017-11-19
 
 ### Fixes
@@ -114,6 +120,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[1.4.2]: https://github.com/hollodotme/fast-cgi-client/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/hollodotme/fast-cgi-client/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/hollodotme/fast-cgi-client/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/hollodotme/fast-cgi-client/compare/v1.2.0...v1.3.0
@@ -129,3 +136,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#9]: https://github.com/hollodotme/fast-cgi-client/issues/9
 [#11]: https://github.com/hollodotme/fast-cgi-client/issues/11
 [#14]: https://github.com/hollodotme/fast-cgi-client/issues/14
+[#15]: https://github.com/hollodotme/fast-cgi-client/issues/15
