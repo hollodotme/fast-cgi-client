@@ -41,39 +41,41 @@ use hollodotme\FastCGI\Responses\Response;
  */
 final class Socket
 {
-	private const BEGIN_REQUEST      = 1;
+	private const BEGIN_REQUEST        = 1;
 
-	private const END_REQUEST        = 3;
+	private const END_REQUEST          = 3;
 
-	private const PARAMS             = 4;
+	private const PARAMS               = 4;
 
-	private const STDIN              = 5;
+	private const STDIN                = 5;
 
-	private const STDOUT             = 6;
+	private const STDOUT               = 6;
 
-	private const STDERR             = 7;
+	private const STDERR               = 7;
 
-	private const RESPONDER          = 1;
+	private const RESPONDER            = 1;
 
-	private const REQUEST_COMPLETE   = 0;
+	private const REQUEST_COMPLETE     = 0;
 
-	private const CANT_MPX_CONN      = 1;
+	private const CANT_MPX_CONN        = 1;
 
-	private const OVERLOADED         = 2;
+	private const OVERLOADED           = 2;
 
-	private const UNKNOWN_ROLE       = 3;
+	private const UNKNOWN_ROLE         = 3;
 
-	private const HEADER_LEN         = 8;
+	private const HEADER_LEN           = 8;
 
-	private const REQ_STATE_WRITTEN  = 1;
+	private const REQ_STATE_WRITTEN    = 1;
 
-	private const REQ_STATE_OK       = 2;
+	private const REQ_STATE_OK         = 2;
 
-	private const REQ_STATE_ERR      = 3;
+	private const REQ_STATE_ERR        = 3;
 
-	private const REQ_STATE_UNKNOWN  = 4;
+	private const REQ_STATE_UNKNOWN    = 4;
 
-	public const  STREAM_SELECT_USEC = 20000;
+	private const REQ_MAX_CONTENT_SIZE = 65535;
+
+	public const  STREAM_SELECT_USEC   = 20000;
 
 	/** @var int */
 	private $id;
@@ -131,7 +133,7 @@ final class Socket
 
 	public function hasResponse() : bool
 	{
-		$reads  = [ $this->resource ];
+		$reads  = [$this->resource];
 		$writes = $excepts = null;
 
 		return (bool)stream_select( $reads, $writes, $excepts, 0, self::STREAM_SELECT_USEC );
@@ -234,7 +236,13 @@ final class Socket
 
 		if ( $request->getContent() )
 		{
-			$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, $request->getContent(), $this->id );
+			$offset = 0;
+			do
+			{
+				$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, substr( $request->getContent(), $offset, self::REQ_MAX_CONTENT_SIZE ), $this->id );
+				$offset         += self::REQ_MAX_CONTENT_SIZE;
+			}
+			while ( $offset < $request->getContentLength() );
 		}
 
 		$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, '', $this->id );
