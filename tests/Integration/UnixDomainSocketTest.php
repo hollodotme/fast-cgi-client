@@ -432,7 +432,7 @@ final class UnixDomainSocketTest extends TestCase
 	 *
 	 * @dataProvider contentLengthProvider
 	 */
-	public function testCanGetLengthOfSentContent( int $length ) : void
+	public function testCanGetLengthOfSentContent( int $length )
 	{
 		$content    = str_repeat( 'a', $length );
 		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );

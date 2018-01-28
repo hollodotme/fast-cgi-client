@@ -432,7 +432,7 @@ final class NetworkSocketTest extends TestCase
 	 *
 	 * @dataProvider contentLengthProvider
 	 */
-	public function testCanGetLengthOfSentContent( int $length ) : void
+	public function testCanGetLengthOfSentContent( int $length )
 	{
 		$content    = str_repeat( 'a', $length );
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
