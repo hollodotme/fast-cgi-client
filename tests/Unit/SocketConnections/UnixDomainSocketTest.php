@@ -30,6 +30,9 @@ use PHPUnit\Framework\TestCase;
 
 class UnixDomainSocketTest extends TestCase
 {
+	/**
+	 * @throws \PHPUnit\Framework\Exception
+	 */
 	public function testImplementsConnectionInterface() : void
 	{
 		$connection = new UnixDomainSocket( '/var/run/php/php7.1-fpm.sock' );

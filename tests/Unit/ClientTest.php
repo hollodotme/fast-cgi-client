@@ -36,6 +36,12 @@ use PHPUnit\Framework\TestCase;
 final class ClientTest extends TestCase
 {
 	/**
+	 * @throws \Exception
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 *
 	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
 	 */
 	public function testConnectAttemptToNotExistingSocketThrowsException() : void
@@ -47,6 +53,12 @@ final class ClientTest extends TestCase
 	}
 
 	/**
+	 * @throws \Exception
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 *
 	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
 	 */
 	public function testConnectAttemptToInvalidSocketThrowsException() : void
@@ -72,6 +84,9 @@ final class ClientTest extends TestCase
 	}
 
 	/**
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 *
 	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
 	 * @expectedExceptionMessage No pending requests found.
 	 */
@@ -108,6 +123,12 @@ final class ClientTest extends TestCase
 	}
 
 	/**
+	 * @throws \Exception
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 *
 	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
 	 * @expectedExceptionMessageRegExp #.*unable to connect to.*#i
 	 */
@@ -119,6 +140,10 @@ final class ClientTest extends TestCase
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
 	}
 
+	/**
+	 * @throws \PHPUnit\Framework\AssertionFailedError
+	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 */
 	public function testHandlingReadyResponsesJustReturnsIfClientGotNoRequests() : void
 	{
 		$connection = new UnixDomainSocket( '/var/run/php7.1-ruds.sock' );

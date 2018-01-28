@@ -23,6 +23,8 @@
 
 if ( PHP_VERSION_ID >= 70200 && extension_loaded( 'xdebug' ) )
 {
+	/** @noinspection PhpUndefinedConstantInspection */
+	/** @noinspection PhpUndefinedFunctionInspection */
 	xdebug_set_filter( XDEBUG_FILTER_CODE_COVERAGE, XDEBUG_PATH_WHITELIST, [__DIR__ . '/../src'] );
 }
 

@@ -30,6 +30,9 @@ use PHPUnit\Framework\TestCase;
 
 class NetworkSocketTest extends TestCase
 {
+	/**
+	 * @throws \PHPUnit\Framework\Exception
+	 */
 	public function testImplementsConnectionInterface() : void
 	{
 		$connection = new NetworkSocket( 'localhost', 9000 );
