@@ -1,5 +1,5 @@
 Copyright (c) 2010-2014 Pierrick Charron
-Copyright (c) 2016-2018 Holger Woltersdorf
+Copyright (c) 2016-2018 Holger Woltersdorf & Contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -18,3 +18,8 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Contributors:
+
+* https://github.com/dugwood (Yvan Taviaud)
+* https://github.com/rbro
