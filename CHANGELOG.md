@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [2.4.3] - 2018-09-17
+
+### Fixes
+
+* Value of Client::STREAM_SELECT_USEC was to low with `20000` and was updated to `200000` as 
+  [recommended in the official PHP documentation](http://php.net/stream_select#tv_sec). - [#20]
+
 ## [2.4.2] - 2018-01-28
 
 ### Fixes
@@ -130,6 +137,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[2.4.3]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.2...v2.4.3
 [2.4.2]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.1...v2.4.2
 [2.4.1]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.0...v2.4.1
 [2.4.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.3.0...v2.4.0
@@ -148,3 +156,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#11]: https://github.com/hollodotme/fast-cgi-client/issues/11
 [#14]: https://github.com/hollodotme/fast-cgi-client/issues/14
 [#15]: https://github.com/hollodotme/fast-cgi-client/issues/15
+[#20]: https://github.com/hollodotme/fast-cgi-client/issues/20
