@@ -1,24 +1,24 @@
 {
     "_readme": [
         "This file locks the dependencies of your project to a known state",
-        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
+        "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d498d68da953c0763bf4c7e8c841d038",
+    "content-hash": "aa07d66b763f71869fffd0e3e3a86d62",
     "packages": [],
     "packages-dev": [
         {
             "name": "tm/tooly-composer-script",
-            "version": "1.2.5",
+            "version": "1.2.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tommy-muehle/tooly-composer-script.git",
-                "reference": "d75cf732edc3a807df47b0c16cb34ca993b420c8"
+                "reference": "53cc0551122145b4ae4c523e64f3628329ef8ea5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tommy-muehle/tooly-composer-script/zipball/d75cf732edc3a807df47b0c16cb34ca993b420c8",
-                "reference": "d75cf732edc3a807df47b0c16cb34ca993b420c8",
+                "url": "https://api.github.com/repos/tommy-muehle/tooly-composer-script/zipball/53cc0551122145b4ae4c523e64f3628329ef8ea5",
+                "reference": "53cc0551122145b4ae4c523e64f3628329ef8ea5",
                 "shasum": ""
             },
             "require": {
@@ -29,6 +29,7 @@
                 "composer/composer": "1.*",
                 "mikey179/vfsstream": "1.6.*",
                 "php-mock/php-mock-phpunit": "1.1.*",
+                "symfony/console": "^3.0",
                 "tm/gpg-verifier": "1.*"
             },
             "suggest": {
@@ -84,7 +85,7 @@
                 "phar-handling",
                 "phar-management"
             ],
-            "time": "2017-07-21T20:16:48+00:00"
+            "time": "2018-03-20T21:26:34+00:00"
         }
     ],
     "aliases": [],

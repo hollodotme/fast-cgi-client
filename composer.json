@@ -41,15 +41,11 @@
 	"extra": {
 		"tools": {
 			"phpunit": {
-        "url": "https://phar.phpunit.de/phpunit-6.4.4.phar",
+				"url": "https://phar.phpunit.de/phpunit-7.phar",
 				"only-dev": true
 			},
 			"coveralls": {
-				"url": "https://github.com/satooshi/php-coveralls/releases/download/v1.0.1/coveralls.phar",
-				"only-dev": true
-			},
-			"phpmetrics": {
-        "url": "https://github.com/phpmetrics/PhpMetrics/releases/download/v2.3.2/phpmetrics.phar",
+				"url": "https://github.com/php-coveralls/php-coveralls/releases/download/v2.1.0/php-coveralls.phar",
 				"only-dev": true
 			}
 		}
