@@ -31,7 +31,7 @@ before_script:
  - composer install -o --prefer-dist --no-interaction
 
 script:
- - php vendor/bin/phpunit.phar -c build/
+- php vendor/bin/phpunit.phar -c build/ --coverage-clover build/logs/clover.xml
 
 after_success:
  - travis_retry php vendor/bin/coveralls.phar -v --exclude-no-stmt
