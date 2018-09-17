@@ -21,11 +21,18 @@
  * SOFTWARE.
  */
 
-if ( PHP_VERSION_ID >= 70200 && extension_loaded( 'xdebug' ) )
+if (
+	extension_loaded( 'xdebug' )
+	&& version_compare( '2.6.0', phpversion( 'xdebug' ), '<=' )
+)
 {
-	/** @noinspection PhpUndefinedConstantInspection */
 	/** @noinspection PhpUndefinedFunctionInspection */
-	xdebug_set_filter( XDEBUG_FILTER_CODE_COVERAGE, XDEBUG_PATH_WHITELIST, [__DIR__ . '/../src'] );
+	/** @noinspection PhpUndefinedConstantInspection */
+	xdebug_set_filter(
+		XDEBUG_FILTER_CODE_COVERAGE,
+		XDEBUG_PATH_WHITELIST,
+		[dirname( __DIR__ ) . '/src']
+	);
 }
 
 require __DIR__ . '/../vendor/autoload.php';
