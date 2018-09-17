@@ -75,7 +75,7 @@ final class Socket
 
 	private const REQ_MAX_CONTENT_SIZE = 65535;
 
-	public const  STREAM_SELECT_USEC   = 20000;
+	public const  STREAM_SELECT_USEC   = 200000;
 
 	/** @var int */
 	private $id;
