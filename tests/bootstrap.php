@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -22,17 +24,16 @@
  */
 
 if (
-	extension_loaded( 'xdebug' )
-	&& version_compare( '2.6.0', phpversion( 'xdebug' ), '<=' )
-)
-{
-	/** @noinspection PhpUndefinedFunctionInspection */
-	/** @noinspection PhpUndefinedConstantInspection */
-	xdebug_set_filter(
-		XDEBUG_FILTER_CODE_COVERAGE,
-		XDEBUG_PATH_WHITELIST,
-		[dirname( __DIR__ ) . '/src']
-	);
+    \extension_loaded('xdebug')
+    && \version_compare('2.6.0', \phpversion('xdebug'), '<=')
+) {
+    /* @noinspection PhpUndefinedFunctionInspection */
+    /* @noinspection PhpUndefinedConstantInspection */
+    xdebug_set_filter(
+        XDEBUG_FILTER_CODE_COVERAGE,
+        XDEBUG_PATH_WHITELIST,
+        [\dirname(__DIR__).'/src']
+    );
 }
 
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__.'/../vendor/autoload.php';

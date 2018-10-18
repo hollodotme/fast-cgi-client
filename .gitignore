@@ -2,3 +2,4 @@
 /.vagrant/
 /vendor/
 /build/logs/
+.php_cs.cache

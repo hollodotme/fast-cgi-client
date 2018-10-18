@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -30,127 +32,119 @@ use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Class ClientTest
- * @package hollodotme\FastCGI\Tests\Unit
+ * Class ClientTest.
  */
 final class ClientTest extends TestCase
 {
-	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
-	 *
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
-	 */
-	public function testConnectAttemptToNotExistingSocketThrowsException() : void
-	{
-		$connection = new UnixDomainSocket( '/tmp/not/existing.sock', 2000, 2000 );
-		$client     = new Client( $connection );
+    /**
+     * @throws \Exception
+     * @throws \Throwable
+     * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+     * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+     * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+     */
+    public function testConnectAttemptToNotExistingSocketThrowsException(): void
+    {
+        $this->expectException(\hollodotme\FastCGI\Exceptions\ConnectException::class);
 
-		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
-	}
+        $connection = new UnixDomainSocket('/tmp/not/existing.sock', 2000, 2000);
+        $client = new Client($connection);
 
-	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
-	 *
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
-	 */
-	public function testConnectAttemptToInvalidSocketThrowsException() : void
-	{
-		$testSocket = realpath( __DIR__ . '/Fixtures/test.sock' );
+        $client->sendRequest(new PostRequest('/path/to/script.php', ''));
+    }
 
-		$connection = new UnixDomainSocket( '' . $testSocket );
-		$client     = new Client( $connection );
+    /**
+     * @throws \Exception
+     * @throws \Throwable
+     * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+     * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+     * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+     */
+    public function testConnectAttemptToInvalidSocketThrowsException(): void
+    {
+        $this->expectException(\hollodotme\FastCGI\Exceptions\ConnectException::class);
 
-		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
-	}
+        $testSocket = \realpath(__DIR__.'/Fixtures/test.sock');
 
-	/**
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @expectedExceptionMessage Socket not found for request ID: 12345
-	 */
-	public function testWaitingForUnknownRequestThrowsException() : void
-	{
-		$connection = new NetworkSocket( '127.0.0.1', 9000 );
-		$client     = new Client( $connection );
+        $connection = new UnixDomainSocket(''.$testSocket);
+        $client = new Client($connection);
 
-		$client->waitForResponse( 12345 );
-	}
+        $client->sendRequest(new PostRequest('/path/to/script.php', ''));
+    }
 
-	/**
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 *
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @expectedExceptionMessage No pending requests found.
-	 */
-	public function testWaitingForResponsesWithoutRequestsThrowsException() : void
-	{
-		$connection = new NetworkSocket( '127.0.0.1', 9000 );
-		$client     = new Client( $connection );
+    public function testWaitingForUnknownRequestThrowsException(): void
+    {
+        $this->expectException(\hollodotme\FastCGI\Exceptions\ReadFailedException::class, 'Socket not found for request ID: 12345');
 
-		$client->waitForResponses();
-	}
+        $connection = new NetworkSocket('127.0.0.1', 9000);
+        $client = new Client($connection);
 
-	/**
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @expectedExceptionMessage Socket not found for request ID: 12345
-	 */
-	public function testHandlingUnknownRequestThrowsException() : void
-	{
-		$connection = new NetworkSocket( '127.0.0.1', 9000 );
-		$client     = new Client( $connection );
+        $client->waitForResponse(12345);
+    }
 
-		$client->handleResponse( 12345 );
-	}
+    /**
+     * @throws \Throwable
+     * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
+     */
+    public function testWaitingForResponsesWithoutRequestsThrowsException(): void
+    {
+        $this->expectException(\hollodotme\FastCGI\Exceptions\ReadFailedException::class, 'No pending requests found.');
 
-	/**
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @expectedExceptionMessage Socket not found for request ID: 12345
-	 */
-	public function testHandlingUnknownRequestsThrowsException() : void
-	{
-		$connection = new NetworkSocket( '127.0.0.1', 9000 );
-		$client     = new Client( $connection );
+        $connection = new NetworkSocket('127.0.0.1', 9000);
+        $client = new Client($connection);
 
-		$client->handleResponses( null, 12345, 12346 );
-	}
+        $client->waitForResponses();
+    }
 
-	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
-	 *
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @expectedExceptionMessageRegExp #.*unable to connect to.*#i
-	 */
-	public function testConnectAttemptToRestrictedUnixDomainSocketThrowsException() : void
-	{
-		$connection = new UnixDomainSocket( '/var/run/php7.1-ruds.sock' );
-		$client     = new Client( $connection );
+    public function testHandlingUnknownRequestThrowsException(): void
+    {
+        $this->expectException(\hollodotme\FastCGI\Exceptions\ReadFailedException::class, 'Socket not found for request ID: 12345');
 
-		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
-	}
+        $connection = new NetworkSocket('127.0.0.1', 9000);
+        $client = new Client($connection);
 
-	/**
-	 * @throws \PHPUnit\Framework\AssertionFailedError
-	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 */
-	public function testHandlingReadyResponsesJustReturnsIfClientGotNoRequests() : void
-	{
-		$connection = new UnixDomainSocket( '/var/run/php7.1-ruds.sock' );
-		$client     = new Client( $connection );
+        $client->handleResponse(12345);
+    }
 
-		$this->assertFalse( $client->hasUnhandledResponses() );
+    public function testHandlingUnknownRequestsThrowsException(): void
+    {
+        $this->expectException(\hollodotme\FastCGI\Exceptions\ReadFailedException::class, 'Socket not found for request ID: 12345');
 
-		$client->handleReadyResponses();
-	}
+        $connection = new NetworkSocket('127.0.0.1', 9000);
+        $client = new Client($connection);
+
+        $client->handleResponses(null, 12345, 12346);
+    }
+
+    /**
+     * @throws \Exception
+     * @throws \Throwable
+     * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+     * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+     * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+     */
+    public function testConnectAttemptToRestrictedUnixDomainSocketThrowsException(): void
+    {
+        $this->expectException(\hollodotme\FastCGI\Exceptions\ConnectException::class);
+        $this->expectExceptionMessageRegExp('#.*unable to connect to.*#i');
+
+        $connection = new UnixDomainSocket('/var/run/php7.1-ruds.sock');
+        $client = new Client($connection);
+
+        $client->sendRequest(new PostRequest('/path/to/script.php', ''));
+    }
+
+    /**
+     * @throws \PHPUnit\Framework\AssertionFailedError
+     * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
+     */
+    public function testHandlingReadyResponsesJustReturnsIfClientGotNoRequests(): void
+    {
+        $connection = new UnixDomainSocket('/var/run/php7.1-ruds.sock');
+        $client = new Client($connection);
+
+        $this->assertFalse($client->hasUnhandledResponses());
+
+        $client->handleReadyResponses();
+    }
 }

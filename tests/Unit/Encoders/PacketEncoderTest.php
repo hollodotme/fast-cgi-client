@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -28,51 +30,51 @@ use PHPUnit\Framework\TestCase;
 
 class PacketEncoderTest extends TestCase
 {
-	/**
-	 * @param int    $type
-	 * @param string $content
-	 * @param int    $requestId
-	 * @param array  $expectedHeader
-	 *
-	 * @dataProvider packetContentProvider
-	 */
-	public function testCanEncodeAndDecodePacket( int $type, string $content, int $requestId, array $expectedHeader ) : void
-	{
-		$packetEncoder = new PacketEncoder();
+    /**
+     * @param int    $type
+     * @param string $content
+     * @param int    $requestId
+     * @param array  $expectedHeader
+     *
+     * @dataProvider packetContentProvider
+     */
+    public function testCanEncodeAndDecodePacket(int $type, string $content, int $requestId, array $expectedHeader): void
+    {
+        $packetEncoder = new PacketEncoder();
 
-		$packet = $packetEncoder->encodePacket( $type, $content, $requestId );
+        $packet = $packetEncoder->encodePacket($type, $content, $requestId);
 
-		$header = $packetEncoder->decodeHeader( $packet );
+        $header = $packetEncoder->decodeHeader($packet);
 
-		$this->assertEquals( $expectedHeader, $header );
-		$this->assertEquals( substr( $packet, -1 * \strlen( $content ) ), $content );
-	}
+        $this->assertEquals($expectedHeader, $header);
+        $this->assertEquals(\mb_substr($packet, -1 * \mb_strlen($content)), $content);
+    }
 
-	public function packetContentProvider() : array
-	{
-		return [
-			[
-				4, 'test', 1,
-				[
-					'version'       => 1,
-					'type'          => 4,
-					'requestId'     => 1,
-					'contentLength' => 4,
-					'paddingLength' => 0,
-					'reserved'      => 0,
-				],
-			],
-			[
-				5, 'çélinö~ß', 12,
-				[
-					'version'       => 1,
-					'type'          => 5,
-					'requestId'     => 12,
-					'contentLength' => 12,
-					'paddingLength' => 0,
-					'reserved'      => 0,
-				],
-			],
-		];
-	}
+    public function packetContentProvider(): array
+    {
+        return [
+            [
+                4, 'test', 1,
+                [
+                    'version' => 1,
+                    'type' => 4,
+                    'requestId' => 1,
+                    'contentLength' => 4,
+                    'paddingLength' => 0,
+                    'reserved' => 0,
+                ],
+            ],
+            [
+                5, 'çélinö~ß', 12,
+                [
+                    'version' => 1,
+                    'type' => 5,
+                    'requestId' => 12,
+                    'contentLength' => 12,
+                    'paddingLength' => 0,
+                    'reserved' => 0,
+                ],
+            ],
+        ];
+    }
 }

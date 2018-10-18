@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -21,4 +23,4 @@
  * SOFTWARE.
  */
 
-echo strlen( file_get_contents( 'php://input' ) );
+echo \mb_strlen(\file_get_contents('php://input'));

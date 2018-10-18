@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -32,147 +34,145 @@ use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Class SocketTest
- * @package hollodotme\FastCGI\Tests\Unit
+ * Class SocketTest.
  */
 final class SocketTest extends TestCase
 {
-	/**
-	 * @throws \Exception
-	 */
-	public function testCanGetIdAfterConstruction() : void
-	{
-		$socket = $this->getSocket();
+    /**
+     * @throws \Exception
+     */
+    public function testCanGetIdAfterConstruction(): void
+    {
+        $socket = $this->getSocket();
 
-		$this->assertGreaterThanOrEqual( 1, $socket->getId() );
-		$this->assertLessThanOrEqual( (1 << 16) - 1, $socket->getId() );
-	}
+        $this->assertGreaterThanOrEqual(1, $socket->getId());
+        $this->assertLessThanOrEqual((1 << 16) - 1, $socket->getId());
+    }
 
-	/**
-	 * @return Socket
-	 * @throws \Exception
-	 */
-	private function getSocket() : Socket
-	{
-		$nameValuePairEncoder = new NameValuePairEncoder();
-		$packetEncoder        = new PacketEncoder();
-		$connection           = new UnixDomainSocket( '/var/run/php-uds.sock' );
+    /**
+     * @return Socket
+     *
+     * @throws \Exception
+     */
+    private function getSocket(): Socket
+    {
+        $nameValuePairEncoder = new NameValuePairEncoder();
+        $packetEncoder = new PacketEncoder();
+        $connection = new UnixDomainSocket('/var/run/php-uds.sock');
 
-		return new Socket( $connection, $packetEncoder, $nameValuePairEncoder );
-	}
+        return new Socket($connection, $packetEncoder, $nameValuePairEncoder);
+    }
 
-	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
-	 */
-	public function testCanSendRequestAndFetchResponse() : void
-	{
-		$socket  = $this->getSocket();
-		$data    = ['test-key' => 'unit'];
-		$request = new PostRequest(
-			\dirname( __DIR__ ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
-		);
+    /**
+     * @throws \Exception
+     * @throws \Throwable
+     * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+     * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+     * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+     */
+    public function testCanSendRequestAndFetchResponse(): void
+    {
+        $socket = $this->getSocket();
+        $data = ['test-key' => 'unit'];
+        $request = new PostRequest(
+            \dirname(__DIR__).'/Integration/Workers/worker.php',
+            \http_build_query($data)
+        );
 
-		$socket->sendRequest( $request );
+        $socket->sendRequest($request);
 
-		$response = $socket->fetchResponse();
+        $response = $socket->fetchResponse();
 
-		$this->assertSame( 'unit', $response->getBody() );
+        $this->assertSame('unit', $response->getBody());
 
-		$response2 = $socket->fetchResponse();
+        $response2 = $socket->fetchResponse();
 
-		$this->assertSame( $response, $response2 );
-	}
+        $this->assertSame($response, $response2);
+    }
 
-	/**
-	 * @throws \Exception
-	 * @throws \PHPUnit\Framework\AssertionFailedError
-	 * @throws \PHPUnit\Framework\Exception
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
-	 */
-	public function testCanCollectResource() : void
-	{
-		$resources = [];
-		$socket    = $this->getSocket();
-		$data      = ['test-key' => 'unit'];
-		$request   = new PostRequest(
-			\dirname( __DIR__ ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
-		);
+    /**
+     * @throws \Exception
+     * @throws \PHPUnit\Framework\AssertionFailedError
+     * @throws \PHPUnit\Framework\Exception
+     * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+     * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+     * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+     */
+    public function testCanCollectResource(): void
+    {
+        $resources = [];
+        $socket = $this->getSocket();
+        $data = ['test-key' => 'unit'];
+        $request = new PostRequest(
+            \dirname(__DIR__).'/Integration/Workers/worker.php',
+            \http_build_query($data)
+        );
 
-		$socket->collectResource( $resources );
+        $socket->collectResource($resources);
 
-		$this->assertEmpty( $resources );
+        $this->assertEmpty($resources);
 
-		$socket->sendRequest( $request );
+        $socket->sendRequest($request);
 
-		$socket->collectResource( $resources );
+        $socket->collectResource($resources);
 
-		$this->assertInternalType( 'resource', $resources[ $socket->getId() ] );
-	}
+        $this->assertInternalType('resource', $resources[$socket->getId()]);
+    }
 
-	/**
-	 * @throws \Exception
-	 * @throws \PHPUnit\Framework\Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
-	 */
-	public function testCanNotifyResponseCallback() : void
-	{
-		$socket  = $this->getSocket();
-		$data    = ['test-key' => 'unit'];
-		$request = new PostRequest(
-			\dirname( __DIR__ ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
-		);
-		$request->addResponseCallbacks(
-			function ( ProvidesResponseData $response )
-			{
-				echo $response->getBody();
-			}
-		);
+    /**
+     * @throws \Exception
+     * @throws \PHPUnit\Framework\Exception
+     * @throws \Throwable
+     * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+     * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+     * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+     */
+    public function testCanNotifyResponseCallback(): void
+    {
+        $socket = $this->getSocket();
+        $data = ['test-key' => 'unit'];
+        $request = new PostRequest(
+            \dirname(__DIR__).'/Integration/Workers/worker.php',
+            \http_build_query($data)
+        );
+        $request->addResponseCallbacks(
+            function (ProvidesResponseData $response) {
+                echo $response->getBody();
+            }
+        );
 
-		$socket->sendRequest( $request );
-		$response = $socket->fetchResponse();
-		$socket->notifyResponseCallbacks( $response );
+        $socket->sendRequest($request);
+        $response = $socket->fetchResponse();
+        $socket->notifyResponseCallbacks($response);
 
-		$this->expectOutputString( 'unit' );
-	}
+        $this->expectOutputString('unit');
+    }
 
-	/**
-	 * @throws \Exception
-	 * @throws \PHPUnit\Framework\Exception
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
-	 */
-	public function testCanNotifyFailureCallback() : void
-	{
-		$socket  = $this->getSocket();
-		$data    = ['test-key' => 'unit'];
-		$request = new PostRequest(
-			\dirname( __DIR__ ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
-		);
-		$request->addFailureCallbacks(
-			function ( \Throwable $throwable )
-			{
-				echo $throwable->getMessage();
-			}
-		);
-		$throwable = new \RuntimeException( 'Something went wrong.' );
+    /**
+     * @throws \Exception
+     * @throws \PHPUnit\Framework\Exception
+     * @throws \hollodotme\FastCGI\Exceptions\ConnectException
+     * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+     * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+     */
+    public function testCanNotifyFailureCallback(): void
+    {
+        $socket = $this->getSocket();
+        $data = ['test-key' => 'unit'];
+        $request = new PostRequest(
+            \dirname(__DIR__).'/Integration/Workers/worker.php',
+            \http_build_query($data)
+        );
+        $request->addFailureCallbacks(
+            function (\Throwable $throwable) {
+                echo $throwable->getMessage();
+            }
+        );
+        $throwable = new \RuntimeException('Something went wrong.');
 
-		$socket->sendRequest( $request );
-		$socket->notifyFailureCallbacks( $throwable );
+        $socket->sendRequest($request);
+        $socket->notifyFailureCallbacks($throwable);
 
-		$this->expectOutputString( 'Something went wrong.' );
-	}
+        $this->expectOutputString('Something went wrong.');
+    }
 }

@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -28,60 +30,60 @@ use PHPUnit\Framework\TestCase;
 
 final class ResponseTest extends TestCase
 {
-	public function testCanGetHeaders() : void
-	{
-		$rawResponse = "X-Powered-By: PHP/7.1.0\r\n"
-		               . "X-Custom: Header\r\n"
-		               . "Content-type: text/html; charset=UTF-8\r\n"
-		               . "\r\n"
-		               . 'unit';
+    public function testCanGetHeaders(): void
+    {
+        $rawResponse = "X-Powered-By: PHP/7.1.0\r\n"
+                       ."X-Custom: Header\r\n"
+                       ."Content-type: text/html; charset=UTF-8\r\n"
+                       ."\r\n"
+                       .'unit';
 
-		$duration = 0.54321;
-		$response = new Response( 1234, $rawResponse, $duration );
+        $duration = 0.54321;
+        $response = new Response(1234, $rawResponse, $duration);
 
-		$expectedHeaders = [
-			'X-Powered-By' => 'PHP/7.1.0',
-			'X-Custom'     => 'Header',
-			'Content-type' => 'text/html; charset=UTF-8',
-		];
+        $expectedHeaders = [
+            'X-Powered-By' => 'PHP/7.1.0',
+            'X-Custom' => 'Header',
+            'Content-type' => 'text/html; charset=UTF-8',
+        ];
 
-		$this->assertSame( $expectedHeaders, $response->getHeaders() );
-		$this->assertSame( 'PHP/7.1.0', $response->getHeader( 'X-Powered-By' ) );
-		$this->assertSame( 'Header', $response->getHeader( 'X-Custom' ) );
-		$this->assertSame( 'text/html; charset=UTF-8', $response->getHeader( 'Content-type' ) );
-	}
+        $this->assertSame($expectedHeaders, $response->getHeaders());
+        $this->assertSame('PHP/7.1.0', $response->getHeader('X-Powered-By'));
+        $this->assertSame('Header', $response->getHeader('X-Custom'));
+        $this->assertSame('text/html; charset=UTF-8', $response->getHeader('Content-type'));
+    }
 
-	public function testCanGetBody() : void
-	{
-		$rawResponse = "X-Powered-By: PHP/7.1.0\r\n"
-		               . "X-Custom: Header\r\n"
-		               . "Content-type: text/html; charset=UTF-8\r\n"
-		               . "\r\n"
-		               . "unit\r\n"
-		               . 'test';
+    public function testCanGetBody(): void
+    {
+        $rawResponse = "X-Powered-By: PHP/7.1.0\r\n"
+                       ."X-Custom: Header\r\n"
+                       ."Content-type: text/html; charset=UTF-8\r\n"
+                       ."\r\n"
+                       ."unit\r\n"
+                       .'test';
 
-		$duration = 0.54321;
-		$response = new Response( 1234, $rawResponse, $duration );
+        $duration = 0.54321;
+        $response = new Response(1234, $rawResponse, $duration);
 
-		$expectedBody = "unit\r\ntest";
+        $expectedBody = "unit\r\ntest";
 
-		$this->assertSame( $expectedBody, $response->getBody() );
-	}
+        $this->assertSame($expectedBody, $response->getBody());
+    }
 
-	public function testCanGetRawResponse() : void
-	{
-		$rawResponse = "X-Powered-By: PHP/7.1.0\r\n"
-		               . "X-Custom: Header\r\n"
-		               . "Content-type: text/html; charset=UTF-8\r\n"
-		               . "\r\n"
-		               . "unit\r\n"
-		               . 'test';
+    public function testCanGetRawResponse(): void
+    {
+        $rawResponse = "X-Powered-By: PHP/7.1.0\r\n"
+                       ."X-Custom: Header\r\n"
+                       ."Content-type: text/html; charset=UTF-8\r\n"
+                       ."\r\n"
+                       ."unit\r\n"
+                       .'test';
 
-		$duration = 0.54321;
-		$response = new Response( 1234, $rawResponse, $duration );
+        $duration = 0.54321;
+        $response = new Response(1234, $rawResponse, $duration);
 
-		$this->assertSame( $rawResponse, $response->getRawResponse() );
-		$this->assertSame( $duration, $response->getDuration() );
-		$this->assertSame( 1234, $response->getRequestId() );
-	}
+        $this->assertSame($rawResponse, $response->getRawResponse());
+        $this->assertSame($duration, $response->getDuration());
+        $this->assertSame(1234, $response->getRequestId());
+    }
 }

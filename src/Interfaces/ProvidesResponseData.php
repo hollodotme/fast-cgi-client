@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -24,20 +26,19 @@
 namespace hollodotme\FastCGI\Interfaces;
 
 /**
- * Interface ProvidesResponseData
- * @package hollodotme\FastCGI\Interfaces
+ * Interface ProvidesResponseData.
  */
 interface ProvidesResponseData
 {
-	public function getRequestId() : int;
+    public function getRequestId(): int;
 
-	public function getHeaders() : array;
+    public function getHeaders(): array;
 
-	public function getHeader( string $headerKey ) : string;
+    public function getHeader(string $headerKey): string;
 
-	public function getBody() : string;
+    public function getBody(): string;
 
-	public function getRawResponse() : string;
+    public function getRawResponse(): string;
 
-	public function getDuration() : float;
+    public function getDuration(): float;
 }

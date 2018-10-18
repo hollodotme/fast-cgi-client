@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -24,14 +26,13 @@
 namespace hollodotme\FastCGI\Interfaces;
 
 /**
- * Interface ConfiguresSocketConnection
- * @package hollodotme\FastCGI\Interfaces
+ * Interface ConfiguresSocketConnection.
  */
 interface ConfiguresSocketConnection
 {
-	public function getSocketAddress() : string;
+    public function getSocketAddress(): string;
 
-	public function getConnectTimeout() : int;
+    public function getConnectTimeout(): int;
 
-	public function getReadWriteTimeout() : int;
+    public function getReadWriteTimeout(): int;
 }

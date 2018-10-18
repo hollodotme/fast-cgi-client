@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -28,10 +30,10 @@ use PHPUnit\Framework\TestCase;
 
 final class PutRequestTest extends TestCase
 {
-	public function testRequestMethodIsPut() : void
-	{
-		$request = new PutRequest( '/path/to/script.php', 'Unit-Test' );
+    public function testRequestMethodIsPut(): void
+    {
+        $request = new PutRequest('/path/to/script.php', 'Unit-Test');
 
-		$this->assertSame( 'PUT', $request->getRequestMethod() );
-	}
+        $this->assertSame('PUT', $request->getRequestMethod());
+    }
 }

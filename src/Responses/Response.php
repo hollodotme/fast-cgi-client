@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -26,86 +28,83 @@ namespace hollodotme\FastCGI\Responses;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 
 /**
- * Class Response
- * @package hollodotme\FastCGI\Responses
+ * Class Response.
  */
 class Response implements ProvidesResponseData
 {
-	private const HEADER_PATTERN = '#^([^\:]+):(.*)$#';
+    private const HEADER_PATTERN = '#^([^\:]+):(.*)$#';
 
-	/** @var int */
-	private $requestId;
+    /** @var int */
+    private $requestId;
 
-	/** @var array */
-	private $headers;
+    /** @var array */
+    private $headers;
 
-	/** @var string */
-	private $body;
+    /** @var string */
+    private $body;
 
-	/** @var string */
-	private $rawResponse;
+    /** @var string */
+    private $rawResponse;
 
-	/** @var float */
-	private $duration;
+    /** @var float */
+    private $duration;
 
-	public function __construct( int $requestId, string $rawResponse, float $duration )
-	{
-		$this->requestId   = $requestId;
-		$this->rawResponse = $rawResponse;
-		$this->duration    = $duration;
-		$this->headers     = [];
-		$this->body        = '';
+    public function __construct(int $requestId, string $rawResponse, float $duration)
+    {
+        $this->requestId = $requestId;
+        $this->rawResponse = $rawResponse;
+        $this->duration = $duration;
+        $this->headers = [];
+        $this->body = '';
 
-		$this->parseHeadersAndBody();
-	}
+        $this->parseHeadersAndBody();
+    }
 
-	private function parseHeadersAndBody() : void
-	{
-		$lines  = explode( PHP_EOL, $this->rawResponse );
-		$offset = 0;
+    private function parseHeadersAndBody(): void
+    {
+        $lines = \explode(PHP_EOL, $this->rawResponse);
+        $offset = 0;
 
-		foreach ( $lines as $i => $line )
-		{
-			if ( preg_match( self::HEADER_PATTERN, $line, $matches ) )
-			{
-				$offset                               = $i;
-				$this->headers[ trim( $matches[1] ) ] = trim( $matches[2] );
-				continue;
-			}
+        foreach ($lines as $i => $line) {
+            if (\preg_match(self::HEADER_PATTERN, $line, $matches)) {
+                $offset = $i;
+                $this->headers[\trim($matches[1])] = \trim($matches[2]);
+                continue;
+            }
 
-			break;
-		}
+            break;
+        }
 
-		$this->body = implode( PHP_EOL, \array_slice( $lines, $offset + 2 ) );
-	}
+        $this->body = \implode(PHP_EOL, \array_slice($lines, $offset + 2));
+    }
 
-	public function getRequestId() : int
-	{
-		return $this->requestId;
-	}
+    public function getRequestId(): int
+    {
+        return $this->requestId;
+    }
 
-	public function getHeader( string $headerKey ) : string
-	{
-		return $this->headers[ $headerKey ] ?? '';
-	}
+    public function getHeader(string $headerKey): string
+    {
+        return $this->headers[$headerKey] ?? '';
+    }
 
-	public function getHeaders() : array
-	{
-		return $this->headers;
-	}
+    public function getHeaders(): array
+    {
+        return $this->headers;
+    }
 
-	public function getBody() : string
-	{
-		return $this->body;
-	}
+    public function getBody(): string
+    {
+        return $this->body;
+    }
 
-	public function getRawResponse() : string
-	{
-		return $this->rawResponse;
-	}
+    public function getRawResponse(): string
+    {
+        return $this->rawResponse;
+    }
 
-	public function getDuration() : float
-	{
-		return $this->duration;
-	}
+    public function getDuration(): float
+    {
+        return $this->duration;
+    }
 }

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -24,12 +26,11 @@
 namespace hollodotme\FastCGI\Interfaces;
 
 /**
- * Interface PacketEncoder
- * @package hollodotme\FastCGI\Encoders
+ * Interface PacketEncoder.
  */
 interface EncodesPacket
 {
-	public function encodePacket( int $type, string $content, int $requestId ) : string;
+    public function encodePacket(int $type, string $content, int $requestId): string;
 
-	public function decodeHeader( string $data ) : array;
+    public function decodeHeader(string $data): array;
 }

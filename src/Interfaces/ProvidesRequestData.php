@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -24,46 +26,45 @@
 namespace hollodotme\FastCGI\Interfaces;
 
 /**
- * Interface ProvidesRequestData
- * @package hollodotme\FastCGI\Interfaces
+ * Interface ProvidesRequestData.
  */
 interface ProvidesRequestData
 {
-	public function getGatewayInterface() : string;
+    public function getGatewayInterface(): string;
 
-	public function getRequestMethod() : string;
+    public function getRequestMethod(): string;
 
-	public function getScriptFilename() : string;
+    public function getScriptFilename(): string;
 
-	public function getServerSoftware() : string;
+    public function getServerSoftware(): string;
 
-	public function getRemoteAddress() : string;
+    public function getRemoteAddress(): string;
 
-	public function getRemotePort() : int;
+    public function getRemotePort(): int;
 
-	public function getServerAddress() : string;
+    public function getServerAddress(): string;
 
-	public function getServerPort() : int;
+    public function getServerPort(): int;
 
-	public function getServerName() : string;
+    public function getServerName(): string;
 
-	public function getServerProtocol() : string;
+    public function getServerProtocol(): string;
 
-	public function getContentType() : string;
+    public function getContentType(): string;
 
-	public function getContentLength() : int;
+    public function getContentLength(): int;
 
-	public function getContent() : string;
+    public function getContent(): string;
 
-	public function getCustomVars() : array;
+    public function getCustomVars(): array;
 
-	public function getParams() : array;
+    public function getParams(): array;
 
-	public function getRequestUri() : string;
+    public function getRequestUri(): string;
 
-	public function getResponseCallbacks() : array;
+    public function getResponseCallbacks(): array;
 
-	public function getFailureCallbacks() : array;
+    public function getFailureCallbacks(): array;
 
-	public function getPassThroughCallbacks() : array;
+    public function getPassThroughCallbacks(): array;
 }

@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -24,18 +26,17 @@
 namespace hollodotme\FastCGI\Constants;
 
 /**
- * Class RequestMethod
- * @package hollodotme\FastCGI\Constants
+ * Class RequestMethod.
  */
 abstract class RequestMethod
 {
-	public const GET    = 'GET';
+    public const GET = 'GET';
 
-	public const POST   = 'POST';
+    public const POST = 'POST';
 
-	public const PUT    = 'PUT';
+    public const PUT = 'PUT';
 
-	public const PATCH  = 'PATCH';
+    public const PATCH = 'PATCH';
 
-	public const DELETE = 'DELETE';
+    public const DELETE = 'DELETE';
 }

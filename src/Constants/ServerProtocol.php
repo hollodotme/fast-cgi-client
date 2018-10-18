@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -24,12 +26,11 @@
 namespace hollodotme\FastCGI\Constants;
 
 /**
- * Class ServerProtocol
- * @package hollodotme\FastCGI\Constants
+ * Class ServerProtocol.
  */
 abstract class ServerProtocol
 {
-	public const HTTP_1_0 = 'HTTP/1.0';
+    public const HTTP_1_0 = 'HTTP/1.0';
 
-	public const HTTP_1_1 = 'HTTP/1.1';
+    public const HTTP_1_1 = 'HTTP/1.1';
 }

@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -28,10 +30,10 @@ use PHPUnit\Framework\TestCase;
 
 final class PatchRequestTest extends TestCase
 {
-	public function testRequestMethodIsGet() : void
-	{
-		$request = new PatchRequest( '/path/to/script.php', 'Unit-Test' );
+    public function testRequestMethodIsGet(): void
+    {
+        $request = new PatchRequest('/path/to/script.php', 'Unit-Test');
 
-		$this->assertSame( 'PATCH', $request->getRequestMethod() );
-	}
+        $this->assertSame('PATCH', $request->getRequestMethod());
+    }
 }

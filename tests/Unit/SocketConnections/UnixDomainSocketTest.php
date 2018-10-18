@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -30,31 +32,31 @@ use PHPUnit\Framework\TestCase;
 
 class UnixDomainSocketTest extends TestCase
 {
-	/**
-	 * @throws \PHPUnit\Framework\Exception
-	 */
-	public function testImplementsConnectionInterface() : void
-	{
-		$connection = new UnixDomainSocket( '/var/run/php/php7.1-fpm.sock' );
+    /**
+     * @throws \PHPUnit\Framework\Exception
+     */
+    public function testImplementsConnectionInterface(): void
+    {
+        $connection = new UnixDomainSocket('/var/run/php/php7.1-fpm.sock');
 
-		$this->assertInstanceOf( ConfiguresSocketConnection::class, $connection );
-	}
+        $this->assertInstanceOf(ConfiguresSocketConnection::class, $connection);
+    }
 
-	public function testCanGetDefaultValues() : void
-	{
-		$connection = new UnixDomainSocket( '/var/run/php/php7.1-fpm.sock' );
+    public function testCanGetDefaultValues(): void
+    {
+        $connection = new UnixDomainSocket('/var/run/php/php7.1-fpm.sock');
 
-		$this->assertSame( 'unix:///var/run/php/php7.1-fpm.sock', $connection->getSocketAddress() );
-		$this->assertSame( Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout() );
-		$this->assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
-	}
+        $this->assertSame('unix:///var/run/php/php7.1-fpm.sock', $connection->getSocketAddress());
+        $this->assertSame(Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout());
+        $this->assertSame(Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout());
+    }
 
-	public function testCanGetSetValues() : void
-	{
-		$connection = new UnixDomainSocket( '/var/run/php/php7.1-fpm.sock', 2000, 3000 );
+    public function testCanGetSetValues(): void
+    {
+        $connection = new UnixDomainSocket('/var/run/php/php7.1-fpm.sock', 2000, 3000);
 
-		$this->assertSame( 'unix:///var/run/php/php7.1-fpm.sock', $connection->getSocketAddress() );
-		$this->assertSame( 2000, $connection->getConnectTimeout() );
-		$this->assertSame( 3000, $connection->getReadWriteTimeout() );
-	}
+        $this->assertSame('unix:///var/run/php/php7.1-fpm.sock', $connection->getSocketAddress());
+        $this->assertSame(2000, $connection->getConnectTimeout());
+        $this->assertSame(3000, $connection->getReadWriteTimeout());
+    }
 }

@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -24,10 +26,8 @@
 namespace hollodotme\FastCGI\Exceptions;
 
 /**
- * Class ForbiddenException
- * @package hollodotme\FastCGI
+ * Class ForbiddenException.
  */
 class ForbiddenException extends FastCGIClientException
 {
-
 }

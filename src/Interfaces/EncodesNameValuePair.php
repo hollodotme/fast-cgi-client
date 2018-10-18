@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -24,14 +26,13 @@
 namespace hollodotme\FastCGI\Interfaces;
 
 /**
- * Class NameValuePairEncoder
- * @package hollodotme\FastCGI\Encoders
+ * Class NameValuePairEncoder.
  */
 interface EncodesNameValuePair
 {
-	public function encodePairs( array $pairs ) : string;
+    public function encodePairs(array $pairs): string;
 
-	public function encodePair( string $name, string $value ) : string;
+    public function encodePair(string $name, string $value): string;
 
-	public function decodePairs( string $data, int $length = -1 ) : array;
+    public function decodePairs(string $data, int $length = -1): array;
 }

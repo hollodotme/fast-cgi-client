@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -24,12 +26,11 @@
 namespace hollodotme\FastCGI\SocketConnections;
 
 /**
- * Class Defaults
- * @package hollodotme\FastCGI\SocketConnections
+ * Class Defaults.
  */
 abstract class Defaults
 {
-	public const CONNECT_TIMEOUT    = 5000;
+    public const CONNECT_TIMEOUT = 5000;
 
-	public const READ_WRITE_TIMEOUT = 5000;
+    public const READ_WRITE_TIMEOUT = 5000;
 }

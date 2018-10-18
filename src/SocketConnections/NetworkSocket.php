@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -26,48 +28,46 @@ namespace hollodotme\FastCGI\SocketConnections;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 
 /**
- * Class NetworkSocket
- * @package hollodotme\FastCGI\SocketConnections
+ * Class NetworkSocket.
  */
 class NetworkSocket implements ConfiguresSocketConnection
 {
-	/** @var string */
-	private $host;
+    /** @var string */
+    private $host;
 
-	/** @var int */
-	private $port;
+    /** @var int */
+    private $port;
 
-	/** @var int */
-	private $connectTimeout;
+    /** @var int */
+    private $connectTimeout;
 
-	/** @var int */
-	private $readWriteTimeout;
+    /** @var int */
+    private $readWriteTimeout;
 
-	public function __construct(
-		string $host,
-		int $port,
-		int $connectTimeout = Defaults::CONNECT_TIMEOUT,
-		int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT
-	)
-	{
-		$this->host             = $host;
-		$this->port             = $port;
-		$this->connectTimeout   = $connectTimeout;
-		$this->readWriteTimeout = $readWriteTimeout;
-	}
+    public function __construct(
+        string $host,
+        int $port,
+        int $connectTimeout = Defaults::CONNECT_TIMEOUT,
+        int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT
+    ) {
+        $this->host = $host;
+        $this->port = $port;
+        $this->connectTimeout = $connectTimeout;
+        $this->readWriteTimeout = $readWriteTimeout;
+    }
 
-	public function getSocketAddress() : string
-	{
-		return sprintf( 'tcp://%s:%d', $this->host, $this->port );
-	}
+    public function getSocketAddress(): string
+    {
+        return \sprintf('tcp://%s:%d', $this->host, $this->port);
+    }
 
-	public function getConnectTimeout() : int
-	{
-		return $this->connectTimeout;
-	}
+    public function getConnectTimeout(): int
+    {
+        return $this->connectTimeout;
+    }
 
-	public function getReadWriteTimeout() : int
-	{
-		return $this->readWriteTimeout;
-	}
+    public function getReadWriteTimeout(): int
+    {
+        return $this->readWriteTimeout;
+    }
 }

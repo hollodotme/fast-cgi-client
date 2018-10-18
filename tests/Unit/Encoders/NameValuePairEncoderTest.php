@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -28,39 +30,39 @@ use PHPUnit\Framework\TestCase;
 
 class NameValuePairEncoderTest extends TestCase
 {
-	/**
-	 * @param array $pairs
-	 *
-	 * @dataProvider pairProvider
-	 */
-	public function testCanEncodeAndDecodePairs( array $pairs ) : void
-	{
-		$nameValuePairEncoder = new NameValuePairEncoder();
+    /**
+     * @param array $pairs
+     *
+     * @dataProvider pairProvider
+     */
+    public function testCanEncodeAndDecodePairs(array $pairs): void
+    {
+        $nameValuePairEncoder = new NameValuePairEncoder();
 
-		$encoded = $nameValuePairEncoder->encodePairs( $pairs );
-		$decoded = $nameValuePairEncoder->decodePairs( $encoded );
+        $encoded = $nameValuePairEncoder->encodePairs($pairs);
+        $decoded = $nameValuePairEncoder->decodePairs($encoded);
 
-		$this->assertEquals( $pairs, $decoded );
-	}
+        $this->assertEquals($pairs, $decoded);
+    }
 
-	public function pairProvider() : array
-	{
-		return [
-			[
-				[ 'unit' => 'test' ],
-			],
-			# no strings
-			[
-				[ 10 => 12.3, 'null' => null ],
-			],
-			# name longer than 128 chars
-			[
-				[ str_repeat( 'a', 129 ) => 'unit' ],
-			],
-			# value longer than 128 chars
-			[
-				[ 'unit' => str_repeat( 'b', 129 ) ],
-			],
-		];
-	}
+    public function pairProvider(): array
+    {
+        return [
+            [
+                ['unit' => 'test'],
+            ],
+            // no strings
+            [
+                [10 => 12.3, 'null' => null],
+            ],
+            // name longer than 128 chars
+            [
+                [\str_repeat('a', 129) => 'unit'],
+            ],
+            // value longer than 128 chars
+            [
+                ['unit' => \str_repeat('b', 129)],
+            ],
+        ];
+    }
 }

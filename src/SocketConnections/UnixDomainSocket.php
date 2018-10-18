@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -26,43 +28,41 @@ namespace hollodotme\FastCGI\SocketConnections;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 
 /**
- * Class UnixDomainSocket
- * @package hollodotme\FastCGI\SocketConnections
+ * Class UnixDomainSocket.
  */
 class UnixDomainSocket implements ConfiguresSocketConnection
 {
-	/** @var string */
-	private $socketPath;
+    /** @var string */
+    private $socketPath;
 
-	/** @var int */
-	private $connectTimeout;
+    /** @var int */
+    private $connectTimeout;
 
-	/** @var int */
-	private $readWriteTimeout;
+    /** @var int */
+    private $readWriteTimeout;
 
-	public function __construct(
-		string $socketPath,
-		int $connectTimeout = Defaults::CONNECT_TIMEOUT,
-		int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT
-	)
-	{
-		$this->socketPath       = $socketPath;
-		$this->connectTimeout   = $connectTimeout;
-		$this->readWriteTimeout = $readWriteTimeout;
-	}
+    public function __construct(
+        string $socketPath,
+        int $connectTimeout = Defaults::CONNECT_TIMEOUT,
+        int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT
+    ) {
+        $this->socketPath = $socketPath;
+        $this->connectTimeout = $connectTimeout;
+        $this->readWriteTimeout = $readWriteTimeout;
+    }
 
-	public function getSocketAddress() : string
-	{
-		return 'unix://' . $this->socketPath;
-	}
+    public function getSocketAddress(): string
+    {
+        return 'unix://'.$this->socketPath;
+    }
 
-	public function getConnectTimeout() : int
-	{
-		return $this->connectTimeout;
-	}
+    public function getConnectTimeout(): int
+    {
+        return $this->connectTimeout;
+    }
 
-	public function getReadWriteTimeout() : int
-	{
-		return $this->readWriteTimeout;
-	}
+    public function getReadWriteTimeout(): int
+    {
+        return $this->readWriteTimeout;
+    }
 }

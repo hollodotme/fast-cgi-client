@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -26,13 +28,12 @@ namespace hollodotme\FastCGI\Requests;
 use hollodotme\FastCGI\Constants\RequestMethod;
 
 /**
- * Class GetRequest
- * @package hollodotme\FastCGI\Requests
+ * Class GetRequest.
  */
 class GetRequest extends AbstractRequest
 {
-	public function getRequestMethod() : string
-	{
-		return RequestMethod::GET;
-	}
+    public function getRequestMethod(): string
+    {
+        return RequestMethod::GET;
+    }
 }
