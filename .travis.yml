@@ -20,7 +20,8 @@ before_script:
  - echo $(phpenv version-name)
  - sudo mkdir -pm 0777 /var/run
  - sudo usermod -a -G travis www-data
- - sudo cp ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf.default ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
+ - rm -f ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/www.conf
+ - echo -e "[global]\ninclude=/home/travis/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/*.conf" > ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.conf
  - sudo cp env/php-fpm/$(phpenv version-name)/network-socket.pool.conf ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/network-socket.pool.conf
  - sudo cp env/php-fpm/$(phpenv version-name)/unix-domain-socket.pool.conf ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/unix-domain-socket.pool.conf
  - sudo cp env/php-fpm/$(phpenv version-name)/restricted-unix-domain-socket.pool.conf ~/.phpenv/versions/$(phpenv version-name)/etc/php-fpm.d/restricted-unix-domain-socket.pool.conf
