@@ -28,6 +28,7 @@ use hollodotme\FastCGI\Encoders\PacketEncoder;
 use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
+use hollodotme\FastCGI\Interfaces\DefinesReadTimeout;
 use hollodotme\FastCGI\Interfaces\EncodesNameValuePair;
 use hollodotme\FastCGI\Interfaces\EncodesPacket;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
@@ -111,19 +112,19 @@ class Client
 	}
 
 	/**
-	 * @param int      $requestId
-	 * @param int|null $timeoutMs
+	 * @param int                     $requestId
+	 * @param DefinesReadTimeout|null $readTimeout
 	 *
 	 * @throws \Throwable
 	 * @return ProvidesResponseData
 	 */
-	public function readResponse( int $requestId, ?int $timeoutMs = null ) : ProvidesResponseData
+	public function readResponse( int $requestId, ?DefinesReadTimeout $readTimeout = null ) : ProvidesResponseData
 	{
 		try
 		{
 			$socket = $this->getSocketWithId( $requestId );
 
-			return $socket->fetchResponse( $timeoutMs );
+			return $socket->fetchResponse( $readTimeout );
 		}
 		catch ( \Throwable $e )
 		{

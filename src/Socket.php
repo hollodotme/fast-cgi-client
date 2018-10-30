@@ -29,6 +29,7 @@ use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
+use hollodotme\FastCGI\Interfaces\DefinesReadTimeout;
 use hollodotme\FastCGI\Interfaces\EncodesNameValuePair;
 use hollodotme\FastCGI\Interfaces\EncodesPacket;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
@@ -262,7 +263,15 @@ final class Socket
 			$offset = 0;
 			do
 			{
-				$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, substr( $request->getContent(), $offset, self::REQ_MAX_CONTENT_SIZE ), $this->id );
+				$requestPackets .= $this->packetEncoder->encodePacket(
+					self::STDIN,
+					substr(
+						$request->getContent(),
+						$offset,
+						self::REQ_MAX_CONTENT_SIZE
+					),
+					$this->id
+				);
 				$offset         += self::REQ_MAX_CONTENT_SIZE;
 			}
 			while ( $offset < $request->getContentLength() );
@@ -298,12 +307,12 @@ final class Socket
 	}
 
 	/**
-	 * @param int|null $timeoutMs
+	 * @param DefinesReadTimeout $readTimeout
 	 *
-	 * @return ProvidesResponseData
 	 * @throws \Throwable
+	 * @return ProvidesResponseData
 	 */
-	public function fetchResponse( ?int $timeoutMs = null ) : ProvidesResponseData
+	public function fetchResponse( DefinesReadTimeout $readTimeout ) : ProvidesResponseData
 	{
 		if ( null !== $this->response )
 		{
@@ -311,7 +320,7 @@ final class Socket
 		}
 
 		// Reset timeout on socket for reading
-		$this->setStreamTimeout( $timeoutMs ?? $this->connection->getReadWriteTimeout() );
+		$this->setStreamTimeout( $readTimeout->getReadTimeoutMSec() );
 
 		$responseContent = '';
 
