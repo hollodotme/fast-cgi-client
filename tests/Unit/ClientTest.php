@@ -49,6 +49,7 @@ final class ClientTest extends TestCase
 		$connection = new UnixDomainSocket( '/tmp/not/existing.sock', 2000, 2000 );
 		$client     = new Client( $connection );
 
+		/** @noinspection UnusedFunctionResultInspection */
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
 	}
 
@@ -68,6 +69,7 @@ final class ClientTest extends TestCase
 		$connection = new UnixDomainSocket( '' . $testSocket );
 		$client     = new Client( $connection );
 
+		/** @noinspection UnusedFunctionResultInspection */
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
 	}
 
@@ -137,12 +139,14 @@ final class ClientTest extends TestCase
 		$connection = new UnixDomainSocket( '/var/run/php7.1-ruds.sock' );
 		$client     = new Client( $connection );
 
+		/** @noinspection UnusedFunctionResultInspection */
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
 	}
 
 	/**
 	 * @throws \PHPUnit\Framework\AssertionFailedError
 	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
 	 */
 	public function testHandlingReadyResponsesJustReturnsIfClientGotNoRequests() : void
 	{

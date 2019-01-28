@@ -31,6 +31,8 @@ final class AbstractRequestTest extends TestCase
 	/**
 	 * @param string $requestMethod
 	 *
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
 	 * @dataProvider requestMethodProvider
 	 */
 	public function testCanGetDefaultValues( string $requestMethod ) : void
@@ -88,6 +90,8 @@ final class AbstractRequestTest extends TestCase
 	/**
 	 * @param string $requestMethod
 	 *
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
 	 * @dataProvider requestMethodProvider
 	 */
 	public function testCanGetParametersArray( string $requestMethod ) : void
@@ -116,6 +120,10 @@ final class AbstractRequestTest extends TestCase
 		$this->assertSame( $expectedParams, $request->getParams() );
 	}
 
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
 	public function testContentLengthChangesWithContent() : void
 	{
 		$request = $this->getRequest( 'GET', '/path/to/script.php', 'Some content' );
@@ -127,6 +135,10 @@ final class AbstractRequestTest extends TestCase
 		$this->assertSame( 16, $request->getContentLength() );
 	}
 
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
 	public function testCanOverwriteVars() : void
 	{
 		$request = $this->getRequest( 'POST', '/path/to/script.php', 'Unit-Test' );
@@ -166,6 +178,10 @@ final class AbstractRequestTest extends TestCase
 		$this->assertSame( $expectedParams, $request->getParams() );
 	}
 
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
 	public function testCanResetCustomVars() : void
 	{
 		$request = $this->getRequest( 'POST', '/path/to/script.php', 'Unit-Test' );
