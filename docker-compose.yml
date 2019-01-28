@@ -1,0 +1,27 @@
+version: '3'
+
+services:
+  php:
+    build:
+      dockerfile: Dockerfile
+      context: .docker/php7.3
+    container_name: fcc_php
+    restart: "no"
+    networks:
+      - fcc_network
+    ports:
+      - 9000:9000
+    volumes:
+      - ./:/repo
+
+  composer:
+    image: composer:latest
+    container_name: fcc_composer
+    restart: "no"
+    networks:
+      - fcc_network
+    volumes:
+      - ./:/repo
+
+networks:
+  fcc_network:
