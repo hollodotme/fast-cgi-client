@@ -24,7 +24,10 @@
 namespace hollodotme\FastCGI\Tests\Integration;
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Exceptions\ConnectException;
+use hollodotme\FastCGI\Exceptions\ProcessManagerException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
@@ -255,6 +258,7 @@ final class NetworkSocketTest extends TestCase
 		$content = http_build_query( ['sleep' => 2, 'test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
 
+		/** @noinspection UnusedFunctionResultInspection */
 		$client->sendRequest( $request );
 	}
 
@@ -290,8 +294,6 @@ final class NetworkSocketTest extends TestCase
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \PHPUnit\Framework\Exception
 	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
 	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
 	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
@@ -365,9 +367,7 @@ final class NetworkSocketTest extends TestCase
 
 		sleep( 1 );
 
-		$responses = $client->readResponses( null, ...$requestIds );
-
-		foreach ( $responses as $response )
+		foreach ( $client->readResponses( null, ...$requestIds ) as $response )
 		{
 			echo $response->getBody();
 		}
@@ -479,6 +479,44 @@ final class NetworkSocketTest extends TestCase
 			],
 			[
 				'length' => 524288,
+			],
+		];
+	}
+
+	/**
+	 * @param string $scriptFilename
+	 *
+	 * @throws ConnectException
+	 * @throws \PHPUnit\Framework\AssertionFailedError
+	 * @throws \Throwable
+	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @dataProvider invalidScriptFileNamesProvider
+	 */
+	public function testRequestingAnUnknownScriptPathThrowsException( string $scriptFilename ) : void
+	{
+		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$client     = new Client( $connection );
+		$request    = new GetRequest( $scriptFilename, '' );
+
+		$this->expectException( ProcessManagerException::class );
+		$this->expectExceptionMessage( 'An error occurred: Primary script unknown' );
+
+		/** @noinspection UnusedFunctionResultInspection */
+		$client->sendRequest( $request );
+
+		$this->fail( 'Expecteed exception to be thrown that the primary script is unknown.' );
+	}
+
+	public function invalidScriptFileNamesProvider() : array
+	{
+		return [
+			[
+				'scriptFilename' => '/unknown/script.php',
+			],
+			[
+				# Existing script filenames containing path traversals do not work either
+				'scriptFilename' => __DIR__ . '/../Integration/Workers/worker.php',
 			],
 		];
 	}

@@ -23,8 +23,10 @@
 
 namespace hollodotme\FastCGI;
 
+use ErrorException;
 use hollodotme\FastCGI\Exceptions\ConnectException;
 use hollodotme\FastCGI\Exceptions\ForbiddenException;
+use hollodotme\FastCGI\Exceptions\ProcessManagerException;
 use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
@@ -34,6 +36,25 @@ use hollodotme\FastCGI\Interfaces\EncodesPacket;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Responses\Response;
+use Throwable;
+use function chr;
+use function error_get_last;
+use function fclose;
+use function fflush;
+use function floor;
+use function fread;
+use function fwrite;
+use function is_resource;
+use function microtime;
+use function ord;
+use function random_int;
+use function str_repeat;
+use function stream_get_meta_data;
+use function stream_select;
+use function stream_set_timeout;
+use function stream_socket_client;
+use function strlen;
+use function substr;
 
 /**
  * Class Socket
@@ -183,7 +204,7 @@ final class Socket
 				$this->connection->getConnectTimeout() / 1000
 			);
 		}
-		catch ( \Throwable $e )
+		catch ( Throwable $e )
 		{
 			throw new ConnectException( $e->getMessage(), $e->getCode(), $e );
 		}
@@ -214,7 +235,7 @@ final class Socket
 
 		if ( null !== $lastError )
 		{
-			$lastErrorException = new \ErrorException(
+			$lastErrorException = new ErrorException(
 				$lastError['message'] ?? '[No message available]',
 				0,
 				$lastError['type'] ?? E_ERROR,
@@ -244,7 +265,7 @@ final class Socket
 		# Keep alive bit always set to 1
 		$requestPackets = $this->packetEncoder->encodePacket(
 			self::BEGIN_REQUEST,
-			\chr( 0 ) . \chr( self::RESPONDER ) . \chr( 1 ) . str_repeat( \chr( 0 ), 5 ),
+			chr( 0 ) . chr( self::RESPONDER ) . chr( 1 ) . str_repeat( chr( 0 ), 5 ),
 			$this->id
 		);
 
@@ -262,7 +283,15 @@ final class Socket
 			$offset = 0;
 			do
 			{
-				$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, substr( $request->getContent(), $offset, self::REQ_MAX_CONTENT_SIZE ), $this->id );
+				$requestPackets .= $this->packetEncoder->encodePacket(
+					self::STDIN,
+					substr(
+						$request->getContent(),
+						$offset,
+						self::REQ_MAX_CONTENT_SIZE
+					),
+					$this->id
+				);
 				$offset         += self::REQ_MAX_CONTENT_SIZE;
 			}
 			while ( $offset < $request->getContentLength() );
@@ -284,7 +313,7 @@ final class Socket
 		$writeResult = fwrite( $this->resource, $data );
 		$flushResult = fflush( $this->resource );
 
-		if ( $writeResult === false || $flushResult === false )
+		if ( $writeResult === false || !$flushResult )
 		{
 			$info = stream_get_meta_data( $this->resource );
 
@@ -300,8 +329,12 @@ final class Socket
 	/**
 	 * @param int|null $timeoutMs
 	 *
+	 * @throws ForbiddenException
+	 * @throws ProcessManagerException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 * @return ProvidesResponseData
-	 * @throws \Throwable
 	 */
 	public function fetchResponse( ?int $timeoutMs = null ) : ProvidesResponseData
 	{
@@ -313,7 +346,10 @@ final class Socket
 		// Reset timeout on socket for reading
 		$this->setStreamTimeout( $timeoutMs ?? $this->connection->getReadWriteTimeout() );
 
+		$errorContent    = '';
 		$responseContent = '';
+
+		$this->status = self::REQ_STATE_OK;
 
 		do
 		{
@@ -322,8 +358,8 @@ final class Socket
 			switch ( (int)$packet['type'] )
 			{
 				case self::STDERR:
-					$this->status    = self::REQ_STATE_ERR;
-					$responseContent .= $packet['content'];
+					$this->status = self::REQ_STATE_ERR;
+					$errorContent .= $packet['content'];
 					$this->notifyPassThroughCallbacks( $packet['content'] );
 					break;
 
@@ -335,7 +371,6 @@ final class Socket
 				case self::END_REQUEST:
 					if ( $packet['requestId'] === $this->id )
 					{
-						$this->status = self::REQ_STATE_OK;
 						break 2;
 					}
 					break;
@@ -346,7 +381,12 @@ final class Socket
 		try
 		{
 			$this->handleNullPacket( $packet );
-			$this->guardRequestCompleted( \ord( $packet['content']{4} ) );
+			$this->guardRequestCompleted( ord( $packet['content']{4} ) );
+
+			if ( $this->status === self::REQ_STATE_ERR )
+			{
+				throw new ProcessManagerException( 'An error occurred: ' . $errorContent );
+			}
 
 			$this->response = new Response(
 				$this->id,
@@ -356,7 +396,7 @@ final class Socket
 
 			return $this->response;
 		}
-		catch ( \Throwable $e )
+		catch ( WriteFailedException | ReadFailedException $e )
 		{
 			throw $e;
 		}
@@ -379,13 +419,14 @@ final class Socket
 
 				while ( $length && ($buffer = fread( $this->resource, $length )) !== false )
 				{
-					$length            -= \strlen( $buffer );
+					$length            -= strlen( $buffer );
 					$packet['content'] .= $buffer;
 				}
 			}
 
 			if ( $packet['paddingLength'] )
 			{
+				/** @noinspection UnusedFunctionResultInspection */
 				fread( $this->resource, $packet['paddingLength'] );
 			}
 
@@ -459,7 +500,7 @@ final class Socket
 
 	private function disconnect() : void
 	{
-		if ( \is_resource( $this->resource ) )
+		if ( is_resource( $this->resource ) )
 		{
 			fclose( $this->resource );
 		}
@@ -478,7 +519,7 @@ final class Socket
 		}
 	}
 
-	public function notifyFailureCallbacks( \Throwable $throwable ) : void
+	public function notifyFailureCallbacks( Throwable $throwable ) : void
 	{
 		foreach ( $this->failureCallbacks as $failureCallback )
 		{
