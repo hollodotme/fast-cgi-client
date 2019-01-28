@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [2.5.0] - 2019-01-29
+
+### Added
+
+* New `ProcessManagerException` in case the php-fpm responds with packages of type `STDERR`.
+  This refers mainly to the error `Primary script unknown` resp. the response `File not found.`.
+  - [#26] 
+  
+* CI builds for PHP 7.3
+
 ## [2.4.3] - 2018-09-17
 
 ### Fixes
@@ -137,6 +147,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[2.5.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.3...v2.5.0
 [2.4.3]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.2...v2.4.3
 [2.4.2]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.1...v2.4.2
 [2.4.1]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.0...v2.4.1
@@ -157,3 +168,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#14]: https://github.com/hollodotme/fast-cgi-client/issues/14
 [#15]: https://github.com/hollodotme/fast-cgi-client/issues/15
 [#20]: https://github.com/hollodotme/fast-cgi-client/issues/20
+[#26]: https://github.com/hollodotme/fast-cgi-client/issues/26
