@@ -23,22 +23,27 @@
 
 namespace hollodotme\FastCGI\Tests\Unit;
 
+use Exception;
 use hollodotme\FastCGI\Encoders\NameValuePairEncoder;
 use hollodotme\FastCGI\Encoders\PacketEncoder;
+use hollodotme\FastCGI\Exceptions\ConnectException;
+use hollodotme\FastCGI\Exceptions\ReadFailedException;
+use hollodotme\FastCGI\Exceptions\TimedoutException;
+use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\Socket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use Throwable;
+use function dirname;
+use function http_build_query;
 
-/**
- * Class SocketTest
- * @package hollodotme\FastCGI\Tests\Unit
- */
 final class SocketTest extends TestCase
 {
 	/**
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	public function testCanGetIdAfterConstruction() : void
 	{
@@ -50,7 +55,7 @@ final class SocketTest extends TestCase
 
 	/**
 	 * @return Socket
-	 * @throws \Exception
+	 * @throws Exception
 	 */
 	private function getSocket() : Socket
 	{
@@ -62,18 +67,18 @@ final class SocketTest extends TestCase
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Exception
+	 * @throws Throwable
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanSendRequestAndFetchResponse() : void
 	{
 		$socket  = $this->getSocket();
 		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
-			\dirname( __DIR__ ) . '/Integration/Workers/worker.php',
+			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 
@@ -89,12 +94,12 @@ final class SocketTest extends TestCase
 	}
 
 	/**
-	 * @throws \Exception
+	 * @throws Exception
 	 * @throws \PHPUnit\Framework\AssertionFailedError
 	 * @throws \PHPUnit\Framework\Exception
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanCollectResource() : void
 	{
@@ -102,7 +107,7 @@ final class SocketTest extends TestCase
 		$socket    = $this->getSocket();
 		$data      = ['test-key' => 'unit'];
 		$request   = new PostRequest(
-			\dirname( __DIR__ ) . '/Integration/Workers/worker.php',
+			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 
@@ -114,23 +119,22 @@ final class SocketTest extends TestCase
 
 		$socket->collectResource( $resources );
 
-		$this->assertInternalType( 'resource', $resources[ $socket->getId() ] );
+		$this->assertIsResource( $resources[ $socket->getId() ] );
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \PHPUnit\Framework\Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws ReadFailedException
+	 * @throws Exception
 	 */
 	public function testCanNotifyResponseCallback() : void
 	{
 		$socket  = $this->getSocket();
 		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
-			\dirname( __DIR__ ) . '/Integration/Workers/worker.php',
+			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 		$request->addResponseCallbacks(
@@ -148,27 +152,26 @@ final class SocketTest extends TestCase
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \PHPUnit\Framework\Exception
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws Exception
 	 */
 	public function testCanNotifyFailureCallback() : void
 	{
 		$socket  = $this->getSocket();
 		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
-			\dirname( __DIR__ ) . '/Integration/Workers/worker.php',
+			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 		$request->addFailureCallbacks(
-			function ( \Throwable $throwable )
+			function ( Throwable $throwable )
 			{
 				echo $throwable->getMessage();
 			}
 		);
-		$throwable = new \RuntimeException( 'Something went wrong.' );
+		$throwable = new RuntimeException( 'Something went wrong.' );
 
 		$socket->sendRequest( $request );
 		$socket->notifyFailureCallbacks( $throwable );

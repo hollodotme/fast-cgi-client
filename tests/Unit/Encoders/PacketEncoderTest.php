@@ -26,7 +26,7 @@ namespace hollodotme\FastCGI\Tests\Unit\Encoders;
 use hollodotme\FastCGI\Encoders\PacketEncoder;
 use PHPUnit\Framework\TestCase;
 
-class PacketEncoderTest extends TestCase
+final class PacketEncoderTest extends TestCase
 {
 	/**
 	 * @param int    $type
@@ -34,6 +34,8 @@ class PacketEncoderTest extends TestCase
 	 * @param int    $requestId
 	 * @param array  $expectedHeader
 	 *
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
 	 * @dataProvider packetContentProvider
 	 */
 	public function testCanEncodeAndDecodePacket( int $type, string $content, int $requestId, array $expectedHeader ) : void

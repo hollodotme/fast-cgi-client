@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -28,6 +28,10 @@ use PHPUnit\Framework\TestCase;
 
 final class PostRequestTest extends TestCase
 {
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
 	public function testRequestMethodIsPost() : void
 	{
 		$request = new PostRequest( '/path/to/script.php', 'Unit-Test' );

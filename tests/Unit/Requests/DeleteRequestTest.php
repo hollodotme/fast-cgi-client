@@ -28,6 +28,10 @@ use PHPUnit\Framework\TestCase;
 
 final class DeleteRequestTest extends TestCase
 {
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
 	public function testRequestMethodIsGet() : void
 	{
 		$request = new DeleteRequest( '/path/to/script.php', 'Unit-Test' );

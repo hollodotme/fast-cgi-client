@@ -23,44 +23,45 @@
 
 namespace hollodotme\FastCGI\Tests\Unit;
 
+use Exception;
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Exceptions\ConnectException;
+use hollodotme\FastCGI\Exceptions\ReadFailedException;
+use hollodotme\FastCGI\Exceptions\TimedoutException;
+use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use PHPUnit\Framework\TestCase;
+use Throwable;
 
-/**
- * Class ClientTest
- * @package hollodotme\FastCGI\Tests\Unit
- */
 final class ClientTest extends TestCase
 {
 	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
-	 *
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws Exception
+	 * @throws Throwable
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testConnectAttemptToNotExistingSocketThrowsException() : void
 	{
-		$connection = new UnixDomainSocket( '/tmp/not/existing.sock', 2000, 2000 );
+		$connection = new UnixDomainSocket( '/tmp/not/existing.sock' );
 		$client     = new Client( $connection );
+
+		$this->expectException( ConnectException::class );
+		$this->expectExceptionMessage( 'Unable to connect to FastCGI application: No such file or directory' );
 
 		/** @noinspection UnusedFunctionResultInspection */
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
-	 *
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
+	 * @throws Exception
+	 * @throws Throwable
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testConnectAttemptToInvalidSocketThrowsException() : void
 	{
@@ -69,75 +70,83 @@ final class ClientTest extends TestCase
 		$connection = new UnixDomainSocket( '' . $testSocket );
 		$client     = new Client( $connection );
 
+		$this->expectException( ConnectException::class );
+		$this->expectExceptionMessage( 'Unable to connect to FastCGI application: Connection refused' );
+
 		/** @noinspection UnusedFunctionResultInspection */
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
 	}
 
 	/**
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @expectedExceptionMessage Socket not found for request ID: 12345
+	 * @throws ReadFailedException
 	 */
 	public function testWaitingForUnknownRequestThrowsException() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
 
+		$this->expectException( ReadFailedException::class );
+		$this->expectExceptionMessage( 'Socket not found for request ID: 12345' );
+
 		$client->waitForResponse( 12345 );
 	}
 
 	/**
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 *
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @expectedExceptionMessage No pending requests found.
+	 * @throws ReadFailedException
+	 * @throws Throwable
 	 */
 	public function testWaitingForResponsesWithoutRequestsThrowsException() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
 
+		$this->expectException( ReadFailedException::class );
+		$this->expectExceptionMessage( 'No pending requests found.' );
+
 		$client->waitForResponses();
 	}
 
 	/**
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @expectedExceptionMessage Socket not found for request ID: 12345
+	 * @throws ReadFailedException
 	 */
 	public function testHandlingUnknownRequestThrowsException() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
 
+		$this->expectException( ReadFailedException::class );
+		$this->expectExceptionMessage( 'Socket not found for request ID: 12345' );
+
 		$client->handleResponse( 12345 );
 	}
 
 	/**
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @expectedExceptionMessage Socket not found for request ID: 12345
+	 * @throws ReadFailedException
 	 */
 	public function testHandlingUnknownRequestsThrowsException() : void
 	{
 		$connection = new NetworkSocket( '127.0.0.1', 9000 );
 		$client     = new Client( $connection );
 
+		$this->expectException( ReadFailedException::class );
+		$this->expectExceptionMessage( 'Socket not found for request ID: 12345' );
+
 		$client->handleResponses( null, 12345, 12346 );
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
-	 *
-	 * @expectedException \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @expectedExceptionMessageRegExp #.*unable to connect to.*#i
+	 * @throws ConnectException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testConnectAttemptToRestrictedUnixDomainSocketThrowsException() : void
 	{
 		$connection = new UnixDomainSocket( '/var/run/php7.1-ruds.sock' );
 		$client     = new Client( $connection );
+
+		$this->expectException( ConnectException::class );
+		$this->expectExceptionMessageRegExp( '#.*unable to connect to.*#i' );
 
 		/** @noinspection UnusedFunctionResultInspection */
 		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
@@ -145,8 +154,8 @@ final class ClientTest extends TestCase
 
 	/**
 	 * @throws \PHPUnit\Framework\AssertionFailedError
-	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
 	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 * @throws ReadFailedException
 	 */
 	public function testHandlingReadyResponsesJustReturnsIfClientGotNoRequests() : void
 	{

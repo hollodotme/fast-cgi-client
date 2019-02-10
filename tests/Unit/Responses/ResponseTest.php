@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -28,16 +28,20 @@ use PHPUnit\Framework\TestCase;
 
 final class ResponseTest extends TestCase
 {
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
 	public function testCanGetHeaders() : void
 	{
-		$rawResponse = "X-Powered-By: PHP/7.1.0\r\n"
-		               . "X-Custom: Header\r\n"
-		               . "Content-type: text/html; charset=UTF-8\r\n"
-		               . "\r\n"
-		               . 'unit';
-
+		$output   = "X-Powered-By: PHP/7.1.0\r\n"
+		            . "X-Custom: Header\r\n"
+		            . "Content-type: text/html; charset=UTF-8\r\n"
+		            . "\r\n"
+		            . 'unit';
+		$error    = '';
 		$duration = 0.54321;
-		$response = new Response( 1234, $rawResponse, $duration );
+		$response = new Response( 1234, $output, $error, $duration );
 
 		$expectedHeaders = [
 			'X-Powered-By' => 'PHP/7.1.0',
@@ -51,36 +55,89 @@ final class ResponseTest extends TestCase
 		$this->assertSame( 'text/html; charset=UTF-8', $response->getHeader( 'Content-type' ) );
 	}
 
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
 	public function testCanGetBody() : void
 	{
-		$rawResponse = "X-Powered-By: PHP/7.1.0\r\n"
-		               . "X-Custom: Header\r\n"
-		               . "Content-type: text/html; charset=UTF-8\r\n"
-		               . "\r\n"
-		               . "unit\r\n"
-		               . 'test';
-
+		$output   = "X-Powered-By: PHP/7.1.0\r\n"
+		            . "X-Custom: Header\r\n"
+		            . "Content-type: text/html; charset=UTF-8\r\n"
+		            . "\r\n"
+		            . "unit\r\n"
+		            . 'test';
+		$error    = '';
 		$duration = 0.54321;
-		$response = new Response( 1234, $rawResponse, $duration );
+		$response = new Response( 1234, $output, $error, $duration );
 
 		$expectedBody = "unit\r\ntest";
 
 		$this->assertSame( $expectedBody, $response->getBody() );
 	}
 
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
 	public function testCanGetRawResponse() : void
 	{
-		$rawResponse = "X-Powered-By: PHP/7.1.0\r\n"
-		               . "X-Custom: Header\r\n"
-		               . "Content-type: text/html; charset=UTF-8\r\n"
-		               . "\r\n"
-		               . "unit\r\n"
-		               . 'test';
-
+		$output   = "X-Powered-By: PHP/7.1.0\r\n"
+		            . "X-Custom: Header\r\n"
+		            . "Content-type: text/html; charset=UTF-8\r\n"
+		            . "\r\n"
+		            . "unit\r\n"
+		            . 'test';
+		$error    = '';
 		$duration = 0.54321;
-		$response = new Response( 1234, $rawResponse, $duration );
+		$response = new Response( 1234, $output, $error, $duration );
 
-		$this->assertSame( $rawResponse, $response->getRawResponse() );
+		$this->assertSame( $output, $response->getRawResponse() );
+		$this->assertSame( $duration, $response->getDuration() );
+		$this->assertSame( 1234, $response->getRequestId() );
+	}
+
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
+	public function testCanGetOutput() : void
+	{
+		$output   = "X-Powered-By: PHP/7.1.0\r\n"
+		            . "X-Custom: Header\r\n"
+		            . "Content-type: text/html; charset=UTF-8\r\n"
+		            . "\r\n"
+		            . "unit\r\n"
+		            . 'test';
+		$error    = '';
+		$duration = 0.54321;
+		$response = new Response( 1234, $output, $error, $duration );
+
+		$this->assertSame( $output, $response->getOutput() );
+		$this->assertSame( $response->getRawResponse(), $response->getOutput() );
+		$this->assertSame( $duration, $response->getDuration() );
+		$this->assertSame( 1234, $response->getRequestId() );
+	}
+
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
+	public function testCanGetError() : void
+	{
+		$output   = "Status: 404 Not Found\r\n"
+		            . "X-Powered-By: PHP/7.1.0\r\n"
+		            . "X-Custom: Header\r\n"
+		            . "Content-type: text/html; charset=UTF-8\r\n"
+		            . "\r\n"
+		            . 'File not found.';
+		$error    = 'Primary script unknown';
+		$duration = 0.54321;
+		$response = new Response( 1234, $output, $error, $duration );
+
+		$this->assertSame( $output, $response->getOutput() );
+		$this->assertSame( 'File not found.', $response->getBody() );
+		$this->assertSame( $error, $response->getError() );
 		$this->assertSame( $duration, $response->getDuration() );
 		$this->assertSame( 1234, $response->getRequestId() );
 	}

@@ -23,58 +23,70 @@
 
 namespace hollodotme\FastCGI\Tests\Integration;
 
+use Exception;
 use hollodotme\FastCGI\Client;
-use hollodotme\FastCGI\Exceptions\ProcessManagerException;
+use hollodotme\FastCGI\Exceptions\ConnectException;
+use hollodotme\FastCGI\Exceptions\ReadFailedException;
+use hollodotme\FastCGI\Exceptions\TimedoutException;
+use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use PHPUnit\Framework\TestCase;
+use Throwable;
+use function chmod;
 
-/**
- * Class NetworkSocketTest
- * @package hollodotme\FastCGI\Tests\Integration
- */
 final class UnixDomainSocketTest extends TestCase
 {
+	/** @var Client */
+	private $client;
+
+	protected function setUp() : void
+	{
+		$connection   = new UnixDomainSocket( '/var/run/php-uds.sock' );
+		$this->client = new Client( $connection );
+	}
+
+	protected function tearDown() : void
+	{
+		$this->client = null;
+	}
+
 	/**
-	 * @throws \Exception
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Exception
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanSendAsyncRequestAndReceiveRequestId() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client     = new Client( $connection );
-		$content    = http_build_query( ['test-key' => 'unit'] );
-		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+		$content = http_build_query( ['test-key' => 'unit'] );
+		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$requestId = $client->sendAsyncRequest( $request );
+		$requestId = $this->client->sendAsyncRequest( $request );
 
 		$this->assertGreaterThanOrEqual( 1, $requestId );
 		$this->assertLessThanOrEqual( 65535, $requestId );
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Exception
+	 * @throws Throwable
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanSendAsyncRequestAndReadResponse() : void
 	{
-		$connection       = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client           = new Client( $connection );
 		$content          = http_build_query( ['test-key' => 'unit'] );
 		$request          = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
 
-		$requestId = $client->sendAsyncRequest( $request );
-		$response  = $client->readResponse( $requestId );
+		$requestId = $this->client->sendAsyncRequest( $request );
+		$response  = $this->client->readResponse( $requestId );
 
 		$this->assertEquals( $expectedResponse, $response->getRawResponse() );
 		$this->assertSame( 'unit', $response->getBody() );
@@ -83,22 +95,20 @@ final class UnixDomainSocketTest extends TestCase
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Exception
+	 * @throws Throwable
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanSendSyncRequestAndReceiveResponse() : void
 	{
-		$connection       = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client           = new Client( $connection );
 		$content          = http_build_query( ['test-key' => 'unit'] );
 		$request          = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
 
-		$response = $client->sendRequest( $request );
+		$response = $this->client->sendRequest( $request );
 
 		$this->assertEquals( $expectedResponse, $response->getRawResponse() );
 		$this->assertSame( 'unit', $response->getBody() );
@@ -109,19 +119,17 @@ final class UnixDomainSocketTest extends TestCase
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Exception
+	 * @throws Throwable
+	 * @throws ConnectException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanReceiveResponseInCallback() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client     = new Client( $connection );
-		$content    = http_build_query( ['test-key' => 'unit'] );
-		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+		$content = http_build_query( ['test-key' => 'unit'] );
+		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$unitTest = $this;
 
@@ -132,24 +140,22 @@ final class UnixDomainSocketTest extends TestCase
 			}
 		);
 
-		$client->sendAsyncRequest( $request );
-		$client->waitForResponses();
+		$this->client->sendAsyncRequest( $request );
+		$this->client->waitForResponses();
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Exception
+	 * @throws Throwable
+	 * @throws ConnectException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanHandleExceptionsInFailureCallback() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client     = new Client( $connection );
-		$content    = http_build_query( ['test-key' => 'unit'] );
-		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+		$content = http_build_query( ['test-key' => 'unit'] );
+		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$unitTest = $this;
 
@@ -168,59 +174,55 @@ final class UnixDomainSocketTest extends TestCase
 			}
 		);
 
-		$client->sendAsyncRequest( $request );
-		$client->waitForResponses();
+		$this->client->sendAsyncRequest( $request );
+		$this->client->waitForResponses();
 	}
 
 	/**
-	 * @throws \Exception
+	 * @throws Exception
 	 * @throws \PHPUnit\Framework\AssertionFailedError
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws ConnectException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanCheckForRequestIdsHavingResponses() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client     = new Client( $connection );
-		$content    = http_build_query( ['test-key' => 'unit'] );
-		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+		$content = http_build_query( ['test-key' => 'unit'] );
+		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$requestId = $client->sendAsyncRequest( $request );
+		$requestId = $this->client->sendAsyncRequest( $request );
 
 		usleep( 60000 );
 
-		$this->assertTrue( $client->hasResponse( $requestId ) );
-		$this->assertEquals( [$requestId], $client->getRequestIdsHavingResponse() );
+		$this->assertTrue( $this->client->hasResponse( $requestId ) );
+		$this->assertEquals( [$requestId], $this->client->getRequestIdsHavingResponse() );
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Exception
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanReadResponses() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client     = new Client( $connection );
-		$content    = http_build_query( ['test-key' => 'unit'] );
-		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+		$content = http_build_query( ['test-key' => 'unit'] );
+		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$requestIdOne = $client->sendAsyncRequest( $request );
+		$requestIdOne = $this->client->sendAsyncRequest( $request );
 
 		$request->setContent( http_build_query( ['test-key' => 'test'] ) );
 
-		$requestIdTwo = $client->sendAsyncRequest( $request );
+		$requestIdTwo = $this->client->sendAsyncRequest( $request );
 
 		usleep( 110000 );
 
 		$requestIds = [$requestIdOne, $requestIdTwo];
 
-		$this->assertEquals( $requestIds, $client->getRequestIdsHavingResponse() );
+		$this->assertEquals( $requestIds, $this->client->getRequestIdsHavingResponse() );
 
-		foreach ( $client->readResponses( null, ...$requestIds ) as $response )
+		foreach ( $this->client->readResponses( null, ...$requestIds ) as $response )
 		{
 			if ( $response->getRequestId() === $requestIdOne )
 			{
@@ -235,13 +237,11 @@ final class UnixDomainSocketTest extends TestCase
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
-	 *
-	 * @expectedException \hollodotme\FastCGI\Exceptions\TimedoutException
+	 * @throws Exception
+	 * @throws Throwable
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testReadingSyncResponseCanTimeOut() : void
 	{
@@ -257,23 +257,23 @@ final class UnixDomainSocketTest extends TestCase
 		$content = http_build_query( ['sleep' => 2, 'test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
 
+		$this->expectException( TimedoutException::class );
+
 		/** @noinspection UnusedFunctionResultInspection */
 		$client->sendRequest( $request );
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Exception
+	 * @throws ConnectException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanHandleReadyResponses() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client     = new Client( $connection );
-		$content    = http_build_query( ['test-key' => 'unit'] );
-		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+		$content = http_build_query( ['test-key' => 'unit'] );
+		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$unitTest = $this;
 
@@ -284,33 +284,30 @@ final class UnixDomainSocketTest extends TestCase
 			}
 		);
 
-		$client->sendAsyncRequest( $request );
+		$this->client->sendAsyncRequest( $request );
 
-		while ( $client->hasUnhandledResponses() )
+		while ( $this->client->hasUnhandledResponses() )
 		{
-			$client->handleReadyResponses();
+			$this->client->handleReadyResponses();
 		}
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \PHPUnit\Framework\Exception
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Exception
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanReadReadyResponses() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client     = new Client( $connection );
-		$content    = http_build_query( ['test-key' => 'unit'] );
-		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+		$content = http_build_query( ['test-key' => 'unit'] );
+		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$client->sendAsyncRequest( $request );
+		$this->client->sendAsyncRequest( $request );
 
-		while ( $client->hasUnhandledResponses() )
+		while ( $this->client->hasUnhandledResponses() )
 		{
-			foreach ( $client->readReadyResponses() as $response )
+			foreach ( $this->client->readReadyResponses() as $response )
 			{
 				echo $response->getBody();
 			}
@@ -320,18 +317,16 @@ final class UnixDomainSocketTest extends TestCase
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Exception
+	 * @throws ConnectException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanWaitForResponse() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client     = new Client( $connection );
-		$content    = http_build_query( ['test-key' => 'unit'] );
-		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+		$content = http_build_query( ['test-key' => 'unit'] );
+		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$unitTest = $this;
 
@@ -342,61 +337,57 @@ final class UnixDomainSocketTest extends TestCase
 			}
 		);
 
-		$requestId = $client->sendAsyncRequest( $request );
+		$requestId = $this->client->sendAsyncRequest( $request );
 
-		$client->waitForResponse( $requestId );
+		$this->client->waitForResponse( $requestId );
 	}
 
 	/**
-	 * @throws \Exception
+	 * @throws Exception
 	 * @throws \PHPUnit\Framework\AssertionFailedError
 	 * @throws \PHPUnit\Framework\Exception
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testReadResponsesSkipsUnknownRequestIds() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client     = new Client( $connection );
-		$content    = http_build_query( ['test-key' => 'unit'] );
-		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+		$content = http_build_query( ['test-key' => 'unit'] );
+		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$requestIds   = [];
-		$requestIds[] = $client->sendAsyncRequest( $request );
+		$requestIds[] = $this->client->sendAsyncRequest( $request );
 		$requestIds[] = 12345;
 
 		sleep( 1 );
 
-		foreach ( $client->readResponses( null, ...$requestIds ) as $response )
+		foreach ( $this->client->readResponses( null, ...$requestIds ) as $response )
 		{
 			echo $response->getBody();
 		}
 
-		$this->assertFalse( $client->hasUnhandledResponses() );
+		$this->assertFalse( $this->client->hasUnhandledResponses() );
 
 		$this->expectOutputString( 'unit' );
 	}
 
 	/**
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\ReadFailedException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Exception
+	 * @throws Throwable
+	 * @throws ConnectException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function testCanReceiveBufferInPassThroughCallback() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client     = new Client( $connection );
-		$data       = [
+		$data    = [
 			'test-key'        => str_repeat( 'test-first-key', 5000 ),
 			'test-second-key' => 'test-second-key',
 			'test-third-key'  => str_repeat( 'test-third-key', 5000 ),
 		];
-		$content    = http_build_query( $data );
-		$request    = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
+		$content = http_build_query( $data );
+		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$unitTest    = $this;
 		$passCounter = 0;
@@ -407,42 +398,39 @@ final class UnixDomainSocketTest extends TestCase
 				if ( 0 === $passCounter++ )
 				{
 					# The first key is large enough to be dumped immediately with all headers
-					$unitTest->assertContains( $data['test-key'], $buffer );
+					$unitTest->assertStringContainsString( $data['test-key'], $buffer );
 
 					return;
 				}
 
 				# The second key is too small to be dumped,
 				# hence the second packet will show both second AND third keys
-
-				$unitTest->assertNotContains( $data['test-key'], $buffer );
-				$unitTest->assertContains( $data['test-second-key'], $buffer );
-				$unitTest->assertContains( $data['test-third-key'], $buffer );
+				$unitTest->assertStringNotContainsString( $data['test-key'], $buffer );
+				$unitTest->assertStringContainsString( $data['test-second-key'], $buffer );
+				$unitTest->assertStringContainsString( $data['test-third-key'], $buffer );
 			}
 		);
 
-		$client->sendAsyncRequest( $request );
-		$client->waitForResponses();
+		$this->client->sendAsyncRequest( $request );
+		$this->client->waitForResponses();
 	}
 
 	/**
 	 * @param int $length
 	 *
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Throwable
+	 * @throws WriteFailedException
 	 *
 	 * @dataProvider contentLengthProvider
 	 */
 	public function testCanGetLengthOfSentContent( int $length ) : void
 	{
-		$content    = str_repeat( 'a', $length );
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client     = new Client( $connection );
-		$request    = new PostRequest( __DIR__ . '/Workers/lengthWorker.php', $content );
+		$content = str_repeat( 'a', $length );
+		$request = new PostRequest( __DIR__ . '/Workers/lengthWorker.php', $content );
 
-		$result = $client->sendRequest( $request );
+		$response = $this->client->sendRequest( $request );
 
-		$this->assertEquals( $length, $result->getBody() );
+		$this->assertEquals( $length, $response->getBody() );
 	}
 
 	public function contentLengthProvider() : array
@@ -485,25 +473,21 @@ final class UnixDomainSocketTest extends TestCase
 	 * @param string $scriptFilename
 	 *
 	 * @throws \PHPUnit\Framework\AssertionFailedError
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws Throwable
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 * @dataProvider invalidScriptFileNamesProvider
 	 */
 	public function testRequestingAnUnknownScriptPathThrowsException( string $scriptFilename ) : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-		$client     = new Client( $connection );
-		$request    = new GetRequest( $scriptFilename, '' );
+		$request = new GetRequest( $scriptFilename, '' );
 
-		$this->expectException( ProcessManagerException::class );
-		$this->expectExceptionMessage( 'An error occurred: Primary script unknown' );
+		$response = $this->client->sendRequest( $request );
 
-		/** @noinspection UnusedFunctionResultInspection */
-		$client->sendRequest( $request );
-
-		$this->fail( 'Expecteed exception to be thrown that the primary script is unknown.' );
+		$this->assertSame( '404 Not Found', $response->getHeader( 'Status' ) );
+		$this->assertSame( "File not found.\n", $response->getBody() );
+		$this->assertSame( 'Primary script unknown', $response->getError() );
 	}
 
 	public function invalidScriptFileNamesProvider() : array
@@ -517,5 +501,117 @@ final class UnixDomainSocketTest extends TestCase
 				'scriptFilename' => __DIR__ . '/../Integration/Workers/worker.php',
 			],
 		];
+	}
+
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 * @throws Throwable
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 */
+	public function testNotAllowedFileNameExtensionRespondsWithAccessDeniedHeader() : void
+	{
+		$request = new GetRequest( __DIR__ . '/Workers/worker.php7', '' );
+
+		$response = $this->client->sendRequest( $request );
+
+		$this->assertSame( '403 Forbidden', $response->getHeader( 'Status' ) );
+		$this->assertRegExp(
+			'#^Access to the script .+ has been denied \(see security\.limit_extensions\)$#',
+			$response->getError()
+		);
+		$this->assertSame( "Access denied.\n", $response->getBody() );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
+	public function testUnaccessibleScriptRespondsWithAccessDeniedHeader() : void
+	{
+		$scriptPath = __DIR__ . '/Workers/sleepWorker.php';
+
+		$this->makeFileUnaccessible( $scriptPath );
+
+		$request  = new GetRequest( $scriptPath, '' );
+		$response = $this->client->sendRequest( $request );
+
+		$this->assertSame( '403 Forbidden', $response->getHeader( 'Status' ) );
+		$this->assertRegExp(
+			'#^Unable to open primary script\: .+ \(Permission denied\)$#',
+			$response->getError()
+		);
+		$this->assertSame( "Access denied.\n", $response->getBody() );
+
+		$this->makeFileAccessible( $scriptPath );
+	}
+
+	private function makeFileUnaccessible( string $filepath ) : void
+	{
+		@chmod( $filepath, 0200 );
+	}
+
+	private function makeFileAccessible( string $filepath ) : void
+	{
+		@chmod( $filepath, 0755 );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 */
+	public function testCanGetErrorBufferInPassThroughCallback() : void
+	{
+		$expectecOutputString = "ERROR: Primary script unknown\n";
+
+		$request = new GetRequest( '/not/existing.php', '' );
+		$request->addPassThroughCallbacks(
+			function (
+				/** @noinspection PhpUnusedParameterInspection */
+				string $outputBuffer,
+				string $errorBuffer
+			)
+			{
+				if ( '' !== $errorBuffer )
+				{
+					echo 'ERROR: ' . $errorBuffer . "\n";
+				}
+			}
+		);
+
+		$requestId = $this->client->sendAsyncRequest( $request );
+		$this->client->handleResponse( $requestId );
+
+		$this->expectOutputString( $expectecOutputString );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 */
+	public function testCanGetErrorInResponseCallback() : void
+	{
+		$unitTest = $this;
+
+		$request = new GetRequest( '/not/existing.php', '' );
+		$request->addResponseCallbacks(
+			function ( ProvidesResponseData $response ) use ( $unitTest )
+			{
+				$unitTest->assertSame( 'Primary script unknown', $response->getError() );
+			}
+		);
+
+		$requestId = $this->client->sendAsyncRequest( $request );
+		$this->client->handleResponse( $requestId );
 	}
 }

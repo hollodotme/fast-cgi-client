@@ -28,9 +28,11 @@ use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use PHPUnit\Framework\TestCase;
 
-class UnixDomainSocketTest extends TestCase
+final class UnixDomainSocketTest extends TestCase
 {
 	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
 	 * @throws \PHPUnit\Framework\Exception
 	 */
 	public function testImplementsConnectionInterface() : void
@@ -40,6 +42,10 @@ class UnixDomainSocketTest extends TestCase
 		$this->assertInstanceOf( ConfiguresSocketConnection::class, $connection );
 	}
 
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
 	public function testCanGetDefaultValues() : void
 	{
 		$connection = new UnixDomainSocket( '/var/run/php/php7.1-fpm.sock' );
@@ -49,6 +55,10 @@ class UnixDomainSocketTest extends TestCase
 		$this->assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
 	}
 
+	/**
+	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
 	public function testCanGetSetValues() : void
 	{
 		$connection = new UnixDomainSocket( '/var/run/php/php7.1-fpm.sock', 2000, 3000 );
