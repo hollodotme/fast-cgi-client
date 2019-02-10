@@ -537,7 +537,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testUnaccessibleScriptRespondsWithAccessDeniedHeader() : void
 	{
-		$scriptPath = __DIR__ . '/Workers/sleepWorker.php';
+		$scriptPath = __DIR__ . '/Workers/inaccessibleWorker.php';
 
 		$this->makeFileUnaccessible( $scriptPath );
 
