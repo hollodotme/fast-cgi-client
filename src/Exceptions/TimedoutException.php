@@ -23,10 +23,6 @@
 
 namespace hollodotme\FastCGI\Exceptions;
 
-/**
- * Class TimedoutException
- * @package hollodotme\FastCGI
- */
 class TimedoutException extends FastCGIClientException
 {
 

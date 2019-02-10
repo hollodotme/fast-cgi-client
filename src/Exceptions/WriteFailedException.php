@@ -23,10 +23,6 @@
 
 namespace hollodotme\FastCGI\Exceptions;
 
-/**
- * Class WriteFailedException
- * @package hollodotme\FastCGI\Exceptions
- */
 class WriteFailedException extends FastCGIClientException
 {
 

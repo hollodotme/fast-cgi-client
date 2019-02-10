@@ -23,10 +23,6 @@
 
 namespace hollodotme\FastCGI\Exceptions;
 
-/**
- * Class ReadFailedException
- * @package hollodotme\FastCGI\Exceptions
- */
 class ReadFailedException extends FastCGIClientException
 {
 

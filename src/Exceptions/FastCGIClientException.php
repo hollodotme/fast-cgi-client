@@ -23,10 +23,6 @@
 
 namespace hollodotme\FastCGI\Exceptions;
 
-/**
- * Class FastCGIClientException
- * @package hollodotme\FastCGI\Exceptions
- */
 class FastCGIClientException extends \Exception
 {
 
