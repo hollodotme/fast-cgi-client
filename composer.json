@@ -41,11 +41,11 @@
 	"extra": {
 		"tools": {
 			"phpunit": {
-				"url": "https://phar.phpunit.de/phpunit-7.phar",
+				"url": "https://phar.phpunit.de/phpunit-8.phar",
 				"only-dev": true
 			},
-			"coveralls": {
-				"url": "https://github.com/php-coveralls/php-coveralls/releases/download/v2.1.0/php-coveralls.phar",
+			"phpstan": {
+				"url": "https://github.com/phpstan/phpstan/releases/download/0.11.1/phpstan.phar",
 				"only-dev": true
 			}
 		}
