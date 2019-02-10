@@ -23,20 +23,24 @@
 
 namespace hollodotme\FastCGI;
 
+use Exception;
+use Generator;
 use hollodotme\FastCGI\Encoders\NameValuePairEncoder;
 use hollodotme\FastCGI\Encoders\PacketEncoder;
+use hollodotme\FastCGI\Exceptions\ConnectException;
 use hollodotme\FastCGI\Exceptions\ReadFailedException;
+use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\Interfaces\EncodesNameValuePair;
 use hollodotme\FastCGI\Interfaces\EncodesPacket;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use Throwable;
+use function array_keys;
+use function count;
+use function stream_select;
 
-/**
- * Class Client
- * @package hollodotme\FastCGI
- */
 class Client
 {
 	/** @var ConfiguresSocketConnection */
@@ -65,11 +69,11 @@ class Client
 	/**
 	 * @param ProvidesRequestData $request
 	 *
-	 * @throws \hollodotme\FastCGI\Exceptions\TimedoutException
-	 * @throws \hollodotme\FastCGI\Exceptions\ConnectException
-	 * @throws \Exception
-	 * @throws \Throwable
-	 * @throws \hollodotme\FastCGI\Exceptions\WriteFailedException
+	 * @throws TimedoutException
+	 * @throws ConnectException
+	 * @throws Exception
+	 * @throws Throwable
+	 * @throws WriteFailedException
 	 * @return ProvidesResponseData
 	 */
 	public function sendRequest( ProvidesRequestData $request ) : ProvidesResponseData
@@ -84,10 +88,10 @@ class Client
 	 *
 	 * @return int
 	 *
-	 * @throws Exceptions\ConnectException
-	 * @throws Exceptions\WriteFailedException
-	 * @throws Exceptions\TimedoutException
-	 * @throws \Exception
+	 * @throws ConnectException
+	 * @throws WriteFailedException
+	 * @throws TimedoutException
+	 * @throws Exception
 	 */
 	public function sendAsyncRequest( ProvidesRequestData $request ) : int
 	{
@@ -114,20 +118,14 @@ class Client
 	 * @param int      $requestId
 	 * @param int|null $timeoutMs
 	 *
-	 * @throws \Throwable
+	 * @throws Throwable
 	 * @return ProvidesResponseData
 	 */
 	public function readResponse( int $requestId, ?int $timeoutMs = null ) : ProvidesResponseData
 	{
 		try
 		{
-			$socket = $this->getSocketWithId( $requestId );
-
-			return $socket->fetchResponse( $timeoutMs );
-		}
-		catch ( \Throwable $e )
-		{
-			throw $e;
+			return $this->getSocketWithId( $requestId )->fetchResponse( $timeoutMs );
 		}
 		finally
 		{
@@ -189,7 +187,7 @@ class Client
 	 */
 	public function waitForResponses( ?int $timeoutMs = null ) : void
 	{
-		if ( \count( $this->sockets ) === 0 )
+		if ( count( $this->sockets ) === 0 )
 		{
 			throw new ReadFailedException( 'No pending requests found.' );
 		}
@@ -215,7 +213,7 @@ class Client
 
 			$socket->notifyResponseCallbacks( $response );
 		}
-		catch ( \Throwable $e )
+		catch ( Throwable $e )
 		{
 			$socket->notifyFailureCallbacks( $e );
 		}
@@ -230,14 +228,14 @@ class Client
 	 */
 	public function hasUnhandledResponses() : bool
 	{
-		return (\count( $this->sockets ) > 0);
+		return (count( $this->sockets ) > 0);
 	}
 
 	/**
-	 * @return \Generator|Socket[]
+	 * @return Generator|Socket[]
 	 * @throws ReadFailedException
 	 */
-	private function getSocketsHavingResponse() : \Generator
+	private function getSocketsHavingResponse() : Generator
 	{
 		foreach ( $this->getRequestIdsHavingResponse() as $requestId )
 		{
@@ -264,9 +262,7 @@ class Client
 	 */
 	public function hasResponse( int $requestId ) : bool
 	{
-		$socket = $this->getSocketWithId( $requestId );
-
-		return $socket->hasResponse();
+		return $this->getSocketWithId( $requestId )->hasResponse();
 	}
 
 	/**
@@ -274,7 +270,7 @@ class Client
 	 */
 	public function getRequestIdsHavingResponse() : array
 	{
-		if ( \count( $this->sockets ) === 0 )
+		if ( count( $this->sockets ) === 0 )
 		{
 			return [];
 		}
@@ -294,11 +290,11 @@ class Client
 
 	/**
 	 * @param int|null $timeoutMs
-	 * @param int[]    ...$requestIds
+	 * @param int      ...$requestIds
 	 *
-	 * @return \Generator|ProvidesResponseData[]
+	 * @return Generator|ProvidesResponseData[]
 	 */
-	public function readResponses( ?int $timeoutMs = null, int ...$requestIds ) : \Generator
+	public function readResponses( ?int $timeoutMs = null, int ...$requestIds ) : Generator
 	{
 		foreach ( $requestIds as $requestId )
 		{
@@ -308,7 +304,7 @@ class Client
 
 				yield $socket->fetchResponse( $timeoutMs );
 			}
-			catch ( \Throwable $e )
+			catch ( Throwable $e )
 			{
 				continue;
 			}
@@ -322,13 +318,13 @@ class Client
 	/**
 	 * @param int|null $timeoutMs
 	 *
-	 * @return \Generator|ProvidesResponseData[]
+	 * @return Generator|ProvidesResponseData[]
 	 */
-	public function readReadyResponses( ?int $timeoutMs = null ) : \Generator
+	public function readReadyResponses( ?int $timeoutMs = null ) : Generator
 	{
 		$requestIds = $this->getRequestIdsHavingResponse();
 
-		if ( \count( $requestIds ) > 0 )
+		if ( count( $requestIds ) > 0 )
 		{
 			yield from $this->readResponses( $timeoutMs, ...$requestIds );
 		}
@@ -349,7 +345,7 @@ class Client
 
 	/**
 	 * @param int|null $timeoutMs
-	 * @param \int[]   ...$requestIds
+	 * @param int      ...$requestIds
 	 *
 	 * @throws ReadFailedException
 	 */
