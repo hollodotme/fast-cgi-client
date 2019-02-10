@@ -30,7 +30,7 @@ before_script:
   - mkdir -p vendor/bin
   - mkdir -p build/logs
   - composer install -o --prefer-dist --no-interaction
-  - sudo chmod 0200 test/Integration/Workers/inaccessibleWorker.php
+  - sudo chmod 0200 tests/Integration/Workers/inaccessibleWorker.php
 
 script:
   - php vendor/bin/phpstan.phar analyze --level max src/
