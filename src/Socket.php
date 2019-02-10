@@ -25,8 +25,6 @@ namespace hollodotme\FastCGI;
 
 use ErrorException;
 use hollodotme\FastCGI\Exceptions\ConnectException;
-use hollodotme\FastCGI\Exceptions\ForbiddenException;
-use hollodotme\FastCGI\Exceptions\ProcessManagerException;
 use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
@@ -197,12 +195,17 @@ final class Socket
 	{
 		try
 		{
-			$this->resource = @stream_socket_client(
+			$resource = @stream_socket_client(
 				$this->connection->getSocketAddress(),
 				$errorNumber,
 				$errorString,
 				$this->connection->getConnectTimeout() / 1000
 			);
+
+			if ( false !== $resource )
+			{
+				$this->resource = $resource;
+			}
 		}
 		catch ( Throwable $e )
 		{
@@ -218,14 +221,14 @@ final class Socket
 	}
 
 	/**
-	 * @param $errorNumber
-	 * @param $errorString
+	 * @param int|null    $errorNumber
+	 * @param string|null $errorString
 	 *
 	 * @throws ConnectException
 	 */
-	private function handleFailedResource( $errorNumber, $errorString ) : void
+	private function handleFailedResource( ?int $errorNumber, ?string $errorString ) : void
 	{
-		if ( $this->resource !== false )
+		if ( is_resource( $this->resource ) )
 		{
 			return;
 		}
@@ -246,7 +249,7 @@ final class Socket
 
 		throw new ConnectException(
 			'Unable to connect to FastCGI application: ' . $errorString,
-			$errorNumber,
+			(int)$errorNumber,
 			$lastErrorException
 		);
 	}
@@ -329,8 +332,6 @@ final class Socket
 	/**
 	 * @param int|null $timeoutMs
 	 *
-	 * @throws ForbiddenException
-	 * @throws ProcessManagerException
 	 * @throws ReadFailedException
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
@@ -346,34 +347,34 @@ final class Socket
 		// Reset timeout on socket for reading
 		$this->setStreamTimeout( $timeoutMs ?? $this->connection->getReadWriteTimeout() );
 
-		$errorContent    = '';
-		$responseContent = '';
+		$error  = '';
+		$output = '';
 
 		$this->status = self::REQ_STATE_OK;
 
 		do
 		{
-			$packet = $this->readPacket();
+			$packet     = $this->readPacket();
+			$packetType = (int)$packet['type'];
 
-			switch ( (int)$packet['type'] )
+			if ( self::STDERR === $packetType )
 			{
-				case self::STDERR:
-					$this->status = self::REQ_STATE_ERR;
-					$errorContent .= $packet['content'];
-					$this->notifyPassThroughCallbacks( $packet['content'] );
-					break;
+				$this->status = self::REQ_STATE_ERR;
+				$error        .= $packet['content'];
+				$this->notifyPassThroughCallbacks( '', $packet['content'] );
+				continue;
+			}
 
-				case self::STDOUT:
-					$responseContent .= $packet['content'];
-					$this->notifyPassThroughCallbacks( $packet['content'] );
-					break;
+			if ( self::STDOUT === $packetType )
+			{
+				$output .= $packet['content'];
+				$this->notifyPassThroughCallbacks( $packet['content'], '' );
+				continue;
+			}
 
-				case self::END_REQUEST:
-					if ( $packet['requestId'] === $this->id )
-					{
-						break 2;
-					}
-					break;
+			if ( self::END_REQUEST === $packetType && $packet['requestId'] === $this->id )
+			{
+				break;
 			}
 		}
 		while ( null !== $packet );
@@ -381,16 +382,13 @@ final class Socket
 		try
 		{
 			$this->handleNullPacket( $packet );
-			$this->guardRequestCompleted( ord( $packet['content']{4} ) );
-
-			if ( $this->status === self::REQ_STATE_ERR )
-			{
-				throw new ProcessManagerException( 'An error occurred: ' . $errorContent );
-			}
+			$character = (string)$packet['content']{4};
+			$this->guardRequestCompleted( ord( $character ) );
 
 			$this->response = new Response(
 				$this->id,
-				$responseContent,
+				$output,
+				$error,
 				microtime( true ) - $this->startTime
 			);
 
@@ -419,7 +417,7 @@ final class Socket
 
 				while ( $length && ($buffer = fread( $this->resource, $length )) !== false )
 				{
-					$length            -= strlen( $buffer );
+					$length            -= strlen( (string)$buffer );
 					$packet['content'] .= $buffer;
 				}
 			}
@@ -436,22 +434,21 @@ final class Socket
 		return null;
 	}
 
-	private function notifyPassThroughCallbacks( string $buffer ) : void
+	private function notifyPassThroughCallbacks( string $outputBuffer, string $errorBuffer ) : void
 	{
 		foreach ( $this->passThroughCallbacks as $passThroughCallback )
 		{
-			$passThroughCallback( $buffer );
+			$passThroughCallback( $outputBuffer, $errorBuffer );
 		}
 	}
 
 	/**
-	 * @param $packet
+	 * @param array|null $packet
 	 *
-	 * @throws ForbiddenException
 	 * @throws ReadFailedException
 	 * @throws TimedoutException
 	 */
-	private function handleNullPacket( $packet ) : void
+	private function handleNullPacket( ?array $packet ) : void
 	{
 		if ( $packet === null )
 		{
@@ -464,7 +461,7 @@ final class Socket
 
 			if ( $info['unread_bytes'] === 0 && $info['blocked'] && $info['eof'] )
 			{
-				throw new ForbiddenException( 'Not in white list. Check listen.allowed_clients.' );
+				throw new ReadFailedException( 'Stream got blocked, or terminated.' );
 			}
 
 			throw new ReadFailedException( 'Read failed' );
