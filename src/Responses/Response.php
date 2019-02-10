@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -43,25 +43,29 @@ class Response implements ProvidesResponseData
 	private $body;
 
 	/** @var string */
-	private $rawResponse;
+	private $output;
+
+	/** @var string */
+	private $error;
 
 	/** @var float */
 	private $duration;
 
-	public function __construct( int $requestId, string $rawResponse, float $duration )
+	public function __construct( int $requestId, string $output, string $error, float $duration )
 	{
-		$this->requestId   = $requestId;
-		$this->rawResponse = $rawResponse;
-		$this->duration    = $duration;
-		$this->headers     = [];
-		$this->body        = '';
+		$this->requestId = $requestId;
+		$this->output    = $output;
+		$this->error     = $error;
+		$this->duration  = $duration;
+		$this->headers   = [];
+		$this->body      = '';
 
 		$this->parseHeadersAndBody();
 	}
 
 	private function parseHeadersAndBody() : void
 	{
-		$lines  = explode( PHP_EOL, $this->rawResponse );
+		$lines  = explode( PHP_EOL, $this->output );
 		$offset = 0;
 
 		foreach ( $lines as $i => $line )
@@ -99,9 +103,23 @@ class Response implements ProvidesResponseData
 		return $this->body;
 	}
 
+	/**
+	 * @return string
+	 * @deprecated Will be removed in v3.0.0. Please use Response#getOutput() instead.
+	 */
 	public function getRawResponse() : string
 	{
-		return $this->rawResponse;
+		return $this->output;
+	}
+
+	public function getOutput() : string
+	{
+		return $this->output;
+	}
+
+	public function getError() : string
+	{
+		return $this->error;
 	}
 
 	public function getDuration() : float

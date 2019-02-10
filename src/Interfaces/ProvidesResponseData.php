@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -37,7 +37,15 @@ interface ProvidesResponseData
 
 	public function getBody() : string;
 
+	/**
+	 * @return string
+	 * @deprecated Will be removed in v3.0.0. Please use ProvidesResponseData#getOutput() instead.
+	 */
 	public function getRawResponse() : string;
+
+	public function getOutput() : string;
+
+	public function getError() : string;
 
 	public function getDuration() : float;
 }
