@@ -306,7 +306,6 @@ class Client
 			}
 			catch ( Throwable $e )
 			{
-				continue;
 			}
 			finally
 			{
