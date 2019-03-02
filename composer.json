@@ -40,12 +40,12 @@
 	},
 	"extra": {
 		"tools": {
-			"phpunit": {
-				"url": "https://phar.phpunit.de/phpunit-8.phar",
+			"phpunit7": {
+				"url": "https://phar.phpunit.de/phpunit-7.phar",
 				"only-dev": true
 			},
-			"phpstan": {
-				"url": "https://github.com/phpstan/phpstan/releases/download/0.11.1/phpstan.phar",
+			"phpunit8": {
+				"url": "https://phar.phpunit.de/phpunit-8.phar",
 				"only-dev": true
 			}
 		}
