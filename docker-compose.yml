@@ -1,22 +1,52 @@
 version: '3'
 
 services:
-  php:
+  php71:
     build:
-      dockerfile: Dockerfile
+      dockerfile: 7.1/Dockerfile
       context: .docker/php
-    container_name: fcc_php
+    container_name: fcc_php71
     restart: "no"
     networks:
       - fcc_network
-    ports:
-      - 9000:9000
+    volumes:
+      - ./:/repo
+
+  php72:
+    build:
+      dockerfile: 7.2/Dockerfile
+      context: .docker/php
+    container_name: fcc_php72
+    restart: "no"
+    networks:
+      - fcc_network
+    volumes:
+      - ./:/repo
+
+  php73:
+    build:
+      dockerfile: 7.3/Dockerfile
+      context: .docker/php
+    container_name: fcc_php73
+    restart: "no"
+    networks:
+      - fcc_network
     volumes:
       - ./:/repo
 
   composer:
     image: composer:latest
     container_name: fcc_composer
+    working_dir: /repo
+    restart: "no"
+    networks:
+      - fcc_network
+    volumes:
+      - ./:/repo
+
+  phpstan:
+    image: phpstan/phpstan:latest
+    container_name: fcc_phpstan
     working_dir: /repo
     restart: "no"
     networks:
