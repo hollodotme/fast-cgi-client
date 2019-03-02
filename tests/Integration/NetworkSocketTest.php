@@ -45,7 +45,7 @@ final class NetworkSocketTest extends TestCase
 
 	protected function setUp() : void
 	{
-		$connection   = new NetworkSocket( '127.0.0.1', 9000 );
+		$connection   = new NetworkSocket( '127.0.0.1', 9001 );
 		$this->client = new Client( $connection );
 	}
 
