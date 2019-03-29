@@ -3,6 +3,31 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [2.6.0] - XXXX-XX-XX
+
+### Added
+
+* Two new methods to Response class - [#27]
+  * `Response#getOutput()` which is identical to `Response#getRawResponse()` and will return the complete output from 
+     the `STDOUT` stream of the response.
+  * `Response#getError()` which will return the complete output of the `STDERR` stream of the response. 
+
+* Second parameter `$errorBuffer` in tha pass through callback signature - [#27]
+  ```php
+  $callback = function( string $outputBuffer, string $errorBuffer ) {};
+  ```
+  This parameter will contain the contents of the `STDERR` stream packets.
+  
+### Depricated
+
+* `Response#getRawResponse()` in favour of consistant naming. This method will be removed in `v3.0.0` - [#27]
+
+### Removed
+
+* `ProcessManagerException` that was introduced in `v2.5.0` - [#27]
+  Please read [this blog post](https://hollo.me/php/background-info-fast-cgi-client-v2.6.0.html) why this (BC breaking) change was necessary 
+  and how to handle server-sent errors now.
+
 ## [2.5.0] - 2019-01-29
 
 ### Added
@@ -147,6 +172,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[2.6.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.3...v2.5.0
 [2.4.3]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.2...v2.4.3
 [2.4.2]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.1...v2.4.2
@@ -169,3 +195,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#15]: https://github.com/hollodotme/fast-cgi-client/issues/15
 [#20]: https://github.com/hollodotme/fast-cgi-client/issues/20
 [#26]: https://github.com/hollodotme/fast-cgi-client/issues/26
+[#27]: https://github.com/hollodotme/fast-cgi-client/issues/27
