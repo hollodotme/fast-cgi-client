@@ -34,7 +34,11 @@ use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use InvalidArgumentException;
+use PHPUnit\Framework\AssertionFailedError;
+use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Throwable;
 use function chmod;
 
@@ -134,7 +138,7 @@ final class UnixDomainSocketTest extends TestCase
 		$unitTest = $this;
 
 		$request->addResponseCallbacks(
-			function ( ProvidesResponseData $response ) use ( $unitTest )
+			static function ( ProvidesResponseData $response ) use ( $unitTest )
 			{
 				$unitTest->assertSame( 'unit', $response->getBody() );
 			}
@@ -160,16 +164,16 @@ final class UnixDomainSocketTest extends TestCase
 		$unitTest = $this;
 
 		$request->addResponseCallbacks(
-			function ()
+			static function ()
 			{
-				throw new \RuntimeException( 'Response callback threw exception.' );
+				throw new RuntimeException( 'Response callback threw exception.' );
 			}
 		);
 
 		$request->addFailureCallbacks(
-			function ( \Throwable $throwable ) use ( $unitTest )
+			function ( Throwable $throwable ) use ( $unitTest )
 			{
-				$unitTest->assertInstanceOf( \RuntimeException::class, $throwable );
+				$unitTest->assertInstanceOf( RuntimeException::class, $throwable );
 				$unitTest->assertSame( 'Response callback threw exception.', $throwable->getMessage() );
 			}
 		);
@@ -180,7 +184,7 @@ final class UnixDomainSocketTest extends TestCase
 
 	/**
 	 * @throws Exception
-	 * @throws \PHPUnit\Framework\AssertionFailedError
+	 * @throws AssertionFailedError
 	 * @throws ConnectException
 	 * @throws ReadFailedException
 	 * @throws TimedoutException
@@ -278,7 +282,7 @@ final class UnixDomainSocketTest extends TestCase
 		$unitTest = $this;
 
 		$request->addResponseCallbacks(
-			function ( ProvidesResponseData $response ) use ( $unitTest )
+			static function ( ProvidesResponseData $response ) use ( $unitTest )
 			{
 				$unitTest->assertSame( 'unit', $response->getBody() );
 			}
@@ -331,7 +335,7 @@ final class UnixDomainSocketTest extends TestCase
 		$unitTest = $this;
 
 		$request->addResponseCallbacks(
-			function ( ProvidesResponseData $response ) use ( $unitTest )
+			static function ( ProvidesResponseData $response ) use ( $unitTest )
 			{
 				$unitTest->assertSame( 'unit', $response->getBody() );
 			}
@@ -344,7 +348,7 @@ final class UnixDomainSocketTest extends TestCase
 
 	/**
 	 * @throws Exception
-	 * @throws \PHPUnit\Framework\AssertionFailedError
+	 * @throws AssertionFailedError
 	 * @throws \PHPUnit\Framework\Exception
 	 * @throws ConnectException
 	 * @throws TimedoutException
@@ -393,7 +397,7 @@ final class UnixDomainSocketTest extends TestCase
 		$passCounter = 0;
 
 		$request->addPassThroughCallbacks(
-			function ( $buffer ) use ( $unitTest, $data, &$passCounter )
+			static function ( $buffer ) use ( $unitTest, $data, &$passCounter )
 			{
 				if ( 0 === $passCounter++ )
 				{
@@ -472,7 +476,7 @@ final class UnixDomainSocketTest extends TestCase
 	/**
 	 * @param string $scriptFilename
 	 *
-	 * @throws \PHPUnit\Framework\AssertionFailedError
+	 * @throws AssertionFailedError
 	 * @throws Throwable
 	 * @throws ConnectException
 	 * @throws TimedoutException
@@ -487,7 +491,7 @@ final class UnixDomainSocketTest extends TestCase
 
 		$this->assertSame( '404 Not Found', $response->getHeader( 'Status' ) );
 		$this->assertSame( "File not found.\n", $response->getBody() );
-		$this->assertSame( 'Primary script unknown', $response->getError() );
+		$this->assertRegExp( "#^Primary script unknown\n?$#", $response->getError() );
 	}
 
 	public function invalidScriptFileNamesProvider() : array
@@ -504,7 +508,7 @@ final class UnixDomainSocketTest extends TestCase
 	}
 
 	/**
-	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws ExpectationFailedException
 	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
 	 * @throws Throwable
 	 * @throws ConnectException
@@ -530,7 +534,7 @@ final class UnixDomainSocketTest extends TestCase
 	 * @throws Throwable
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
-	 * @throws \PHPUnit\Framework\ExpectationFailedException
+	 * @throws ExpectationFailedException
 	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
 	 */
 	public function testUnaccessibleScriptRespondsWithAccessDeniedHeader() : void
@@ -570,11 +574,11 @@ final class UnixDomainSocketTest extends TestCase
 	 */
 	public function testCanGetErrorBufferInPassThroughCallback() : void
 	{
-		$expectecOutputString = "ERROR: Primary script unknown\n";
+		$expectecOutputRegExp = "#^ERROR: Primary script unknown\n?$#";
 
 		$request = new GetRequest( '/not/existing.php', '' );
 		$request->addPassThroughCallbacks(
-			function (
+			static function (
 				/** @noinspection PhpUnusedParameterInspection */
 				string $outputBuffer,
 				string $errorBuffer
@@ -582,7 +586,7 @@ final class UnixDomainSocketTest extends TestCase
 			{
 				if ( '' !== $errorBuffer )
 				{
-					echo 'ERROR: ' . $errorBuffer . "\n";
+					echo 'ERROR: ' . $errorBuffer;
 				}
 			}
 		);
@@ -590,7 +594,7 @@ final class UnixDomainSocketTest extends TestCase
 		$requestId = $this->client->sendAsyncRequest( $request );
 		$this->client->handleResponse( $requestId );
 
-		$this->expectOutputString( $expectecOutputString );
+		$this->expectOutputRegex( $expectecOutputRegExp );
 	}
 
 	/**
@@ -605,7 +609,7 @@ final class UnixDomainSocketTest extends TestCase
 
 		$request = new GetRequest( '/not/existing.php', '' );
 		$request->addResponseCallbacks(
-			function ( ProvidesResponseData $response ) use ( $unitTest )
+			static function ( ProvidesResponseData $response ) use ( $unitTest )
 			{
 				$unitTest->assertSame( 'Primary script unknown', $response->getError() );
 			}
@@ -613,5 +617,27 @@ final class UnixDomainSocketTest extends TestCase
 
 		$requestId = $this->client->sendAsyncRequest( $request );
 		$this->client->handleResponse( $requestId );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 */
+	public function testCanGetErrorOutputFromWorkerUsingErrorLog() : void
+	{
+		$request  = new GetRequest( __DIR__ . '/Workers/errorLogWorker.php', '' );
+		$response = $this->client->sendRequest( $request );
+
+		$expectedError = "#^PHP message: ERROR1\n\n?"
+		                 . "PHP message: ERROR2\n\n?"
+		                 . "PHP message: ERROR3\n\n?"
+		                 . "PHP message: ERROR4\n\n?"
+		                 . "PHP message: ERROR5\n\n?$#";
+
+		$this->assertRegExp( $expectedError, $response->getError() );
 	}
 }
