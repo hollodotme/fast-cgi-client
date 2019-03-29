@@ -1,5 +1,5 @@
 #!/usr/bin/env php
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2018 Holger Woltersdorf
@@ -27,6 +27,7 @@ namespace hollodotme\FastCGI;
 use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use Throwable;
 
 if ( file_exists( __DIR__ . '/../vendor/autoload.php' ) )
 {
@@ -62,12 +63,10 @@ if ( preg_match( '#^unix:(.*.sock)(/.*)$#', $_SERVER['argv'][1], $reg ) )
 	{
 		die( "UDS {$sock} not found\n" );
 	}
-	else
+
+	if ( !is_writable( $sock ) )
 	{
-		if ( !is_writable( $sock ) )
-		{
-			die( "UDS {$sock} is not writable\n" );
-		}
+		die( "UDS {$sock} is not writable\n" );
 	}
 }
 else
@@ -114,7 +113,30 @@ $request->addCustomVars(
 	]
 );
 
-$response = $client->sendRequest( $request );
+try
+{
+	$response = $client->sendRequest( $request );
 
-echo $response->getRawResponse() . "\n\n";
-echo 'Duration: ' . $response->getDuration() . " Sec.\n";
+	if ( '' !== $response->getOutput() )
+	{
+		echo "STDOUT:\n=======\n";
+		echo $response->getOutput() . "\n\n";
+	}
+
+	if ( '' !== $response->getError() )
+	{
+		echo "STDERR:\n=======\n";
+		echo $response->getError() . "\n\n";
+	}
+
+	echo 'Duration: ' . $response->getDuration() . " Sec.\n";
+}
+catch ( Throwable $e )
+{
+	echo "EXCEPTION:\n==========\n";
+	echo get_class( $e ) . "\n";
+	echo 'File ' . $e->getFile() . "\n";
+	echo 'Line' . $e->getLine() . "\n";
+	echo 'Code' . $e->getCode() . "\n";
+	echo "Trace:\n" . $e->getTraceAsString() . "\n";
+}
