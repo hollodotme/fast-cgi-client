@@ -4,17 +4,17 @@ version: 2
 # Unfortunately Circle CI is not able to expand environment/context variables in
 # the value for working_directory
 workdir-71: &workdir-71
-  working_directory: ~/repo/7.1
+  working_directory: /repo/7.1
 
 workdir-72: &workdir-72
-  working_directory: ~/repo/7.2
+  working_directory: /repo/7.2
 
 workdir-73: &workdir-73
-  working_directory: ~/repo/7.3
+  working_directory: /repo/7.3
 
 # Define steps to build docker images for each PHP version
 shared-build: &shared-build
-  working_directory: ~/repo
+  working_directory: /repo
   machine:
     docker_layer_caching: true
   steps:
@@ -23,7 +23,7 @@ shared-build: &shared-build
         name: Build docker image
         command: >
           docker build
-          -t "hollodotme/fast-cgi-client:$PHP_VERSION-cli"
+          -t "hollodotme/fast-cgi-client:$PHP_VERSION-fpm"
           -f .docker/php/$PHP_VERSION/Dockerfile
           .docker/php
     - run:
@@ -33,13 +33,13 @@ shared-build: &shared-build
     - run:
         name: Push docker image
         command: |
-          docker push "hollodotme/fast-cgi-client:$PHP_VERSION-cli"
+          docker push "hollodotme/fast-cgi-client:$PHP_VERSION-fpm"
 
 # Define steps to build the code and its dependencies
 # Persist it to the workspace when done
 shared-code: &shared-code
   docker:
-    - image: hollodotme/fast-cgi-client:$PHP_VERSION-cli
+    - image: hollodotme/fast-cgi-client:$PHP_VERSION-fpm
   steps:
     - checkout
 
@@ -89,17 +89,17 @@ shared-code: &shared-code
           mkdir -p build/logs/phpmetrics
 
     - persist_to_workspace:
-        root: ~/repo
+        root: /repo
         paths:
           - "*"
 
 # Define steps to check for PHP parse errors
 shared-linting: &shared-linting
   docker:
-    - image: hollodotme/fast-cgi-client:$PHP_VERSION-cli
+    - image: hollodotme/fast-cgi-client:$PHP_VERSION-fpm
   steps:
     - attach_workspace:
-        at: ~/repo
+        at: /repo
 
     - run:
         name: Check for PHP parse errors
@@ -108,10 +108,10 @@ shared-linting: &shared-linting
 # Define steps to run unit tests
 shared-unit-tests: &shared-unit-tests
   docker:
-    - image: hollodotme/fast-cgi-client:$PHP_VERSION-cli
+    - image: hollodotme/fast-cgi-client:$PHP_VERSION-fpm
   steps:
     - attach_workspace:
-        at: ~/repo
+        at: /repo
 
     - run:
         name: Run unit tests
@@ -137,10 +137,10 @@ shared-unit-tests: &shared-unit-tests
 # Define steps to run integration tests
 shared-integration-tests: &shared-integration-tests
   docker:
-    - image: hollodotme/fast-cgi-client:$PHP_VERSION-cli
+    - image: hollodotme/fast-cgi-client:$PHP_VERSION-fpm
   steps:
     - attach_workspace:
-        at: ~/repo
+        at: /repo
 
     - run:
         name: Run integration tests
@@ -159,7 +159,7 @@ shared-phpstan: &shared-phpstan
     - image: phpstan/phpstan:latest
   steps:
     - attach_workspace:
-        at: ~/repo
+        at: /repo
 
     - run:
         name: Run PHPStan
