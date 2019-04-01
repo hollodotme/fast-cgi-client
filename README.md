@@ -59,7 +59,7 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
 $connection = new UnixDomainSocket(
-	'/var/run/php/php7.1-fpm.sock',  # Socket path to php-fpm
+	'/var/run/php/php7.3-fpm.sock',  # Socket path to php-fpm
 	5000,                            # Connect timeout in milliseconds (default: 5000)
 	5000                             # Read/write timeout in milliseconds (default: 5000)
 );
@@ -100,7 +100,7 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
-$client  = new Client( new UnixDomainSocket( '/var/run/php/php1.0-fpm.sock' ) );
+$client  = new Client( new UnixDomainSocket( '/var/run/php/php7.3-fpm.sock' ) );
 $content = http_build_query(['key' => 'value']);
 
 $request = new PostRequest('/path/to/target/script.php', $content);
@@ -187,6 +187,7 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+use Throwable;
 
 $client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
 $content = http_build_query(['key' => 'value']);
@@ -195,7 +196,7 @@ $request = new PostRequest('/path/to/target/script.php', $content);
 
 # Register a response callback, expects a `ProvidesResponseData` instance as the only paramter
 $request->addResponseCallbacks(
-	function( ProvidesResponseData $response )
+	static function( ProvidesResponseData $response )
 	{
 		echo $response->getBody();	
 	}
@@ -203,7 +204,7 @@ $request->addResponseCallbacks(
 
 # Register a failure callback, expects a `\Throwable` instance as the only parameter
 $request->addFailureCallbacks(
-	function ( \Throwable $throwable )
+	static function ( Throwable $throwable )
 	{
 		echo $throwable->getMessage();	
 	}
@@ -374,15 +375,16 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+use Throwable;
 
 $client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
 
-$responseCallback = function( ProvidesResponseData $response )
+$responseCallback = static function( ProvidesResponseData $response )
 {
 	echo $response->getBody();	
 };
 
-$failureCallback = function ( \Throwable $throwable )
+$failureCallback = static function ( Throwable $throwable )
 {
 	echo $throwable->getMessage();	
 };
@@ -455,13 +457,15 @@ ob_implicit_flush();
 
 function show( string $string )
 {
-	echo $string . str_repeat( "\r", 4096 - strlen( $string ) ) . PHP_EOL;
+	echo $string . str_repeat( "\r", 4096 - strlen( $string ) ) . "\n";
 	sleep( 1 );
 }
 
 show( 'One' );
 show( 'Two' );
 show( 'Three' );
+
+error_log("Oh oh!\n");
 
 echo 'End';
 ```
@@ -478,9 +482,10 @@ use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 $client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
 
-$passThroughCallback = function( string $buffer )
+$passThroughCallback = static function( string $outputBuffer, string $errorBuffer )
 {
-	echo 'Buffer: ' . $buffer;
+	echo 'Output: ' . $outputBuffer;
+	echo 'Error: ' . $errorBuffer;
 };
 
 $request = new GetRequest('/path/to/target/script.php', '');
@@ -494,14 +499,17 @@ $client->waitForResponses();
 # prints immediately
 Buffer: Content-type: text/html; charset=UTF-8
 
-One
+Output: One
 # sleeps 1 sec
-Buffer: Two
+Output: Two
 # sleeps 1 sec
-Buffer: Three
+Output: Three
 # sleeps 1 sec
-Buffer: End
+Error: Oh oh!
+Output: End
 ```
+
+**Please note:** The second parameter `$outputBuffer` was introduced to the signature of the callback function in `v2.6.0`.
 
 ----
 
@@ -599,7 +607,15 @@ interface ProvidesResponseData
 
 	public function getBody() : string;
 
+    /**
+     * @deprecated Since v2.6.0 in favour of getOutput(), will be removed in v3.0.0  
+     * @return string
+     */
 	public function getRawResponse() : string;
+	
+	public function getOutput() : string;
+	
+	public function getError() : string;
 
 	public function getDuration() : float;
 }
@@ -610,7 +626,8 @@ Assuming `/path/to/target/script.php` has the following content:
 ```php
 <?php declare(strict_types=1);
 
-echo "Hello World";
+echo 'Hello World';
+error_log('Some error');
 ```
 
 The raw response would look like this:
@@ -632,7 +649,8 @@ Custom headers will also be part of the response:
 
 header('X-Custom: Header');
 
-echo "Hello World";
+echo 'Hello World';
+error_log('Some error');
 ```
 
 The raw response would look like this:
@@ -665,13 +683,19 @@ Array (
 # Get the body
 echo $response->getBody(); # 'Hello World'
 
-# Get the raw response
-echo $response->getRawResponse();
+# Get the raw response output from STDOUT stream
+echo $response->getOutput();
 /*
 X-Custom: Header
 Content-type: text/html; charset=UTF-8
 
 Hello World
+*/
+
+# Get the raw response from SFTERR stream
+echo $response->getError();
+/*
+Some error
 */
 
 # Get the duration
@@ -687,12 +711,23 @@ echo $response->getDuration(); # e.g. 0.0016319751739502
 This response is generated by php-fpm for the preceding error `Primary script unknown` in case the requested script 
 does not exists or there are path traversals in its path like `/var/www/../run/script.php`.
 
-**This error throws a `ProcessManagerException` from library version `2.5.0` onwards.**
+**This error throws a `ProcessManagerException` in library version `2.5.0` ONLY.**
 
 Prior to library version `2.5.0` this error is ignored and only present as the `File not found.` response. 
 
 If you're facing the aforementioned exception or a `File not found.` response after issuing a request to php-fpm, 
 please make sure the given path to the script you want to call is an existing absolute path / realpath.
+
+In library versions from `2.6.0` onwards you need to handle that error yourself like this:
+
+```php
+if (preg_match("#^Primary script unknown\n?$#", $response->getError()))
+{
+    throw new Exception('Could not find or resolve path to script for execution.');
+}
+```
+
+Please read more about the journey to and changes in `v2.6.0` in [this blog post](https://hollo.me/php/background-info-fast-cgi-client-v2.6.0.html).
 
 ### Doesn't work
 
@@ -726,6 +761,6 @@ Run a call through a network socket:
 
 Run a call through a Unix Domain Socket
 
-    bin/fcgiget /var/run/php/php7.1-fpm.sock/status
+    bin/fcgiget /var/run/php/php7.3-fpm.sock/status
 
 This shows the response of the php-fpm status page, if enabled.
