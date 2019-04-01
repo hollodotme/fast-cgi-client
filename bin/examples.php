@@ -51,10 +51,10 @@ function printResponse( ProvidesResponseData $response )
 {
 	printLine( "Response for request ID: {$response->getRequestId()}", 'green', true );
 	printLine( $response->getBody() );
-	printLine( 'Duration: ' . (string)$response->getDuration() );
+	printLine( 'Duration: ' . $response->getDuration() );
 }
 
-$connection = new UnixDomainSocket( 'unix:///var/run/php/php7.1-fpm.sock' );
+$connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
 $client     = new Client( $connection );
 
 $workerPath = __DIR__ . '/exampleWorker.php';
@@ -64,7 +64,7 @@ $request = new PostRequest( $workerPath, '' );
 printLine( "\n" );
 printLine( 'hollodotme/fast-cgi-client examples', 'blue', true );
 printLine( 'Worker script: ' . $workerPath, 'blue' );
-printLine( 'Socket: ' . $connection->getHost(), 'blue' );
+printLine( 'Socket: ' . $connection->getSocketAddress(), 'blue' );
 printLine( "\n" );
 
 sleep( 2 );
