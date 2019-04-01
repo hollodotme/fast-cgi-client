@@ -114,6 +114,10 @@ shared-unit-tests: &shared-unit-tests
         at: /repo
 
     - run:
+        name: Start PHP-FPM server
+        command: php-fpm -D
+
+    - run:
         name: Run unit tests
         command: vendor/bin/phpunit$PHPUNIT_VERSION.phar -c build --testsuite Unit --log-junit build/logs/junit/junit.xml --coverage-html build/logs/coverage --coverage-clover=coverage.xml
 
@@ -141,6 +145,10 @@ shared-integration-tests: &shared-integration-tests
   steps:
     - attach_workspace:
         at: /repo
+
+    - run:
+        name: Start PHP-FPM server
+        command: php-fpm -D
 
     - run:
         name: Run integration tests
