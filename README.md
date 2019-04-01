@@ -751,18 +751,22 @@ $request = new PostRequest( '/var/run/script.php', $content );
 
 ---
 
+## Bring up local environment
+
+    docker-compose up -d
+
 ## Run examples
 
-	php bin/examples.php
+	docker-compose exec php73 php bin/examples.php
 
 ## Command line tool (for debugging only)
 
 Run a call through a network socket:
 
-    bin/fcgiget localhost:9000/status
+    docker-compose exec php73 php bin/fcgiget localhost:9001/status
 
 Run a call through a Unix Domain Socket
 
-    bin/fcgiget /var/run/php/php7.3-fpm.sock/status
+    docker-compose exec php73 php bin/fcgiget unix:///var/run/php-uds.sock/status
 
-This shows the response of the php-fpm status page, if enabled.
+This shows the response of the php-fpm status page.
