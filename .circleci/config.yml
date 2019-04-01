@@ -25,7 +25,7 @@ shared-build: &shared-build
           docker build
           -t "hollodotme/fast-cgi-client:$PHP_VERSION-cli"
           -f .docker/php/$PHP_VERSION/Dockerfile
-          .docker/php/$PHP_VERSION
+          .docker/php
     - run:
         name: Login to hub.docker.com
         command: |
