@@ -10,6 +10,8 @@ A PHP fast CGI client to send requests (a)synchronously to PHP-FPM using the [Fa
 This library is based on the work of [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](https://github.com/adoy/PHP-FastCGI-Client/) 
 and was ported and modernized to PHP 7.0/PHP 7.1, extended with some features for handling multiple requests (in loops) and unit and integration tests as well.
 
+Please read more about the journey to and changes in `v2.6.0` in [this blog post](https://hollo.me/php/background-info-fast-cgi-client-v2.6.0.html).
+
 You can find an experimental use-case in my related blog posts:
  
 * [Experimental async PHP vol. 1](http://bit.ly/eapv1)
