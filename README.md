@@ -1,7 +1,7 @@
-[![Build Status](https://travis-ci.org/hollodotme/fast-cgi-client.svg?branch=master)](https://travis-ci.org/hollodotme/fast-cgi-client)
+[![CircleCI](https://circleci.com/gh/hollodotme/fast-cgi-client.svg?style=svg&circle-token=259b98920de0a0a72bc61325c6e9b76c409dc5b4)](https://circleci.com/gh/hollodotme/fast-cgi-client)
 [![Latest Stable Version](https://poser.pugx.org/hollodotme/fast-cgi-client/v/stable)](https://packagist.org/packages/hollodotme/fast-cgi-client) 
 [![Total Downloads](https://poser.pugx.org/hollodotme/fast-cgi-client/downloads)](https://packagist.org/packages/hollodotme/fast-cgi-client) 
-[![Coverage Status](https://coveralls.io/repos/github/hollodotme/fast-cgi-client/badge.svg?branch=master)](https://coveralls.io/github/hollodotme/fast-cgi-client?branch=master)
+[![codecov](https://codecov.io/gh/hollodotme/fast-cgi-client/branch/master/graph/badge.svg)](https://codecov.io/gh/hollodotme/fast-cgi-client)
 
 # Fast CGI Client
 
