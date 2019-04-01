@@ -119,7 +119,9 @@ shared-unit-tests: &shared-unit-tests
 
     - run:
         name: Upload code coverage to codecov.io
-        command: bash <(curl -s https://codecov.io/bash)
+        command: |
+          apk add -q bash
+          bash <(curl -s https://codecov.io/bash)
 
     - store_test_results:
         path: build/logs/junit
