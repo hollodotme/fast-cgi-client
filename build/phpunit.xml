@@ -7,10 +7,10 @@
 	convertNoticesToExceptions="true"
 	convertWarningsToExceptions="true">
 	<testsuites>
-		<testsuite name="FastCGIClient-Unit">
+    <testsuite name="Unit">
 			<directory suffix="Test.php">../tests/Unit</directory>
 		</testsuite>
-		<testsuite name="FastCGIClient-Integration">
+    <testsuite name="Integration">
 			<directory suffix="Test.php">../tests/Integration</directory>
 		</testsuite>
 	</testsuites>
