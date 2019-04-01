@@ -14,7 +14,7 @@ workdir-73: &workdir-73
 
 # Define steps to build docker images for each PHP version
 shared-build: &shared-build
-  working_directory: /repo
+  working_directory: ~/repo
   machine:
     docker_layer_caching: true
   steps:
