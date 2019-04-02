@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2018 Holger Woltersdorf
+ * Copyright (c) 2016-2019 Holger Woltersdorf & Contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -24,15 +24,17 @@
 namespace hollodotme\FastCGI\Tests\Unit\Requests;
 
 use hollodotme\FastCGI\Requests\AbstractRequest;
+use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
+use SebastianBergmann\RecursionContext\InvalidArgumentException;
 
 final class AbstractRequestTest extends TestCase
 {
 	/**
 	 * @param string $requestMethod
 	 *
-	 * @throws \PHPUnit\Framework\ExpectationFailedException
-	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
 	 * @dataProvider requestMethodProvider
 	 */
 	public function testCanGetDefaultValues( string $requestMethod ) : void
@@ -90,8 +92,8 @@ final class AbstractRequestTest extends TestCase
 	/**
 	 * @param string $requestMethod
 	 *
-	 * @throws \PHPUnit\Framework\ExpectationFailedException
-	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
 	 * @dataProvider requestMethodProvider
 	 */
 	public function testCanGetParametersArray( string $requestMethod ) : void
@@ -121,8 +123,8 @@ final class AbstractRequestTest extends TestCase
 	}
 
 	/**
-	 * @throws \PHPUnit\Framework\ExpectationFailedException
-	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
 	 */
 	public function testContentLengthChangesWithContent() : void
 	{
@@ -136,8 +138,8 @@ final class AbstractRequestTest extends TestCase
 	}
 
 	/**
-	 * @throws \PHPUnit\Framework\ExpectationFailedException
-	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
 	 */
 	public function testCanOverwriteVars() : void
 	{
@@ -179,8 +181,8 @@ final class AbstractRequestTest extends TestCase
 	}
 
 	/**
-	 * @throws \PHPUnit\Framework\ExpectationFailedException
-	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
 	 */
 	public function testCanResetCustomVars() : void
 	{

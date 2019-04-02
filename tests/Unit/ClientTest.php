@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2018 Holger Woltersdorf
+ * Copyright (c) 2016-2019 Holger Woltersdorf & Contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -32,7 +32,9 @@ use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
+use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 
 final class ClientTest extends TestCase
@@ -153,8 +155,8 @@ final class ClientTest extends TestCase
 	}
 
 	/**
-	 * @throws \PHPUnit\Framework\AssertionFailedError
-	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 * @throws AssertionFailedError
+	 * @throws InvalidArgumentException
 	 * @throws ReadFailedException
 	 */
 	public function testHandlingReadyResponsesJustReturnsIfClientGotNoRequests() : void

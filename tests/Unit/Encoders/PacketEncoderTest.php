@@ -1,7 +1,7 @@
 <?php declare(strict_types = 1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2018 Holger Woltersdorf
+ * Copyright (c) 2016-2019 Holger Woltersdorf & Contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -24,7 +24,10 @@
 namespace hollodotme\FastCGI\Tests\Unit\Encoders;
 
 use hollodotme\FastCGI\Encoders\PacketEncoder;
+use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
+use SebastianBergmann\RecursionContext\InvalidArgumentException;
+use function strlen;
 
 final class PacketEncoderTest extends TestCase
 {
@@ -34,8 +37,8 @@ final class PacketEncoderTest extends TestCase
 	 * @param int    $requestId
 	 * @param array  $expectedHeader
 	 *
-	 * @throws \PHPUnit\Framework\ExpectationFailedException
-	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
 	 * @dataProvider packetContentProvider
 	 */
 	public function testCanEncodeAndDecodePacket( int $type, string $content, int $requestId, array $expectedHeader ) : void
@@ -47,7 +50,7 @@ final class PacketEncoderTest extends TestCase
 		$header = $packetEncoder->decodeHeader( $packet );
 
 		$this->assertEquals( $expectedHeader, $header );
-		$this->assertEquals( substr( $packet, -1 * \strlen( $content ) ), $content );
+		$this->assertEquals( substr( $packet, -1 * strlen( $content ) ), $content );
 	}
 
 	public function packetContentProvider() : array

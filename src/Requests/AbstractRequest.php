@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2018 Holger Woltersdorf
+ * Copyright (c) 2016-2019 Holger Woltersdorf & Contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -25,6 +25,7 @@ namespace hollodotme\FastCGI\Requests;
 
 use hollodotme\FastCGI\Constants\ServerProtocol;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
+use function strlen;
 
 /**
  * Class AbstractRequest
@@ -177,7 +178,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 	public function setContent( string $content ) : void
 	{
 		$this->content       = $content;
-		$this->contentLength = \strlen( $content );
+		$this->contentLength = strlen( $content );
 	}
 
 	public function setCustomVar( string $key, $value ) : void
