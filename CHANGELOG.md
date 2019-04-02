@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
-## [2.6.0] - XXXX-XX-XX
+## [2.6.0] - 2019-04-02
 
 ### Added
 
@@ -27,6 +27,14 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CH
 * `ProcessManagerException` that was introduced in `v2.5.0` - [#27]
   Please read [this blog post](https://hollo.me/php/background-info-fast-cgi-client-v2.6.0.html) why this (BC breaking) change was necessary 
   and how to handle server-sent errors now.
+
+### Fixed
+
+* `bin/fcgiget` to accept full URL paths and print STDOUT and STDERR output
+
+### Improved
+
+* Documentation
 
 ## [2.5.0] - 2019-01-29
 
