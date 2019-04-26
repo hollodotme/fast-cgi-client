@@ -104,8 +104,6 @@ class Client
 			return $socket->getId();
 		}
 
-		echo "Creating new socket...\n";
-
 		for ( $i = 0; $i < 10; $i++ )
 		{
 			$socket = new Socket( $this->connection, $this->packetEncoder, $this->nameValuePairEncoder );
