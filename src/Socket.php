@@ -124,7 +124,7 @@ final class Socket
 	/** @var float */
 	private $startTime;
 
-	/** @var ProvidesResponseData */
+	/** @var null|ProvidesResponseData */
 	private $response;
 
 	/** @var int */
