@@ -69,12 +69,12 @@ class Client
 	/**
 	 * @param ProvidesRequestData $request
 	 *
-	 * @throws TimedoutException
+	 * @return ProvidesResponseData
 	 * @throws ConnectException
 	 * @throws Exception
 	 * @throws Throwable
 	 * @throws WriteFailedException
-	 * @return ProvidesResponseData
+	 * @throws TimedoutException
 	 */
 	public function sendRequest( ProvidesRequestData $request ) : ProvidesResponseData
 	{
@@ -95,6 +95,17 @@ class Client
 	 */
 	public function sendAsyncRequest( ProvidesRequestData $request ) : int
 	{
+		$socket = $this->getIdleSocket();
+
+		if ( null !== $socket )
+		{
+			$socket->sendRequest( $request );
+
+			return $socket->getId();
+		}
+
+		echo "Creating new socket...\n";
+
 		for ( $i = 0; $i < 10; $i++ )
 		{
 			$socket = new Socket( $this->connection, $this->packetEncoder, $this->nameValuePairEncoder );
@@ -114,23 +125,34 @@ class Client
 		throw new WriteFailedException( 'Could not allocate a new request ID' );
 	}
 
+	private function getIdleSocket() : ?Socket
+	{
+		if ( [] === $this->sockets )
+		{
+			return null;
+		}
+
+		foreach ( $this->sockets as $socket )
+		{
+			if ( $socket->isIdle() )
+			{
+				return $socket;
+			}
+		}
+
+		return null;
+	}
+
 	/**
 	 * @param int      $requestId
 	 * @param int|null $timeoutMs
 	 *
-	 * @throws Throwable
 	 * @return ProvidesResponseData
+	 * @throws Throwable
 	 */
 	public function readResponse( int $requestId, ?int $timeoutMs = null ) : ProvidesResponseData
 	{
-		try
-		{
-			return $this->getSocketWithId( $requestId )->fetchResponse( $timeoutMs );
-		}
-		finally
-		{
-			$this->removeSocket( $requestId );
-		}
+		return $this->getSocketWithId( $requestId )->fetchResponse( $timeoutMs );
 	}
 
 	/**
@@ -217,10 +239,6 @@ class Client
 		{
 			$socket->notifyFailureCallbacks( $e );
 		}
-		finally
-		{
-			$this->removeSocket( $socket->getId() );
-		}
 	}
 
 	/**
@@ -240,17 +258,6 @@ class Client
 		foreach ( $this->getRequestIdsHavingResponse() as $requestId )
 		{
 			yield $this->getSocketWithId( $requestId );
-		}
-	}
-
-	/**
-	 * @param int $requestId
-	 */
-	private function removeSocket( int $requestId ) : void
-	{
-		if ( isset( $this->sockets[ $requestId ] ) )
-		{
-			unset( $this->sockets[ $requestId ] );
 		}
 	}
 
@@ -306,10 +313,6 @@ class Client
 			}
 			catch ( Throwable $e )
 			{
-			}
-			finally
-			{
-				$this->removeSocket( $requestId );
 			}
 		}
 	}

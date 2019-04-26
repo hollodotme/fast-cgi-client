@@ -175,6 +175,10 @@ final class Socket
 	 */
 	public function sendRequest( ProvidesRequestData $request ) : void
 	{
+		$this->guardSocketIsIdle();
+
+		$this->response = null;
+
 		$this->responseCallbacks    = $request->getResponseCallbacks();
 		$this->failureCallbacks     = $request->getFailureCallbacks();
 		$this->passThroughCallbacks = $request->getPassThroughCallbacks();
@@ -192,8 +196,44 @@ final class Socket
 	/**
 	 * @throws ConnectException
 	 */
+	private function guardSocketIsIdle() : void
+	{
+		if ( !$this->isIdle() )
+		{
+			throw new ConnectException( 'Trying to connect to a socket that is not idle.' );
+		}
+	}
+
+	public function isIdle() : bool
+	{
+		if ( !is_resource( $this->resource ) )
+		{
+			return true;
+		}
+
+		if ( self::REQ_STATE_UNKNOWN !== $this->status )
+		{
+			return false;
+		}
+
+		if ( stream_get_meta_data( $this->resource )['timed_out'] )
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * @throws ConnectException
+	 */
 	private function connect() : void
 	{
+		if ( is_resource( $this->resource ) )
+		{
+			return;
+		}
+
 		try
 		{
 			$resource = @stream_socket_client(
@@ -333,10 +373,10 @@ final class Socket
 	/**
 	 * @param int|null $timeoutMs
 	 *
-	 * @throws ReadFailedException
+	 * @return ProvidesResponseData
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
-	 * @return ProvidesResponseData
+	 * @throws ReadFailedException
 	 */
 	public function fetchResponse( ?int $timeoutMs = null ) : ProvidesResponseData
 	{
@@ -393,15 +433,14 @@ final class Socket
 				microtime( true ) - $this->startTime
 			);
 
+			# Set socket to idle again
+			$this->status = self::REQ_STATE_UNKNOWN;
+
 			return $this->response;
 		}
 		catch ( WriteFailedException | ReadFailedException $e )
 		{
 			throw $e;
-		}
-		finally
-		{
-			$this->disconnect();
 		}
 	}
 
