@@ -220,7 +220,12 @@ final class Socket
 			return true;
 		}
 
-		$metaData = stream_get_meta_data( $this->resource );
+		$metaData = @stream_get_meta_data( $this->resource );
+
+		if ( false === $metaData )
+		{
+			return false;
+		}
 
 		return !($metaData['timed_out'] || $metaData['unread_bytes'] || $metaData['eof']);
 	}
