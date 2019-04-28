@@ -413,28 +413,21 @@ final class Socket
 		}
 		while ( null !== $packet );
 
-		try
-		{
-			$this->handleNullPacket( $packet );
-			$character = (string)$packet['content']{4};
-			$this->guardRequestCompleted( ord( $character ) );
+		$this->handleNullPacket( $packet );
+		$character = (string)$packet['content']{4};
+		$this->guardRequestCompleted( ord( $character ) );
 
-			$this->response = new Response(
-				$this->id,
-				$output,
-				$error,
-				microtime( true ) - $this->startTime
-			);
+		$this->response = new Response(
+			$this->id,
+			$output,
+			$error,
+			microtime( true ) - $this->startTime
+		);
 
-			# Set socket to idle again
-			$this->status = self::SOCK_STATE_IDLE;
+		# Set socket to idle again
+		$this->status = self::SOCK_STATE_IDLE;
 
-			return $this->response;
-		}
-		catch ( WriteFailedException | ReadFailedException $e )
-		{
-			throw $e;
-		}
+		return $this->response;
 	}
 
 	private function readPacket() : ?array
