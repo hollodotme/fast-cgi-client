@@ -32,14 +32,17 @@ use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use hollodotme\FastCGI\Sockets\Socket;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\AssertionFailedError;
+use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionException;
 use RuntimeException;
+use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 use function dirname;
 use function http_build_query;
@@ -60,14 +63,24 @@ final class SocketTest extends TestCase
 	}
 
 	/**
+	 * @param int $connectTimeout
+	 * @param int $readWriteTimeout
+	 *
 	 * @return Socket
 	 * @throws Exception
 	 */
-	private function getSocket() : Socket
+	private function getSocket(
+		int $connectTimeout = Defaults::CONNECT_TIMEOUT,
+		int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT
+	) : Socket
 	{
 		$nameValuePairEncoder = new NameValuePairEncoder();
 		$packetEncoder        = new PacketEncoder();
-		$connection           = new UnixDomainSocket( $this->getUnixDomainSocket() );
+		$connection           = new UnixDomainSocket(
+			$this->getUnixDomainSocket(),
+			$connectTimeout,
+			$readWriteTimeout
+		);
 
 		return new Socket( $connection, $packetEncoder, $nameValuePairEncoder );
 	}
@@ -261,5 +274,45 @@ final class SocketTest extends TestCase
 				'expectedExceptionMessage' => 'Unknown content.',
 			],
 		];
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws Exception
+	 */
+	public function testIsUsableWhenInInitialState() : void
+	{
+		$socket = $this->getSocket();
+
+		$this->assertTrue( $socket->isUsable() );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws Exception
+	 */
+	public function testIsNotUsableWhenTimedOut() : void
+	{
+		$socket  = $this->getSocket();
+		$content = http_build_query( ['sleep' => 1, 'test-key' => 'unit'] );
+		$request = new PostRequest( dirname( __DIR__, 2 ) . '/Integration/Workers/sleepWorker.php', $content );
+		$socket->sendRequest( $request );
+
+		try
+		{
+			/** @noinspection UnusedFunctionResultInspection */
+			$socket->fetchResponse( 100 );
+		}
+		catch ( TimedoutException $e )
+		{
+		}
+
+		$this->assertFalse( $socket->isUsable() );
 	}
 }
