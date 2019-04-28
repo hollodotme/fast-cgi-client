@@ -37,6 +37,8 @@ use hollodotme\FastCGI\Sockets\Socket;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
+use ReflectionException;
 use RuntimeException;
 use Throwable;
 use function dirname;
@@ -203,5 +205,61 @@ final class SocketTest extends TestCase
 		$socket->sendRequest( $request );
 
 		$this->fail( 'Expected ConnectException to be thrown.' );
+	}
+
+	/**
+	 * @param int    $flag
+	 * @param string $expectedException
+	 * @param string $expectedExceptionMessage
+	 *
+	 * @throws AssertionFailedError
+	 * @throws ReflectionException
+	 * @throws Exception
+	 *
+	 * @dataProvider responseFlagProvider
+	 */
+	public function testRequestCompletedGuard(
+		int $flag,
+		string $expectedException,
+		string $expectedExceptionMessage
+	) : void
+	{
+		$socket = $this->getSocket();
+
+		$guardMethod = (new ReflectionClass( $socket ))->getMethod( 'guardRequestCompleted' );
+		$guardMethod->setAccessible( true );
+
+		$this->expectException( $expectedException );
+		$this->expectExceptionMessage( $expectedExceptionMessage );
+
+		$guardMethod->invoke( $socket, $flag );
+
+		$this->fail( 'Expected an Exception to be thrown.' );
+	}
+
+	public function responseFlagProvider() : array
+	{
+		return [
+			[
+				'flag'                     => 1,
+				'expectedException'        => WriteFailedException::class,
+				'expectedExceptionMessage' => 'This app can\'t multiplex [CANT_MPX_CONN]',
+			],
+			[
+				'flag'                     => 2,
+				'expectedException'        => WriteFailedException::class,
+				'expectedExceptionMessage' => 'New request rejected; too busy [OVERLOADED]',
+			],
+			[
+				'flag'                     => 3,
+				'expectedException'        => WriteFailedException::class,
+				'expectedExceptionMessage' => 'Role value not known [UNKNOWN_ROLE]',
+			],
+			[
+				'flag'                     => 123,
+				'expectedException'        => ReadFailedException::class,
+				'expectedExceptionMessage' => 'Unknown content.',
+			],
+		];
 	}
 }
