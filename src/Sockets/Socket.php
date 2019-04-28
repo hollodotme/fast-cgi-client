@@ -220,6 +220,7 @@ final class Socket
 			return true;
 		}
 
+		/** @var false|array $metaData */
 		$metaData = @stream_get_meta_data( $this->resource );
 
 		if ( false === $metaData )
