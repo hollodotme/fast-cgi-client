@@ -41,17 +41,12 @@ final class SocketCollection implements Countable
 				continue;
 			}
 
-			$this->add( $socket );
+			$this->sockets[ $socket->getId() ] = $socket;
 
 			return $socket;
 		}
 
 		throw new WriteFailedException( 'Could not allocate a new request ID' );
-	}
-
-	public function add( Socket $socket ) : void
-	{
-		$this->sockets[ $socket->getId() ] = $socket;
 	}
 
 	/**
@@ -97,7 +92,7 @@ final class SocketCollection implements Countable
 
 		if ( false === $socketId )
 		{
-			throw new ReadFailedException( 'Socket not found for request ID: ' . $socketId );
+			throw new ReadFailedException( 'Socket not found for resource' );
 		}
 
 		return $this->sockets[ $socketId ];
