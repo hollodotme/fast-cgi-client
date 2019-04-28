@@ -315,4 +315,25 @@ final class SocketTest extends TestCase
 
 		$this->assertFalse( $socket->isUsable() );
 	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws ReflectionException
+	 * @throws Exception
+	 */
+	public function testIsNotUsableWhenSocketWasClosed() : void
+	{
+		$socket = $this->getSocket();
+
+		$connectMethod = (new ReflectionClass( $socket ))->getMethod( 'connect' );
+		$connectMethod->setAccessible( true );
+		$connectMethod->invoke( $socket );
+
+		$disconnectMethod = (new ReflectionClass( $socket ))->getMethod( 'disconnect' );
+		$disconnectMethod->setAccessible( true );
+		$disconnectMethod->invoke( $socket );
+
+		$this->assertFalse( $socket->isUsable() );
+	}
 }

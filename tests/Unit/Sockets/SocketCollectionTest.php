@@ -10,16 +10,20 @@ use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\ExpectationFailedException;
-use PHPUnit\Framework\MockObject\RuntimeException;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionException;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
+use function dirname;
+use function fclose;
+use function feof;
+use function fread;
 use function reset;
 use const STDIN;
 
@@ -41,16 +45,24 @@ final class SocketCollectionTest extends TestCase
 	}
 
 	/**
-	 * @throws Exception
+	 * @return ConfiguresSocketConnection
+	 * @throws \Exception
+	 */
+	private function getSocketConnection() : ConfiguresSocketConnection
+	{
+		return new UnixDomainSocket( $this->getUnixDomainSocket() );
+	}
+
+	/**
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
 	 * @throws ReflectionException
-	 * @throws RuntimeException
 	 * @throws WriteFailedException
+	 * @throws \Exception
 	 */
 	public function testCollectResources() : void
 	{
-		$connection           = $this->getSocketConnectionMock();
+		$connection           = $this->getSocketConnection();
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
@@ -87,12 +99,12 @@ final class SocketCollectionTest extends TestCase
 	 * @throws InvalidArgumentException
 	 * @throws ReadFailedException
 	 * @throws ReflectionException
-	 * @throws RuntimeException
 	 * @throws WriteFailedException
+	 * @throws \Exception
 	 */
 	public function testGetByResource() : void
 	{
-		$connection           = $this->getSocketConnectionMock();
+		$connection           = $this->getSocketConnection();
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
@@ -130,17 +142,16 @@ final class SocketCollectionTest extends TestCase
 	}
 
 	/**
-	 * @throws Exception
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
 	 * @throws ReadFailedException
 	 * @throws ReflectionException
-	 * @throws RuntimeException
 	 * @throws WriteFailedException
+	 * @throws \Exception
 	 */
 	public function testGetSocketIdsByResources() : void
 	{
-		$connection           = $this->getSocketConnectionMock();
+		$connection           = $this->getSocketConnection();
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
@@ -186,13 +197,12 @@ final class SocketCollectionTest extends TestCase
 	 * @throws Exception
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
-	 * @throws ReflectionException
-	 * @throws RuntimeException
 	 * @throws WriteFailedException
+	 * @throws \Exception
 	 */
 	public function testNewlyAddedSocketIsIdle() : void
 	{
-		$connection           = $this->getSocketConnectionMock();
+		$connection           = $this->getSocketConnection();
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
@@ -213,14 +223,13 @@ final class SocketCollectionTest extends TestCase
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
 	 * @throws ReadFailedException
-	 * @throws ReflectionException
-	 * @throws RuntimeException
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
+	 * @throws \Exception
 	 */
 	public function testSocketWithResponseIsIdle() : void
 	{
-		$connection           = $this->getSocketConnectionMock();
+		$connection           = $this->getSocketConnection();
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
@@ -232,12 +241,14 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$socket->sendRequest(
-			new PostRequest( '/some/script.php', '' )
+		$request = new PostRequest(
+			dirname( __DIR__, 2 ) . '/Integration/Workers/sleepWorker.php',
+			''
 		);
+		$socket->sendRequest( $request );
 
 		/** @noinspection UnusedFunctionResultInspection */
-		$socket->fetchResponse();
+		$socket->fetchResponse( 2000 );
 
 		$this->assertSame( $socket, $this->collection->getIdleSocket() );
 	}
@@ -247,14 +258,13 @@ final class SocketCollectionTest extends TestCase
 	 * @throws Exception
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
-	 * @throws ReflectionException
-	 * @throws RuntimeException
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
+	 * @throws \Exception
 	 */
 	public function testBusySocketIsNotIdle() : void
 	{
-		$connection           = $this->getSocketConnectionMock();
+		$connection           = $this->getSocketConnection();
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
@@ -278,12 +288,12 @@ final class SocketCollectionTest extends TestCase
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
 	 * @throws ReflectionException
-	 * @throws RuntimeException
 	 * @throws WriteFailedException
+	 * @throws \Exception
 	 */
 	public function testNotUsableSocketIsNotIdle() : void
 	{
-		$connection           = $this->getSocketConnectionMock();
+		$connection           = $this->getSocketConnection();
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
@@ -319,13 +329,49 @@ final class SocketCollectionTest extends TestCase
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
 	 * @throws ReflectionException
-	 * @throws RuntimeException
+	 * @throws WriteFailedException
+	 * @throws \Exception
+	 */
+	public function testClosedSocketIsNotIdle() : void
+	{
+		$connection           = $this->getSocketConnection();
+		$packetEncoder        = new PacketEncoder();
+		$nameValuePairEncoder = new NameValuePairEncoder();
+
+		$this->assertCount( 0, $this->collection );
+
+		$socket = $this->collection->new(
+			$connection,
+			$packetEncoder,
+			$nameValuePairEncoder
+		);
+
+		$connectMethod = (new ReflectionClass( $socket ))->getMethod( 'connect' );
+		$connectMethod->setAccessible( true );
+		$connectMethod->invoke( $socket );
+
+		foreach ( $this->collection->collectResources() as $resource )
+		{
+			fclose( $resource );
+		}
+
+		$this->assertNull( $this->collection->getIdleSocket() );
+
+		# Socket should also be removed from collection
+		$this->assertCount( 0, $this->collection );
+	}
+
+	/**
+	 * @throws Exception
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
 	 * @throws WriteFailedException
 	 * @throws ReadFailedException
+	 * @throws \Exception
 	 */
 	public function testGetById() : void
 	{
-		$connection           = $this->getSocketConnectionMock();
+		$connection           = $this->getSocketConnection();
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
@@ -356,31 +402,15 @@ final class SocketCollectionTest extends TestCase
 	}
 
 	/**
-	 * @return ConfiguresSocketConnection
-	 * @throws ReflectionException
-	 * @throws RuntimeException
-	 * @throws Exception
-	 */
-	private function getSocketConnectionMock() : ConfiguresSocketConnection
-	{
-		$connection = $this->getMockBuilder( ConfiguresSocketConnection::class )->getMockForAbstractClass();
-		$connection->method( 'getSocketAddress' )->willReturn( 'unix://' . $this->getUnixDomainSocket() );
-
-		/** @var ConfiguresSocketConnection $connection */
-		return $connection;
-	}
-
-	/**
 	 * @throws Exception
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
-	 * @throws ReflectionException
-	 * @throws RuntimeException
 	 * @throws WriteFailedException
+	 * @throws \Exception
 	 */
 	public function testNew() : void
 	{
-		$connection           = $this->getSocketConnectionMock();
+		$connection           = $this->getSocketConnection();
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
@@ -407,14 +437,13 @@ final class SocketCollectionTest extends TestCase
 	}
 
 	/**
-	 * @throws Exception
-	 * @throws ReflectionException
-	 * @throws RuntimeException
+	 * @throws AssertionFailedError
 	 * @throws WriteFailedException
+	 * @throws \Exception
 	 */
 	public function testThrowsExceptionIfNoNewSocketCanBeCreated() : void
 	{
-		$connection           = $this->getSocketConnectionMock();
+		$connection           = $this->getSocketConnection();
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
@@ -433,15 +462,14 @@ final class SocketCollectionTest extends TestCase
 	 * @throws Exception
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
-	 * @throws ReflectionException
-	 * @throws RuntimeException
 	 * @throws WriteFailedException
 	 * @throws ConnectException
 	 * @throws TimedoutException
+	 * @throws \Exception
 	 */
 	public function testHasBusySockets() : void
 	{
-		$connection           = $this->getSocketConnectionMock();
+		$connection           = $this->getSocketConnection();
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
@@ -465,13 +493,12 @@ final class SocketCollectionTest extends TestCase
 	 * @throws Exception
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
-	 * @throws ReflectionException
-	 * @throws RuntimeException
 	 * @throws WriteFailedException
+	 * @throws \Exception
 	 */
 	public function testRemove() : void
 	{
-		$connection           = $this->getSocketConnectionMock();
+		$connection           = $this->getSocketConnection();
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
