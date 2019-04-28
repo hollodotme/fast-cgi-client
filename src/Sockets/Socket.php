@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI;
+namespace hollodotme\FastCGI\Sockets;
 
 use ErrorException;
 use Exception;
@@ -85,13 +85,11 @@ final class Socket
 
 	private const HEADER_LEN           = 8;
 
-	private const REQ_STATE_WRITTEN    = 1;
+	private const SOCK_STATE_INIT      = 1;
 
-	private const REQ_STATE_OK         = 2;
+	private const SOCK_STATE_BUSY      = 2;
 
-	private const REQ_STATE_ERR        = 3;
-
-	private const REQ_STATE_UNKNOWN    = 4;
+	private const SOCK_STATE_IDLE      = 3;
 
 	private const REQ_MAX_CONTENT_SIZE = 65535;
 
@@ -150,7 +148,7 @@ final class Socket
 		$this->responseCallbacks    = [];
 		$this->failureCallbacks     = [];
 		$this->passThroughCallbacks = [];
-		$this->status               = self::REQ_STATE_UNKNOWN;
+		$this->status               = self::SOCK_STATE_INIT;
 	}
 
 	public function getId() : int
@@ -189,7 +187,7 @@ final class Socket
 
 		$this->write( $requestPackets );
 
-		$this->status    = self::REQ_STATE_WRITTEN;
+		$this->status    = self::SOCK_STATE_BUSY;
 		$this->startTime = microtime( true );
 	}
 
@@ -211,17 +209,19 @@ final class Socket
 			return true;
 		}
 
-		if ( self::REQ_STATE_UNKNOWN !== $this->status )
+		if ( self::SOCK_STATE_IDLE !== $this->status )
 		{
 			return false;
 		}
 
-		if ( stream_get_meta_data( $this->resource )['timed_out'] )
-		{
-			return false;
-		}
+		$metaData = stream_get_meta_data( $this->resource );
 
-		return true;
+		return !($metaData['timed_out'] || $metaData['unread_bytes'] || $metaData['eof']);
+	}
+
+	public function isBusy() : bool
+	{
+		return self::SOCK_STATE_BUSY === $this->status;
 	}
 
 	/**
@@ -247,6 +247,8 @@ final class Socket
 			{
 				$this->resource = $resource;
 			}
+
+			$this->status = self::SOCK_STATE_IDLE;
 		}
 		catch ( Throwable $e )
 		{
@@ -359,9 +361,7 @@ final class Socket
 
 		if ( $writeResult === false || !$flushResult )
 		{
-			$info = stream_get_meta_data( $this->resource );
-
-			if ( $info['timed_out'] )
+			if ( stream_get_meta_data( $this->resource )['timed_out'] )
 			{
 				throw new TimedoutException( 'Write timed out' );
 			}
@@ -391,8 +391,6 @@ final class Socket
 		$error  = '';
 		$output = '';
 
-		$this->status = self::REQ_STATE_OK;
-
 		do
 		{
 			$packet     = $this->readPacket();
@@ -400,8 +398,7 @@ final class Socket
 
 			if ( self::STDERR === $packetType )
 			{
-				$this->status = self::REQ_STATE_ERR;
-				$error        .= $packet['content'];
+				$error .= $packet['content'];
 				$this->notifyPassThroughCallbacks( '', $packet['content'] );
 				continue;
 			}
@@ -434,7 +431,7 @@ final class Socket
 			);
 
 			# Set socket to idle again
-			$this->status = self::REQ_STATE_UNKNOWN;
+			$this->status = self::SOCK_STATE_IDLE;
 
 			return $this->response;
 		}
@@ -568,7 +565,7 @@ final class Socket
 	{
 		if ( null !== $this->resource )
 		{
-			$resources[ $this->id ] = $this->resource;
+			$resources[ (string)$this->id ] = $this->resource;
 		}
 	}
 }

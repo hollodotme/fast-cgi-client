@@ -32,8 +32,8 @@ use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Requests\PostRequest;
-use hollodotme\FastCGI\Socket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use hollodotme\FastCGI\Sockets\Socket;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
@@ -142,7 +142,7 @@ final class SocketTest extends TestCase
 			http_build_query( $data )
 		);
 		$request->addResponseCallbacks(
-			function ( ProvidesResponseData $response )
+			static function ( ProvidesResponseData $response )
 			{
 				echo $response->getBody();
 			}
@@ -170,7 +170,7 @@ final class SocketTest extends TestCase
 			http_build_query( $data )
 		);
 		$request->addFailureCallbacks(
-			function ( Throwable $throwable )
+			static function ( Throwable $throwable )
 			{
 				echo $throwable->getMessage();
 			}
