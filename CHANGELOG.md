@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [2.7.0] - YYYY-MM-DD
+
+### Added
+
+* Re-using of idle sockets - [#33]
+
 ## [2.6.0] - 2019-04-02
 
 ### Added
@@ -180,6 +186,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[2.7.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.3...v2.5.0
 [2.4.3]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.2...v2.4.3
@@ -204,3 +211,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#20]: https://github.com/hollodotme/fast-cgi-client/issues/20
 [#26]: https://github.com/hollodotme/fast-cgi-client/issues/26
 [#27]: https://github.com/hollodotme/fast-cgi-client/issues/27
+[#33]: https://github.com/hollodotme/fast-cgi-client/pull/33

@@ -39,6 +39,7 @@ services:
     container_name: fcc_composer
     working_dir: /repo
     restart: "no"
+    command: "update -o -v"
     networks:
       - fcc_network
     volumes:
@@ -49,6 +50,7 @@ services:
     container_name: fcc_phpstan
     working_dir: /repo
     restart: "no"
+    command: "analyze --level max src/"
     networks:
       - fcc_network
     volumes:

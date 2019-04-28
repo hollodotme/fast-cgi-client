@@ -36,8 +36,9 @@ use hollodotme\FastCGI\Interfaces\EncodesNameValuePair;
 use hollodotme\FastCGI\Interfaces\EncodesPacket;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\Sockets\Socket;
+use hollodotme\FastCGI\Sockets\SocketCollection;
 use Throwable;
-use function array_keys;
 use function count;
 use function stream_select;
 
@@ -46,7 +47,7 @@ class Client
 	/** @var ConfiguresSocketConnection */
 	private $connection;
 
-	/** @var array|Socket[] */
+	/** @var SocketCollection */
 	private $sockets;
 
 	/** @var EncodesPacket */
@@ -63,18 +64,18 @@ class Client
 		$this->connection           = $connection;
 		$this->packetEncoder        = new PacketEncoder();
 		$this->nameValuePairEncoder = new NameValuePairEncoder();
-		$this->sockets              = [];
+		$this->sockets              = new SocketCollection();
 	}
 
 	/**
 	 * @param ProvidesRequestData $request
 	 *
-	 * @throws TimedoutException
+	 * @return ProvidesResponseData
 	 * @throws ConnectException
 	 * @throws Exception
 	 * @throws Throwable
 	 * @throws WriteFailedException
-	 * @return ProvidesResponseData
+	 * @throws TimedoutException
 	 */
 	public function sendRequest( ProvidesRequestData $request ) : ProvidesResponseData
 	{
@@ -95,68 +96,36 @@ class Client
 	 */
 	public function sendAsyncRequest( ProvidesRequestData $request ) : int
 	{
-		for ( $i = 0; $i < 10; $i++ )
+		$socket = $this->sockets->getIdleSocket();
+
+		if ( null !== $socket )
 		{
-			$socket = new Socket( $this->connection, $this->packetEncoder, $this->nameValuePairEncoder );
-
-			if ( isset( $this->sockets[ $socket->getId() ] ) )
-			{
-				continue;
-			}
-
-			$this->sockets[ $socket->getId() ] = $socket;
-
 			$socket->sendRequest( $request );
 
 			return $socket->getId();
 		}
 
-		throw new WriteFailedException( 'Could not allocate a new request ID' );
+		$socket = $this->sockets->new(
+			$this->connection,
+			$this->packetEncoder,
+			$this->nameValuePairEncoder
+		);
+
+		$socket->sendRequest( $request );
+
+		return $socket->getId();
 	}
 
 	/**
 	 * @param int      $requestId
 	 * @param int|null $timeoutMs
 	 *
-	 * @throws Throwable
 	 * @return ProvidesResponseData
+	 * @throws Throwable
 	 */
 	public function readResponse( int $requestId, ?int $timeoutMs = null ) : ProvidesResponseData
 	{
-		try
-		{
-			return $this->getSocketWithId( $requestId )->fetchResponse( $timeoutMs );
-		}
-		finally
-		{
-			$this->removeSocket( $requestId );
-		}
-	}
-
-	/**
-	 * @param int $requestId
-	 *
-	 * @return Socket
-	 * @throws ReadFailedException
-	 */
-	private function getSocketWithId( int $requestId ) : Socket
-	{
-		$this->guardSocketExists( $requestId );
-
-		return $this->sockets[ $requestId ];
-	}
-
-	/**
-	 * @param int $requestId
-	 *
-	 * @throws ReadFailedException
-	 */
-	private function guardSocketExists( int $requestId ) : void
-	{
-		if ( !isset( $this->sockets[ $requestId ] ) )
-		{
-			throw new ReadFailedException( 'Socket not found for request ID: ' . $requestId );
-		}
+		return $this->sockets->getById( $requestId )->fetchResponse( $timeoutMs );
 	}
 
 	/**
@@ -167,7 +136,7 @@ class Client
 	 */
 	public function waitForResponse( int $requestId, ?int $timeoutMs = null ) : void
 	{
-		$socket = $this->getSocketWithId( $requestId );
+		$socket = $this->sockets->getById( $requestId );
 
 		while ( true )
 		{
@@ -187,7 +156,7 @@ class Client
 	 */
 	public function waitForResponses( ?int $timeoutMs = null ) : void
 	{
-		if ( count( $this->sockets ) === 0 )
+		if ( $this->sockets->isEmpty() )
 		{
 			throw new ReadFailedException( 'No pending requests found.' );
 		}
@@ -217,10 +186,6 @@ class Client
 		{
 			$socket->notifyFailureCallbacks( $e );
 		}
-		finally
-		{
-			$this->removeSocket( $socket->getId() );
-		}
 	}
 
 	/**
@@ -228,7 +193,7 @@ class Client
 	 */
 	public function hasUnhandledResponses() : bool
 	{
-		return (count( $this->sockets ) > 0);
+		return $this->sockets->hasBusySockets();
 	}
 
 	/**
@@ -239,18 +204,7 @@ class Client
 	{
 		foreach ( $this->getRequestIdsHavingResponse() as $requestId )
 		{
-			yield $this->getSocketWithId( $requestId );
-		}
-	}
-
-	/**
-	 * @param int $requestId
-	 */
-	private function removeSocket( int $requestId ) : void
-	{
-		if ( isset( $this->sockets[ $requestId ] ) )
-		{
-			unset( $this->sockets[ $requestId ] );
+			yield $this->sockets->getById( $requestId );
 		}
 	}
 
@@ -262,30 +216,26 @@ class Client
 	 */
 	public function hasResponse( int $requestId ) : bool
 	{
-		return $this->getSocketWithId( $requestId )->hasResponse();
+		return $this->sockets->getById( $requestId )->hasResponse();
 	}
 
 	/**
 	 * @return array
+	 * @throws ReadFailedException
 	 */
 	public function getRequestIdsHavingResponse() : array
 	{
-		if ( count( $this->sockets ) === 0 )
+		if ( $this->sockets->isEmpty() )
 		{
 			return [];
 		}
 
-		$resources = [];
-		$writes    = $excepts = null;
+		$reads  = $this->sockets->collectResources();
+		$writes = $excepts = null;
 
-		foreach ( $this->sockets as $socket )
-		{
-			$socket->collectResource( $resources );
-		}
+		stream_select( $reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
 
-		stream_select( $resources, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
-
-		return array_keys( $resources );
+		return $this->sockets->getSocketIdsByResources( $reads );
 	}
 
 	/**
@@ -300,16 +250,10 @@ class Client
 		{
 			try
 			{
-				$socket = $this->getSocketWithId( $requestId );
-
-				yield $socket->fetchResponse( $timeoutMs );
+				yield $this->sockets->getById( $requestId )->fetchResponse( $timeoutMs );
 			}
 			catch ( Throwable $e )
 			{
-			}
-			finally
-			{
-				$this->removeSocket( $requestId );
 			}
 		}
 	}
@@ -318,6 +262,7 @@ class Client
 	 * @param int|null $timeoutMs
 	 *
 	 * @return Generator|ProvidesResponseData[]
+	 * @throws ReadFailedException
 	 */
 	public function readReadyResponses( ?int $timeoutMs = null ) : Generator
 	{
@@ -337,9 +282,10 @@ class Client
 	 */
 	public function handleResponse( int $requestId, ?int $timeoutMs = null ) : void
 	{
-		$socket = $this->getSocketWithId( $requestId );
-
-		$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
+		$this->fetchResponseAndNotifyCallback(
+			$this->sockets->getById( $requestId ),
+			$timeoutMs
+		);
 	}
 
 	/**

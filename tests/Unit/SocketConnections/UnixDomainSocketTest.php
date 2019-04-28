@@ -26,13 +26,17 @@ namespace hollodotme\FastCGI\Tests\Unit\SocketConnections;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
+use function sprintf;
 
 final class UnixDomainSocketTest extends TestCase
 {
+	use SocketDataProviding;
+
 	/**
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
@@ -40,7 +44,7 @@ final class UnixDomainSocketTest extends TestCase
 	 */
 	public function testImplementsConnectionInterface() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php/php7.1-fpm.sock' );
+		$connection = new UnixDomainSocket( $this->getUnixDomainSocket() );
 
 		$this->assertInstanceOf( ConfiguresSocketConnection::class, $connection );
 	}
@@ -51,9 +55,11 @@ final class UnixDomainSocketTest extends TestCase
 	 */
 	public function testCanGetDefaultValues() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php/php7.1-fpm.sock' );
+		$connection = new UnixDomainSocket( $this->getUnixDomainSocket() );
 
-		$this->assertSame( 'unix:///var/run/php/php7.1-fpm.sock', $connection->getSocketAddress() );
+		$expectedSocketAddress = sprintf( 'unix://%s', $this->getUnixDomainSocket() );
+
+		$this->assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
 		$this->assertSame( Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout() );
 		$this->assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
 	}
@@ -64,9 +70,11 @@ final class UnixDomainSocketTest extends TestCase
 	 */
 	public function testCanGetSetValues() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php/php7.1-fpm.sock', 2000, 3000 );
+		$connection = new UnixDomainSocket( $this->getUnixDomainSocket(), 2000, 3000 );
 
-		$this->assertSame( 'unix:///var/run/php/php7.1-fpm.sock', $connection->getSocketAddress() );
+		$expectedSocketAddress = sprintf( 'unix://%s', $this->getUnixDomainSocket() );
+
+		$this->assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
 		$this->assertSame( 2000, $connection->getConnectTimeout() );
 		$this->assertSame( 3000, $connection->getReadWriteTimeout() );
 	}

@@ -34,6 +34,7 @@ use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
@@ -43,12 +44,14 @@ use Throwable;
 
 final class NetworkSocketTest extends TestCase
 {
+	use SocketDataProviding;
+
 	/** @var Client */
 	private $client;
 
 	protected function setUp() : void
 	{
-		$connection   = new NetworkSocket( '127.0.0.1', 9001 );
+		$connection   = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
 		$this->client = new Client( $connection );
 	}
 
@@ -114,6 +117,7 @@ final class NetworkSocketTest extends TestCase
 		$response = $this->client->sendRequest( $request );
 
 		$this->assertEquals( $expectedResponse, $response->getRawResponse() );
+		$this->assertEquals( $expectedResponse, $response->getOutput() );
 		$this->assertSame( 'unit', $response->getBody() );
 		$this->assertGreaterThan( 0, $response->getDuration() );
 
@@ -248,7 +252,12 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testReadingSyncResponseCanTimeOut() : void
 	{
-		$connection = new NetworkSocket( '127.0.0.1', 9000, Defaults::CONNECT_TIMEOUT, 1000 );
+		$connection = new NetworkSocket(
+			$this->getNetworkSocketHost(),
+			$this->getNetworkSocketPort(),
+			Defaults::CONNECT_TIMEOUT,
+			100
+		);
 		$client     = new Client( $connection );
 		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
@@ -257,7 +266,7 @@ final class NetworkSocketTest extends TestCase
 
 		$this->assertSame( 'unit - 0', $response->getBody() );
 
-		$content = http_build_query( ['sleep' => 2, 'test-key' => 'unit'] );
+		$content = http_build_query( ['sleep' => 1, 'test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
 
 		$this->expectException( TimedoutException::class );
@@ -299,6 +308,7 @@ final class NetworkSocketTest extends TestCase
 	 * @throws ConnectException
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
+	 * @throws ReadFailedException
 	 */
 	public function testCanReadReadyResponses() : void
 	{
@@ -640,5 +650,30 @@ final class NetworkSocketTest extends TestCase
 		                 . "PHP message: ERROR5\n\n?$#";
 
 		$this->assertRegExp( $expectedError, $response->getError() );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testSuccessiveRequestsShouldUseSameSocket() : void
+	{
+		$request = new GetRequest( __DIR__ . '/Workers/sleepWorker.php', '' );
+
+		$requestId = $this->client->sendRequest( $request )->getRequestId();
+
+		$requestIds = [];
+		for ( $i = 0; $i < 5; $i++ )
+		{
+			$requestIds[] = $this->client->sendRequest( $request )->getRequestId();
+		}
+
+		$expectedRequestIds = [$requestId, $requestId, $requestId, $requestId, $requestId];
+
+		$this->assertSame( $expectedRequestIds, $requestIds );
 	}
 }

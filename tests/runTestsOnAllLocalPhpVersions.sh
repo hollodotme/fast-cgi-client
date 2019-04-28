@@ -11,4 +11,4 @@ docker-compose exec php72 vendor/bin/phpunit8.phar -c build
 docker-compose exec php73 vendor/bin/phpunit8.phar -c build
 
 echo -e "\n\033[43mRun phpstan\033[0m\n"
-docker-compose run phpstan analyze --level max src/
+docker-compose run phpstan

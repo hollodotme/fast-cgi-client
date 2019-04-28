@@ -34,6 +34,7 @@ use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use InvalidArgumentException;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\ExpectationFailedException;
@@ -44,12 +45,14 @@ use function chmod;
 
 final class UnixDomainSocketTest extends TestCase
 {
+	use SocketDataProviding;
+
 	/** @var Client */
 	private $client;
 
 	protected function setUp() : void
 	{
-		$connection   = new UnixDomainSocket( '/var/run/php-uds.sock' );
+		$connection   = new UnixDomainSocket( $this->getUnixDomainSocket() );
 		$this->client = new Client( $connection );
 	}
 
@@ -93,6 +96,7 @@ final class UnixDomainSocketTest extends TestCase
 		$response  = $this->client->readResponse( $requestId );
 
 		$this->assertEquals( $expectedResponse, $response->getRawResponse() );
+		$this->assertEquals( $expectedResponse, $response->getOutput() );
 		$this->assertSame( 'unit', $response->getBody() );
 		$this->assertGreaterThan( 0, $response->getDuration() );
 		$this->assertSame( $requestId, $response->getRequestId() );
@@ -171,7 +175,7 @@ final class UnixDomainSocketTest extends TestCase
 		);
 
 		$request->addFailureCallbacks(
-			function ( Throwable $throwable ) use ( $unitTest )
+			static function ( Throwable $throwable ) use ( $unitTest )
 			{
 				$unitTest->assertInstanceOf( RuntimeException::class, $throwable );
 				$unitTest->assertSame( 'Response callback threw exception.', $throwable->getMessage() );
@@ -249,7 +253,11 @@ final class UnixDomainSocketTest extends TestCase
 	 */
 	public function testReadingSyncResponseCanTimeOut() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock', Defaults::CONNECT_TIMEOUT, 1000 );
+		$connection = new UnixDomainSocket(
+			$this->getUnixDomainSocket(),
+			Defaults::CONNECT_TIMEOUT,
+			100
+		);
 		$client     = new Client( $connection );
 		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
@@ -258,7 +266,7 @@ final class UnixDomainSocketTest extends TestCase
 
 		$this->assertSame( 'unit - 0', $response->getBody() );
 
-		$content = http_build_query( ['sleep' => 2, 'test-key' => 'unit'] );
+		$content = http_build_query( ['sleep' => 1, 'test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
 
 		$this->expectException( TimedoutException::class );
@@ -639,5 +647,30 @@ final class UnixDomainSocketTest extends TestCase
 		                 . "PHP message: ERROR5\n\n?$#";
 
 		$this->assertRegExp( $expectedError, $response->getError() );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
+	public function testSuccessiveRequestsShouldUseSameSocket() : void
+	{
+		$request = new GetRequest( __DIR__ . '/Workers/sleepWorker.php', '' );
+
+		$requestId = $this->client->sendRequest( $request )->getRequestId();
+
+		$requestIds = [];
+		for ( $i = 0; $i < 5; $i++ )
+		{
+			$requestIds[] = $this->client->sendRequest( $request )->getRequestId();
+		}
+
+		$expectedRequestIds = [$requestId, $requestId, $requestId, $requestId, $requestId];
+
+		$this->assertSame( $expectedRequestIds, $requestIds );
 	}
 }

@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI;
+namespace hollodotme\FastCGI\Sockets;
 
 use ErrorException;
 use Exception;
@@ -55,10 +55,6 @@ use function stream_socket_client;
 use function strlen;
 use function substr;
 
-/**
- * Class Socket
- * @package hollodotme\FastCGI
- */
 final class Socket
 {
 	private const BEGIN_REQUEST        = 1;
@@ -85,13 +81,11 @@ final class Socket
 
 	private const HEADER_LEN           = 8;
 
-	private const REQ_STATE_WRITTEN    = 1;
+	private const SOCK_STATE_INIT      = 1;
 
-	private const REQ_STATE_OK         = 2;
+	private const SOCK_STATE_BUSY      = 2;
 
-	private const REQ_STATE_ERR        = 3;
-
-	private const REQ_STATE_UNKNOWN    = 4;
+	private const SOCK_STATE_IDLE      = 3;
 
 	private const REQ_MAX_CONTENT_SIZE = 65535;
 
@@ -124,7 +118,7 @@ final class Socket
 	/** @var float */
 	private $startTime;
 
-	/** @var ProvidesResponseData */
+	/** @var null|ProvidesResponseData */
 	private $response;
 
 	/** @var int */
@@ -150,7 +144,7 @@ final class Socket
 		$this->responseCallbacks    = [];
 		$this->failureCallbacks     = [];
 		$this->passThroughCallbacks = [];
-		$this->status               = self::REQ_STATE_UNKNOWN;
+		$this->status               = self::SOCK_STATE_INIT;
 	}
 
 	public function getId() : int
@@ -175,6 +169,10 @@ final class Socket
 	 */
 	public function sendRequest( ProvidesRequestData $request ) : void
 	{
+		$this->guardSocketIsUsable();
+
+		$this->response = null;
+
 		$this->responseCallbacks    = $request->getResponseCallbacks();
 		$this->failureCallbacks     = $request->getFailureCallbacks();
 		$this->passThroughCallbacks = $request->getPassThroughCallbacks();
@@ -185,8 +183,57 @@ final class Socket
 
 		$this->write( $requestPackets );
 
-		$this->status    = self::REQ_STATE_WRITTEN;
+		$this->status    = self::SOCK_STATE_BUSY;
 		$this->startTime = microtime( true );
+	}
+
+	/**
+	 * @throws ConnectException
+	 */
+	private function guardSocketIsUsable() : void
+	{
+		if ( !$this->isIdle() || !$this->isUsable() )
+		{
+			throw new ConnectException( 'Trying to connect to a socket that is not idle.' );
+		}
+	}
+
+	public function isIdle() : bool
+	{
+		if ( self::SOCK_STATE_INIT === $this->status )
+		{
+			return true;
+		}
+
+		if ( self::SOCK_STATE_IDLE === $this->status )
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	public function isUsable() : bool
+	{
+		if ( null === $this->resource )
+		{
+			return true;
+		}
+
+		/** @var false|array $metaData */
+		$metaData = @stream_get_meta_data( $this->resource );
+
+		if ( false === $metaData )
+		{
+			return false;
+		}
+
+		return !($metaData['timed_out'] || $metaData['unread_bytes'] || $metaData['eof']);
+	}
+
+	public function isBusy() : bool
+	{
+		return self::SOCK_STATE_BUSY === $this->status;
 	}
 
 	/**
@@ -194,6 +241,11 @@ final class Socket
 	 */
 	private function connect() : void
 	{
+		if ( is_resource( $this->resource ) )
+		{
+			return;
+		}
+
 		try
 		{
 			$resource = @stream_socket_client(
@@ -207,6 +259,8 @@ final class Socket
 			{
 				$this->resource = $resource;
 			}
+
+			$this->status = self::SOCK_STATE_IDLE;
 		}
 		catch ( Throwable $e )
 		{
@@ -319,9 +373,7 @@ final class Socket
 
 		if ( $writeResult === false || !$flushResult )
 		{
-			$info = stream_get_meta_data( $this->resource );
-
-			if ( $info['timed_out'] )
+			if ( stream_get_meta_data( $this->resource )['timed_out'] )
 			{
 				throw new TimedoutException( 'Write timed out' );
 			}
@@ -333,10 +385,10 @@ final class Socket
 	/**
 	 * @param int|null $timeoutMs
 	 *
-	 * @throws ReadFailedException
+	 * @return ProvidesResponseData
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
-	 * @return ProvidesResponseData
+	 * @throws ReadFailedException
 	 */
 	public function fetchResponse( ?int $timeoutMs = null ) : ProvidesResponseData
 	{
@@ -351,8 +403,6 @@ final class Socket
 		$error  = '';
 		$output = '';
 
-		$this->status = self::REQ_STATE_OK;
-
 		do
 		{
 			$packet     = $this->readPacket();
@@ -360,8 +410,7 @@ final class Socket
 
 			if ( self::STDERR === $packetType )
 			{
-				$this->status = self::REQ_STATE_ERR;
-				$error        .= $packet['content'];
+				$error .= $packet['content'];
 				$this->notifyPassThroughCallbacks( '', $packet['content'] );
 				continue;
 			}
@@ -380,29 +429,21 @@ final class Socket
 		}
 		while ( null !== $packet );
 
-		try
-		{
-			$this->handleNullPacket( $packet );
-			$character = (string)$packet['content']{4};
-			$this->guardRequestCompleted( ord( $character ) );
+		$this->handleNullPacket( $packet );
+		$character = (string)$packet['content']{4};
+		$this->guardRequestCompleted( ord( $character ) );
 
-			$this->response = new Response(
-				$this->id,
-				$output,
-				$error,
-				microtime( true ) - $this->startTime
-			);
+		$this->response = new Response(
+			$this->id,
+			$output,
+			$error,
+			microtime( true ) - $this->startTime
+		);
 
-			return $this->response;
-		}
-		catch ( WriteFailedException | ReadFailedException $e )
-		{
-			throw $e;
-		}
-		finally
-		{
-			$this->disconnect();
-		}
+		# Set socket to idle again
+		$this->status = self::SOCK_STATE_IDLE;
+
+		return $this->response;
 	}
 
 	private function readPacket() : ?array
@@ -529,7 +570,7 @@ final class Socket
 	{
 		if ( null !== $this->resource )
 		{
-			$resources[ $this->id ] = $this->resource;
+			$resources[ (string)$this->id ] = $this->resource;
 		}
 	}
 }

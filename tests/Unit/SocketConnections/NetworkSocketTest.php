@@ -26,13 +26,17 @@ namespace hollodotme\FastCGI\Tests\Unit\SocketConnections;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\Exception;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
+use function sprintf;
 
 final class NetworkSocketTest extends TestCase
 {
+	use SocketDataProviding;
+
 	/**
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
@@ -51,9 +55,11 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanGetDefaultValues() : void
 	{
-		$connection = new NetworkSocket( 'localhost', 9000 );
+		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
 
-		$this->assertSame( 'tcp://localhost:9000', $connection->getSocketAddress() );
+		$expectedSocketAddress = sprintf( 'tcp://%s:%d', $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
+
+		$this->assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
 		$this->assertSame( Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout() );
 		$this->assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
 	}
@@ -64,9 +70,11 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanGetSetValues() : void
 	{
-		$connection = new NetworkSocket( '127.0.0.1', 9001, 2000, 3000 );
+		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort(), 2000, 3000 );
 
-		$this->assertSame( 'tcp://127.0.0.1:9001', $connection->getSocketAddress() );
+		$expectedSocketAddress = sprintf( 'tcp://%s:%d', $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
+
+		$this->assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
 		$this->assertSame( 2000, $connection->getConnectTimeout() );
 		$this->assertSame( 3000, $connection->getReadWriteTimeout() );
 	}
