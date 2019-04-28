@@ -130,10 +130,18 @@ final class SocketCollection implements Countable
 
 		foreach ( $this->sockets as $socket )
 		{
-			if ( $socket->isIdle() )
+			if ( !$socket->isIdle() )
 			{
-				return $socket;
+				continue;
 			}
+
+			if ( !$socket->isUsable() )
+			{
+				$this->remove( $socket->getId() );
+				continue;
+			}
+
+			return $socket;
 		}
 
 		return null;
