@@ -182,4 +182,26 @@ final class SocketTest extends TestCase
 
 		$this->expectOutputString( 'Something went wrong.' );
 	}
+
+	/**
+	 * @throws AssertionFailedError
+	 * @throws ConnectException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws Exception
+	 */
+	public function testThrowsExceptionIfRequestIsSentToSocketThatIsNotIdle() : void
+	{
+		$socket  = $this->getSocket();
+		$request = new PostRequest( '/some/script.php', '' );
+
+		$socket->sendRequest( $request );
+
+		$this->expectException( ConnectException::class );
+		$this->expectExceptionMessage( 'Trying to connect to a socket that is not idle.' );
+
+		$socket->sendRequest( $request );
+
+		$this->fail( 'Expected ConnectException to be thrown.' );
+	}
 }
