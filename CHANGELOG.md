@@ -24,7 +24,7 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CH
   ```
   This parameter will contain the contents of the `STDERR` stream packets.
   
-### Depricated
+### Deprecated
 
 * `Response#getRawResponse()` in favour of consistant naming. This method will be removed in `v3.0.0` - [#27]
 
