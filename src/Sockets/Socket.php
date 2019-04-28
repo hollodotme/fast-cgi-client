@@ -169,7 +169,7 @@ final class Socket
 	 */
 	public function sendRequest( ProvidesRequestData $request ) : void
 	{
-		$this->guardSocketIsIdle();
+		$this->guardSocketIsUsable();
 
 		$this->response = null;
 
@@ -190,9 +190,9 @@ final class Socket
 	/**
 	 * @throws ConnectException
 	 */
-	private function guardSocketIsIdle() : void
+	private function guardSocketIsUsable() : void
 	{
-		if ( !$this->isIdle() )
+		if ( !$this->isIdle() || !$this->isUsable() )
 		{
 			throw new ConnectException( 'Trying to connect to a socket that is not idle.' );
 		}
@@ -200,14 +200,24 @@ final class Socket
 
 	public function isIdle() : bool
 	{
-		if ( !is_resource( $this->resource ) )
+		if ( self::SOCK_STATE_INIT === $this->status )
 		{
 			return true;
 		}
 
-		if ( self::SOCK_STATE_IDLE !== $this->status )
+		if ( self::SOCK_STATE_IDLE === $this->status )
 		{
-			return false;
+			return true;
+		}
+
+		return false;
+	}
+
+	public function isUsable() : bool
+	{
+		if ( null === $this->resource )
+		{
+			return true;
 		}
 
 		$metaData = stream_get_meta_data( $this->resource );
