@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-namespace hollodotme\FastCGI\Tests\Unit;
+namespace hollodotme\FastCGI\Tests\Unit\Sockets;
 
 use Exception;
 use hollodotme\FastCGI\Encoders\NameValuePairEncoder;
@@ -82,7 +82,7 @@ final class SocketTest extends TestCase
 		$socket  = $this->getSocket();
 		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
-			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
+			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 
@@ -111,7 +111,7 @@ final class SocketTest extends TestCase
 		$socket    = $this->getSocket();
 		$data      = ['test-key' => 'unit'];
 		$request   = new PostRequest(
-			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
+			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 
@@ -138,7 +138,7 @@ final class SocketTest extends TestCase
 		$socket  = $this->getSocket();
 		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
-			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
+			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 		$request->addResponseCallbacks(
@@ -166,7 +166,7 @@ final class SocketTest extends TestCase
 		$socket  = $this->getSocket();
 		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
-			dirname( __DIR__ ) . '/Integration/Workers/worker.php',
+			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
 			http_build_query( $data )
 		);
 		$request->addFailureCallbacks(
