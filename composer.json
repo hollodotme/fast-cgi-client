@@ -1,53 +1,55 @@
 {
-	"name": "hollodotme/fast-cgi-client",
-	"description": "A PHP fast CGI client to send requests (a)synchronously to PHP-FPM.",
-	"keywords": [
-		"fastcgi",
-		"php-fpm",
-		"socket"
-	],
-	"minimum-stability": "dev",
-	"prefer-stable": true,
-	"license": "MIT",
-	"authors": [
-		{
-			"name": "Holger Woltersdorf",
-			"email": "hw@hollo.me"
-		}
-	],
-	"bin": [
-		"bin/fcgiget"
-	],
-	"autoload": {
-		"psr-4": {
-			"hollodotme\\FastCGI\\": "src/"
-		}
-	},
-	"autoload-dev": {
-		"psr-4": {
-			"hollodotme\\FastCGI\\Tests\\": "tests/"
-		}
-	},
-	"require": {
-		"php": ">=7.1"
-	},
-	"require-dev": {
-		"tm/tooly-composer-script": "^1.0"
-	},
-	"scripts": {
-		"post-install-cmd": "Tooly\\ScriptHandler::installPharTools",
-		"post-update-cmd": "Tooly\\ScriptHandler::installPharTools"
-	},
-	"extra": {
-		"tools": {
-			"phpunit7": {
-				"url": "https://phar.phpunit.de/phpunit-7.phar",
-				"only-dev": true
-			},
-			"phpunit8": {
-				"url": "https://phar.phpunit.de/phpunit-8.phar",
-				"only-dev": true
-			}
-		}
-	}
+  "name": "hollodotme/fast-cgi-client",
+  "description": "A PHP fast CGI client to send requests (a)synchronously to PHP-FPM.",
+  "keywords": [
+    "fastcgi",
+    "php-fpm",
+    "socket"
+  ],
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Holger Woltersdorf",
+      "email": "hw@hollo.me"
+    }
+  ],
+  "bin": [
+    "bin/fcgiget"
+  ],
+  "autoload": {
+    "psr-4": {
+      "hollodotme\\FastCGI\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "hollodotme\\FastCGI\\Tests\\": "tests/"
+    }
+  },
+  "require": {
+    "php": ">=7.1"
+  },
+  "require-dev": {
+    "tm/tooly-composer-script": "^1.0"
+  },
+  "scripts": {
+    "post-install-cmd": "Tooly\\ScriptHandler::installPharTools",
+    "post-update-cmd": "Tooly\\ScriptHandler::installPharTools"
+  },
+  "extra": {
+    "tools": {
+      "phpunit7": {
+        "url": "https://phar.phpunit.de/phpunit-7.phar",
+        "replace": true,
+        "only-dev": true
+      },
+      "phpunit8": {
+        "url": "https://phar.phpunit.de/phpunit-8.phar",
+        "replace": true,
+        "only-dev": true
+      }
+    }
+  }
 }
