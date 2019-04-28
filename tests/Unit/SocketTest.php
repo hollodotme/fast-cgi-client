@@ -34,6 +34,7 @@ use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\Socket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -43,6 +44,8 @@ use function http_build_query;
 
 final class SocketTest extends TestCase
 {
+	use SocketDataProviding;
+
 	/**
 	 * @throws Exception
 	 */
@@ -62,7 +65,7 @@ final class SocketTest extends TestCase
 	{
 		$nameValuePairEncoder = new NameValuePairEncoder();
 		$packetEncoder        = new PacketEncoder();
-		$connection           = new UnixDomainSocket( '/var/run/php-uds.sock' );
+		$connection           = new UnixDomainSocket( $this->getUnixDomainSocket() );
 
 		return new Socket( $connection, $packetEncoder, $nameValuePairEncoder );
 	}

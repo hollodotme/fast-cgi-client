@@ -34,6 +34,7 @@ use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use InvalidArgumentException;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\ExpectationFailedException;
@@ -44,12 +45,14 @@ use function chmod;
 
 final class UnixDomainSocketTest extends TestCase
 {
+	use SocketDataProviding;
+
 	/** @var Client */
 	private $client;
 
 	protected function setUp() : void
 	{
-		$connection   = new UnixDomainSocket( '/var/run/php-uds.sock' );
+		$connection   = new UnixDomainSocket( $this->getUnixDomainSocket() );
 		$this->client = new Client( $connection );
 	}
 
@@ -93,6 +96,7 @@ final class UnixDomainSocketTest extends TestCase
 		$response  = $this->client->readResponse( $requestId );
 
 		$this->assertEquals( $expectedResponse, $response->getRawResponse() );
+		$this->assertEquals( $expectedResponse, $response->getOutput() );
 		$this->assertSame( 'unit', $response->getBody() );
 		$this->assertGreaterThan( 0, $response->getDuration() );
 		$this->assertSame( $requestId, $response->getRequestId() );
@@ -249,7 +253,11 @@ final class UnixDomainSocketTest extends TestCase
 	 */
 	public function testReadingSyncResponseCanTimeOut() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php-uds.sock', Defaults::CONNECT_TIMEOUT, 1000 );
+		$connection = new UnixDomainSocket(
+			$this->getUnixDomainSocket(),
+			Defaults::CONNECT_TIMEOUT,
+			1000
+		);
 		$client     = new Client( $connection );
 		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );

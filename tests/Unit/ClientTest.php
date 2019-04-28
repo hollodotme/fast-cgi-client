@@ -32,6 +32,7 @@ use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\TestCase;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
@@ -39,6 +40,8 @@ use Throwable;
 
 final class ClientTest extends TestCase
 {
+	use SocketDataProviding;
+
 	/**
 	 * @throws Exception
 	 * @throws Throwable
@@ -48,7 +51,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testConnectAttemptToNotExistingSocketThrowsException() : void
 	{
-		$connection = new UnixDomainSocket( '/tmp/not/existing.sock' );
+		$connection = new UnixDomainSocket( $this->getNonExistingUnixDomainSocket() );
 		$client     = new Client( $connection );
 
 		$this->expectException( ConnectException::class );
@@ -67,7 +70,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testConnectAttemptToInvalidSocketThrowsException() : void
 	{
-		$testSocket = realpath( __DIR__ . '/Fixtures/test.sock' );
+		$testSocket = realpath( __DIR__ . $this->getInvalidUnixDomainSocket() );
 
 		$connection = new UnixDomainSocket( '' . $testSocket );
 		$client     = new Client( $connection );
@@ -84,7 +87,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testWaitingForUnknownRequestThrowsException() : void
 	{
-		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
 		$client     = new Client( $connection );
 
 		$this->expectException( ReadFailedException::class );
@@ -99,7 +102,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testWaitingForResponsesWithoutRequestsThrowsException() : void
 	{
-		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
 		$client     = new Client( $connection );
 
 		$this->expectException( ReadFailedException::class );
@@ -113,7 +116,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testHandlingUnknownRequestThrowsException() : void
 	{
-		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
 		$client     = new Client( $connection );
 
 		$this->expectException( ReadFailedException::class );
@@ -127,7 +130,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testHandlingUnknownRequestsThrowsException() : void
 	{
-		$connection = new NetworkSocket( '127.0.0.1', 9000 );
+		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
 		$client     = new Client( $connection );
 
 		$this->expectException( ReadFailedException::class );
@@ -144,7 +147,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testConnectAttemptToRestrictedUnixDomainSocketThrowsException() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php7.1-ruds.sock' );
+		$connection = new UnixDomainSocket( $this->getRestrictedUnixDomainSocket() );
 		$client     = new Client( $connection );
 
 		$this->expectException( ConnectException::class );
@@ -161,7 +164,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testHandlingReadyResponsesJustReturnsIfClientGotNoRequests() : void
 	{
-		$connection = new UnixDomainSocket( '/var/run/php7.1-ruds.sock' );
+		$connection = new UnixDomainSocket( $this->getUnixDomainSocket() );
 		$client     = new Client( $connection );
 
 		$this->assertFalse( $client->hasUnhandledResponses() );
