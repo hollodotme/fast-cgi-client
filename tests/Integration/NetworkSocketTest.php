@@ -256,7 +256,7 @@ final class NetworkSocketTest extends TestCase
 			$this->getNetworkSocketHost(),
 			$this->getNetworkSocketPort(),
 			Defaults::CONNECT_TIMEOUT,
-			1000
+			100
 		);
 		$client     = new Client( $connection );
 		$content    = http_build_query( ['test-key' => 'unit'] );
@@ -266,7 +266,7 @@ final class NetworkSocketTest extends TestCase
 
 		$this->assertSame( 'unit - 0', $response->getBody() );
 
-		$content = http_build_query( ['sleep' => 2, 'test-key' => 'unit'] );
+		$content = http_build_query( ['sleep' => 1, 'test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
 
 		$this->expectException( TimedoutException::class );
