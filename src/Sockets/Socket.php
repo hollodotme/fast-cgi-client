@@ -55,10 +55,6 @@ use function stream_socket_client;
 use function strlen;
 use function substr;
 
-/**
- * Class Socket
- * @package hollodotme\FastCGI
- */
 final class Socket
 {
 	private const BEGIN_REQUEST        = 1;
