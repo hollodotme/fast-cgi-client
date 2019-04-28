@@ -280,6 +280,47 @@ final class SocketCollectionTest extends TestCase
 	 * @throws ReflectionException
 	 * @throws RuntimeException
 	 * @throws WriteFailedException
+	 */
+	public function testNotUsableSocketIsNotIdle() : void
+	{
+		$connection           = $this->getSocketConnectionMock();
+		$packetEncoder        = new PacketEncoder();
+		$nameValuePairEncoder = new NameValuePairEncoder();
+
+		$this->assertCount( 0, $this->collection );
+
+		$socket = $this->collection->new(
+			$connection,
+			$packetEncoder,
+			$nameValuePairEncoder
+		);
+
+		$connectMethod = (new ReflectionClass( $socket ))->getMethod( 'connect' );
+		$connectMethod->setAccessible( true );
+		$connectMethod->invoke( $socket );
+
+		foreach ( $this->collection->collectResources() as $resource )
+		{
+			while ( !feof( $resource ) )
+			{
+				/** @noinspection UnusedFunctionResultInspection */
+				fread( $resource, 1024 );
+			}
+		}
+
+		$this->assertNull( $this->collection->getIdleSocket() );
+
+		# Socket should also be removed from collection
+		$this->assertCount( 0, $this->collection );
+	}
+
+	/**
+	 * @throws Exception
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws ReflectionException
+	 * @throws RuntimeException
+	 * @throws WriteFailedException
 	 * @throws ReadFailedException
 	 */
 	public function testGetById() : void
