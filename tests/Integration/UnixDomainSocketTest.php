@@ -175,7 +175,7 @@ final class UnixDomainSocketTest extends TestCase
 		);
 
 		$request->addFailureCallbacks(
-			function ( Throwable $throwable ) use ( $unitTest )
+			static function ( Throwable $throwable ) use ( $unitTest )
 			{
 				$unitTest->assertInstanceOf( RuntimeException::class, $throwable );
 				$unitTest->assertSame( 'Response callback threw exception.', $throwable->getMessage() );

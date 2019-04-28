@@ -308,6 +308,7 @@ final class NetworkSocketTest extends TestCase
 	 * @throws ConnectException
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
+	 * @throws ReadFailedException
 	 */
 	public function testCanReadReadyResponses() : void
 	{
