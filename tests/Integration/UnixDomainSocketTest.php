@@ -648,4 +648,29 @@ final class UnixDomainSocketTest extends TestCase
 
 		$this->assertRegExp( $expectedError, $response->getError() );
 	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws \SebastianBergmann\RecursionContext\InvalidArgumentException
+	 */
+	public function testSuccessiveRequestsShouldUseSameSocket() : void
+	{
+		$request = new GetRequest( __DIR__ . '/Workers/sleepWorker.php', '' );
+
+		$requestId = $this->client->sendRequest( $request )->getRequestId();
+
+		$requestIds = [];
+		for ( $i = 0; $i < 5; $i++ )
+		{
+			$requestIds[] = $this->client->sendRequest( $request )->getRequestId();
+		}
+
+		$expectedRequestIds = [$requestId, $requestId, $requestId, $requestId, $requestId];
+
+		$this->assertSame( $expectedRequestIds, $requestIds );
+	}
 }
