@@ -24,7 +24,12 @@
 namespace hollodotme\FastCGI\Responses;
 
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use function array_change_key_case;
 use function array_slice;
+use function implode;
+use function strtolower;
+use function trim;
+use const CASE_LOWER;
 
 /**
  * Class Response
@@ -71,14 +76,23 @@ class Response implements ProvidesResponseData
 
 		foreach ( $lines as $i => $line )
 		{
-			if ( preg_match( self::HEADER_PATTERN, $line, $matches ) )
+			$matches = [];
+			if ( !preg_match( self::HEADER_PATTERN, $line, $matches ) )
 			{
-				$offset                               = $i;
-				$this->headers[ trim( $matches[1] ) ] = trim( $matches[2] );
+				break;
+			}
+
+			$offset      = $i;
+			$headerKey   = trim( $matches[1] );
+			$headerValue = trim( $matches[2] );
+
+			if ( !isset( $this->headers[ $headerKey ] ) )
+			{
+				$this->headers[ $headerKey ] = [$headerValue];
 				continue;
 			}
 
-			break;
+			$this->headers[ $headerKey ][] = $headerValue;
 		}
 
 		$this->body = implode( PHP_EOL, array_slice( $lines, $offset + 2 ) );
@@ -89,9 +103,17 @@ class Response implements ProvidesResponseData
 		return $this->requestId;
 	}
 
-	public function getHeader( string $headerKey ) : string
+	public function getHeader( string $headerKey ) : array
 	{
-		return $this->headers[ $headerKey ] ?? '';
+		$headers   = array_change_key_case( $this->headers, CASE_LOWER );
+		$searchKey = strtolower( $headerKey );
+
+		return $headers[ $searchKey ] ?? [];
+	}
+
+	public function getHeaderLine( string $headerKey ) : string
+	{
+		return implode( ', ', $this->getHeader( $headerKey ) );
 	}
 
 	public function getHeaders() : array

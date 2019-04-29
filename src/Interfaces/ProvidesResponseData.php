@@ -33,7 +33,9 @@ interface ProvidesResponseData
 
 	public function getHeaders() : array;
 
-	public function getHeader( string $headerKey ) : string;
+	public function getHeader( string $headerKey ) : array;
+
+	public function getHeaderLine( string $headerKey ) : string;
 
 	public function getBody() : string;
 
