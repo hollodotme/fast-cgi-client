@@ -94,7 +94,7 @@ final class NetworkSocketTest extends TestCase
 		$requestId = $this->client->sendAsyncRequest( $request );
 		$response  = $this->client->readResponse( $requestId );
 
-		$this->assertEquals( $expectedResponse, $response->getRawResponse() );
+		$this->assertEquals( $expectedResponse, $response->getOutput() );
 		$this->assertSame( 'unit', $response->getBody() );
 		$this->assertGreaterThan( 0, $response->getDuration() );
 		$this->assertSame( $requestId, $response->getRequestId() );
@@ -116,7 +116,6 @@ final class NetworkSocketTest extends TestCase
 
 		$response = $this->client->sendRequest( $request );
 
-		$this->assertEquals( $expectedResponse, $response->getRawResponse() );
 		$this->assertEquals( $expectedResponse, $response->getOutput() );
 		$this->assertSame( 'unit', $response->getBody() );
 		$this->assertGreaterThan( 0, $response->getDuration() );

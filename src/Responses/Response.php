@@ -126,15 +126,6 @@ class Response implements ProvidesResponseData
 		return $this->body;
 	}
 
-	/**
-	 * @return string
-	 * @deprecated Will be removed in v3.0.0. Please use Response#getOutput() instead.
-	 */
-	public function getRawResponse() : string
-	{
-		return $this->output;
-	}
-
 	public function getOutput() : string
 	{
 		return $this->output;

@@ -39,12 +39,6 @@ interface ProvidesResponseData
 
 	public function getBody() : string;
 
-	/**
-	 * @return string
-	 * @deprecated Will be removed in v3.0.0. Please use ProvidesResponseData#getOutput() instead.
-	 */
-	public function getRawResponse() : string;
-
 	public function getOutput() : string;
 
 	public function getError() : string;
