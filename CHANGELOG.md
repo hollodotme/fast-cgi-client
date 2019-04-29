@@ -3,7 +3,48 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
-## [3.0.0] - 2019-MM-DD
+## [3.0.0-alpha] - 2019-MM-DD
+
+### Backwards incompatible changes (BC breaks)
+
+* Method `Response#getHeaders() : array` will now return a two-dimensional array with grouped values to support 
+  multi-value headers. Previous versions returned a one-dimensional key-value array.
+  ```php
+  # Previous versions
+  [
+    'Status' => 'HTTP/2 200 OK',
+    'Set-Cookie' => 'tasty_cookie=strawberry',
+  ]
+
+  # Since 3.0.0-alpha
+  [
+    'Status' => [
+      'HTTP/2 200 OK',
+    ],
+    'Set-Cookie' => [
+      'yummy_cookie=choco',
+      'tasty_cookie=strawberry',
+    ],
+  ]
+  ```
+  
+* Method `Response#getHeader(string $headerKey) : array` will now return an array containing all values for the given 
+  header key to support multi-value headers. Previous versions returned the last value as a string.
+  ```php
+  echo $response->getHeader('Set-Cookie');
+  
+  # Previous versions
+  'tasty_cookie=strawberry'
+
+  # Since 3.0.0-alpha
+  [
+    'yummy_cookie=choco',
+    'tasty_cookie=strawberry'
+  ]
+  ```
+
+* Method `Response#getRawResponse() : string` is no longer available and its usage must be replaced with `Response#getOutput()`.
+  The method was deprecated since version [2.6.0](#260---2019-04-02).
 
 ### Added
 
@@ -12,7 +53,7 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CH
 
 ### Removed
 
-* Method `Response#getRawResponse() : string` that was deprecated in [#260---2019-04-02] in favour of `Response#getOutput() : string`. 
+* Method `Response#getRawResponse() : string` that was deprecated in version [2.6.0](#260---2019-04-02) in favour of `Response#getOutput() : string`.
 
 ## [2.7.1] - 2019-04-29
 
