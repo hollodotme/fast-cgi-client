@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [3.0.0] - 2019-MM-DD
+
+### Added
+
+* Method `Response#getHeaderLine(string $headerKey) : string` that returns all values, separated by comma, for the given key.
+* Header keys are now case-insensitive in `Response#getHeader(string $headerKey) : array` and `Response#getHeaderLine(string $headerKey) : string`.
+
+### Removed
+
+* Method `Response#getRawResponse() : string` that was deprecated in [#260---2019-04-02] in favour of `Response#getOutput() : string`. 
+
 ## [2.7.1] - 2019-04-29
 
 ### Fixed
