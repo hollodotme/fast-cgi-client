@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [2.7.1] - 2019-04-29
+
+### Fixed
+
+* Remove failed sockets from internal collection that errored out during reading of response in order to prevent infinite 
+  tries/re-use of those failed connections. - [#37]
+
 ## [2.7.0] - 2019-04-28
 
 ### Added
@@ -186,6 +193,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[2.7.1]: https://github.com/hollodotme/fast-cgi-client/compare/v2.7.0...v2.7.1
 [2.7.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.3...v2.5.0
@@ -212,3 +220,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#26]: https://github.com/hollodotme/fast-cgi-client/issues/26
 [#27]: https://github.com/hollodotme/fast-cgi-client/issues/27
 [#33]: https://github.com/hollodotme/fast-cgi-client/pull/33
+[#37]: https://github.com/hollodotme/fast-cgi-client/issue/37
