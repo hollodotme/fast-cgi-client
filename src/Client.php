@@ -125,7 +125,16 @@ class Client
 	 */
 	public function readResponse( int $requestId, ?int $timeoutMs = null ) : ProvidesResponseData
 	{
-		return $this->sockets->getById( $requestId )->fetchResponse( $timeoutMs );
+		try
+		{
+			return $this->sockets->getById( $requestId )->fetchResponse( $timeoutMs );
+		}
+		catch ( Throwable $e )
+		{
+			$this->sockets->remove( $requestId );
+
+			throw $e;
+		}
 	}
 
 	/**
@@ -184,6 +193,8 @@ class Client
 		}
 		catch ( Throwable $e )
 		{
+			$this->sockets->remove( $socket->getId() );
+
 			$socket->notifyFailureCallbacks( $e );
 		}
 	}
@@ -254,6 +265,7 @@ class Client
 			}
 			catch ( Throwable $e )
 			{
+				$this->sockets->remove( $requestId );
 			}
 		}
 	}
