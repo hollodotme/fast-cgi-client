@@ -40,6 +40,7 @@ final class ResponseTest extends TestCase
 		          . "X-Custom: Header\r\n"
 		          . "Set-Cookie: yummy_cookie=choco\r\n"
 		          . "Set-Cookie: tasty_cookie=strawberry\r\n"
+		          . "Set-cookie: delicious_cookie=cherry\r\n"
 		          . "Content-type: text/html; charset=UTF-8\r\n"
 		          . "\r\n"
 		          . 'unit';
@@ -59,6 +60,9 @@ final class ResponseTest extends TestCase
 				'yummy_cookie=choco',
 				'tasty_cookie=strawberry',
 			],
+			'Set-cookie'   => [
+				'delicious_cookie=cherry',
+			],
 			'Content-type' => [
 				'text/html; charset=UTF-8',
 			],
@@ -70,25 +74,37 @@ final class ResponseTest extends TestCase
 		# Header values by keys
 		$this->assertSame( ['PHP/7.3.0'], $response->getHeader( 'X-Powered-By' ) );
 		$this->assertSame( ['Header'], $response->getHeader( 'X-Custom' ) );
-		$this->assertSame( ['yummy_cookie=choco', 'tasty_cookie=strawberry'], $response->getHeader( 'Set-Cookie' ) );
+		$this->assertSame(
+			['yummy_cookie=choco', 'tasty_cookie=strawberry', 'delicious_cookie=cherry'],
+			$response->getHeader( 'Set-Cookie' )
+		);
 		$this->assertSame( ['text/html; charset=UTF-8'], $response->getHeader( 'Content-type' ) );
 
 		# Header lines by keys
 		$this->assertSame( 'PHP/7.3.0', $response->getHeaderLine( 'X-Powered-By' ) );
 		$this->assertSame( 'Header', $response->getHeaderLine( 'X-Custom' ) );
-		$this->assertSame( 'yummy_cookie=choco, tasty_cookie=strawberry', $response->getHeaderLine( 'Set-Cookie' ) );
+		$this->assertSame(
+			'yummy_cookie=choco, tasty_cookie=strawberry, delicious_cookie=cherry',
+			$response->getHeaderLine( 'Set-Cookie' )
+		);
 		$this->assertSame( 'text/html; charset=UTF-8', $response->getHeaderLine( 'Content-type' ) );
 
 		# Header values by case-insensitive keys
 		$this->assertSame( ['PHP/7.3.0'], $response->getHeader( 'x-powered-by' ) );
 		$this->assertSame( ['Header'], $response->getHeader( 'X-CUSTOM' ) );
-		$this->assertSame( ['yummy_cookie=choco', 'tasty_cookie=strawberry'], $response->getHeader( 'Set-cookie' ) );
+		$this->assertSame(
+			['yummy_cookie=choco', 'tasty_cookie=strawberry', 'delicious_cookie=cherry'],
+			$response->getHeader( 'Set-cookie' )
+		);
 		$this->assertSame( ['text/html; charset=UTF-8'], $response->getHeader( 'Content-Type' ) );
 
 		# Header lines by case-insensitive keys
 		$this->assertSame( 'PHP/7.3.0', $response->getHeaderLine( 'x-powered-by' ) );
 		$this->assertSame( 'Header', $response->getHeaderLine( 'X-CUSTOM' ) );
-		$this->assertSame( 'yummy_cookie=choco, tasty_cookie=strawberry', $response->getHeaderLine( 'Set-cookie' ) );
+		$this->assertSame(
+			'yummy_cookie=choco, tasty_cookie=strawberry, delicious_cookie=cherry',
+			$response->getHeaderLine( 'Set-cookie' )
+		);
 		$this->assertSame( 'text/html; charset=UTF-8', $response->getHeaderLine( 'Content-Type' ) );
 	}
 

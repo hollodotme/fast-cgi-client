@@ -24,12 +24,10 @@
 namespace hollodotme\FastCGI\Responses;
 
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
-use function array_change_key_case;
 use function array_slice;
 use function implode;
 use function strtolower;
 use function trim;
-use const CASE_LOWER;
 
 /**
  * Class Response
@@ -41,6 +39,9 @@ class Response implements ProvidesResponseData
 
 	/** @var int */
 	private $requestId;
+
+	/** @var array */
+	private $normalizedHeaders;
 
 	/** @var array */
 	private $headers;
@@ -59,12 +60,13 @@ class Response implements ProvidesResponseData
 
 	public function __construct( int $requestId, string $output, string $error, float $duration )
 	{
-		$this->requestId = $requestId;
-		$this->output    = $output;
-		$this->error     = $error;
-		$this->duration  = $duration;
-		$this->headers   = [];
-		$this->body      = '';
+		$this->requestId         = $requestId;
+		$this->output            = $output;
+		$this->error             = $error;
+		$this->duration          = $duration;
+		$this->normalizedHeaders = [];
+		$this->headers           = [];
+		$this->body              = '';
 
 		$this->parseHeadersAndBody();
 	}
@@ -86,16 +88,37 @@ class Response implements ProvidesResponseData
 			$headerKey   = trim( $matches[1] );
 			$headerValue = trim( $matches[2] );
 
-			if ( !isset( $this->headers[ $headerKey ] ) )
-			{
-				$this->headers[ $headerKey ] = [$headerValue];
-				continue;
-			}
-
-			$this->headers[ $headerKey ][] = $headerValue;
+			$this->addRawHeader( $headerKey, $headerValue );
+			$this->addNormalizedHeader( $headerKey, $headerValue );
 		}
 
 		$this->body = implode( PHP_EOL, array_slice( $lines, $offset + 2 ) );
+	}
+
+	private function addRawHeader( string $headerKey, string $headerValue ) : void
+	{
+		if ( !isset( $this->headers[ $headerKey ] ) )
+		{
+			$this->headers[ $headerKey ] = [$headerValue];
+
+			return;
+		}
+
+		$this->headers[ $headerKey ][] = $headerValue;
+	}
+
+	private function addNormalizedHeader( string $headerKey, string $headerValue ) : void
+	{
+		$key = strtolower( $headerKey );
+
+		if ( !isset( $this->normalizedHeaders[ $key ] ) )
+		{
+			$this->normalizedHeaders[ $key ] = [$headerValue];
+
+			return;
+		}
+
+		$this->normalizedHeaders[ $key ][] = $headerValue;
 	}
 
 	public function getRequestId() : int
@@ -105,10 +128,7 @@ class Response implements ProvidesResponseData
 
 	public function getHeader( string $headerKey ) : array
 	{
-		$headers   = array_change_key_case( $this->headers, CASE_LOWER );
-		$searchKey = strtolower( $headerKey );
-
-		return $headers[ $searchKey ] ?? [];
+		return $this->normalizedHeaders[ strtolower( $headerKey ) ] ?? [];
 	}
 
 	public function getHeaderLine( string $headerKey ) : string
