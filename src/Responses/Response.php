@@ -25,6 +25,9 @@ namespace hollodotme\FastCGI\Responses;
 
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use function array_slice;
+use function implode;
+use function strtolower;
+use function trim;
 
 /**
  * Class Response
@@ -36,6 +39,9 @@ class Response implements ProvidesResponseData
 
 	/** @var int */
 	private $requestId;
+
+	/** @var array */
+	private $normalizedHeaders;
 
 	/** @var array */
 	private $headers;
@@ -54,12 +60,13 @@ class Response implements ProvidesResponseData
 
 	public function __construct( int $requestId, string $output, string $error, float $duration )
 	{
-		$this->requestId = $requestId;
-		$this->output    = $output;
-		$this->error     = $error;
-		$this->duration  = $duration;
-		$this->headers   = [];
-		$this->body      = '';
+		$this->requestId         = $requestId;
+		$this->output            = $output;
+		$this->error             = $error;
+		$this->duration          = $duration;
+		$this->normalizedHeaders = [];
+		$this->headers           = [];
+		$this->body              = '';
 
 		$this->parseHeadersAndBody();
 	}
@@ -71,17 +78,47 @@ class Response implements ProvidesResponseData
 
 		foreach ( $lines as $i => $line )
 		{
-			if ( preg_match( self::HEADER_PATTERN, $line, $matches ) )
+			$matches = [];
+			if ( !preg_match( self::HEADER_PATTERN, $line, $matches ) )
 			{
-				$offset                               = $i;
-				$this->headers[ trim( $matches[1] ) ] = trim( $matches[2] );
-				continue;
+				break;
 			}
 
-			break;
+			$offset      = $i;
+			$headerKey   = trim( $matches[1] );
+			$headerValue = trim( $matches[2] );
+
+			$this->addRawHeader( $headerKey, $headerValue );
+			$this->addNormalizedHeader( $headerKey, $headerValue );
 		}
 
 		$this->body = implode( PHP_EOL, array_slice( $lines, $offset + 2 ) );
+	}
+
+	private function addRawHeader( string $headerKey, string $headerValue ) : void
+	{
+		if ( !isset( $this->headers[ $headerKey ] ) )
+		{
+			$this->headers[ $headerKey ] = [$headerValue];
+
+			return;
+		}
+
+		$this->headers[ $headerKey ][] = $headerValue;
+	}
+
+	private function addNormalizedHeader( string $headerKey, string $headerValue ) : void
+	{
+		$key = strtolower( $headerKey );
+
+		if ( !isset( $this->normalizedHeaders[ $key ] ) )
+		{
+			$this->normalizedHeaders[ $key ] = [$headerValue];
+
+			return;
+		}
+
+		$this->normalizedHeaders[ $key ][] = $headerValue;
 	}
 
 	public function getRequestId() : int
@@ -89,9 +126,14 @@ class Response implements ProvidesResponseData
 		return $this->requestId;
 	}
 
-	public function getHeader( string $headerKey ) : string
+	public function getHeader( string $headerKey ) : array
 	{
-		return $this->headers[ $headerKey ] ?? '';
+		return $this->normalizedHeaders[ strtolower( $headerKey ) ] ?? [];
+	}
+
+	public function getHeaderLine( string $headerKey ) : string
+	{
+		return implode( ', ', $this->getHeader( $headerKey ) );
 	}
 
 	public function getHeaders() : array
@@ -102,15 +144,6 @@ class Response implements ProvidesResponseData
 	public function getBody() : string
 	{
 		return $this->body;
-	}
-
-	/**
-	 * @return string
-	 * @deprecated Will be removed in v3.0.0. Please use Response#getOutput() instead.
-	 */
-	public function getRawResponse() : string
-	{
-		return $this->output;
 	}
 
 	public function getOutput() : string

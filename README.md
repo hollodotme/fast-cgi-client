@@ -14,10 +14,12 @@ and was ported and modernized to latest PHP versions, extended with some feature
 
 This is the documentation of the latest release.
 
+Please have a look at the [backwards incompatible changes (BC breaks) in the changelog](./CHANGELOG.md).
+
 Please see the following links for earlier releases: 
 
 * PHP >= 7.0 (EOL) [v1.0.0], [v1.0.1], [v1.1.0], [v1.2.0], [v1.3.0], [v1.4.0], [v1.4.1], [v1.4.2] 
-* PHP >= 7.1 [v2.0.0], [v2.0.1], [v2.1.0], [v2.2.0], [v2.3.0], [v2.4.0], [v2.4.1], [v2.4.2], [v2.4.3], [v2.5.0], [v2.6.0], [v2.7.0]
+* PHP >= 7.1 [v2.0.0], [v2.0.1], [v2.1.0], [v2.2.0], [v2.3.0], [v2.4.0], [v2.4.1], [v2.4.2], [v2.4.3], [v2.5.0], [v2.6.0], [v2.7.0], [v2.7.1]
 
 Read more about the journey to and changes in `v2.6.0` in [this blog post](https://hollo.me/php/background-info-fast-cgi-client-v2.6.0.html).
 
@@ -35,7 +37,7 @@ You can also find slides of my talks about this project on [speakerdeck.com](htt
 ## Installation
 
 ```bash
-composer require hollodotme/fast-cgi-client:~2.6.0
+composer require hollodotme/fast-cgi-client:3.0.0-alpha
 ```
 
 ---
@@ -602,16 +604,12 @@ interface ProvidesResponseData
 
 	public function getHeaders() : array;
 
-	public function getHeader( string $headerKey ) : string;
+	public function getHeader( string $headerKey ) : array;
+	
+	public function getHeaderLine( string $headerKey ) : string;
 
 	public function getBody() : string;
 
-    /**
-     * @deprecated Since v2.6.0 in favour of getOutput(), will be removed in v3.0.0  
-     * @return string
-     */
-	public function getRawResponse() : string;
-	
 	public function getOutput() : string;
 	
 	public function getError() : string;
@@ -647,6 +645,8 @@ Custom headers will also be part of the response:
 <?php declare(strict_types=1);
 
 header('X-Custom: Header');
+header('Set-Cookie: yummy_cookie=choco');
+header('Set-Cookie: tasty_cookie=strawberry');
 
 echo 'Hello World';
 error_log('Some error');
@@ -656,6 +656,8 @@ The raw response would look like this:
 
 ```
 X-Custom: Header
+Set-Cookie: yummy_cookie=choco
+Set-Cookie: tasty_cookie=strawberry
 Content-type: text/html; charset=UTF-8
 
 Hello World
@@ -667,38 +669,49 @@ You can retrieve all of the response data separately from the response object:
 # Get the request ID
 echo $response->getRequestId(); # random int set by client
 
-# Get a single response header
-echo $response->getHeader('X-Custom'); # 'Header'
+# Get all values of a single response header
+$response->getHeader('Set-Cookie'); 
+// ['yummy_cookie=choco', 'tasty_cookie=strawberry']
 
-# Get all headers
-print_r($response->getHeaders());
-/*
-Array (
-	[X-Custom] => Header
-	[Content-type] => text/html; charset=UTF-8
-)
-*/
+# Get all values of a single response header as comma separated string
+$response->getHeaderLine('Set-Cookie');
+// 'yummy_cookie=choco, tasty_cookie=strawberry'
+
+# Get all headers as grouped array
+$response->getHeaders();
+// [
+//   'X-Custom' => [
+//      'Header',
+//   ],
+//   'Set-Cookie' => [
+//      'yummy_cookie=choco',
+//      'tasty_cookie=strawberry',
+//   ],
+//   'Content-type' => [
+//      'text/html; charset=UTF-8',
+//   ],
+// ]
 
 # Get the body
-echo $response->getBody(); # 'Hello World'
+$response->getBody(); 
+// 'Hello World'
 
 # Get the raw response output from STDOUT stream
-echo $response->getOutput();
-/*
-X-Custom: Header
-Content-type: text/html; charset=UTF-8
-
-Hello World
-*/
+$response->getOutput();
+// 'X-Custom: Header
+// Set-Cookie: yummy_cookie=choco
+// Set-Cookie: tasty_cookie=strawberry
+// Content-type: text/html; charset=UTF-8
+// 
+// Hello World'
 
 # Get the raw response from SFTERR stream
-echo $response->getError();
-/*
-Some error
-*/
+$response->getError();
+// Some error
 
 # Get the duration
-echo $response->getDuration(); # e.g. 0.0016319751739502
+$response->getDuration(); 
+// e.g. 0.0016319751739502
 ```
 
 ---
@@ -723,7 +736,7 @@ if (preg_match("#^Primary script unknown\n?$#", $response->getError()))
 
 # OR
 
-if ('404 Not Found' === $response->getHeader('Status'))
+if ('404 Not Found' === $response->getHeaderLine('Status'))
 {
     throw new Exception('Could not find or resolve path to script for execution.');
 }
@@ -763,6 +776,7 @@ Run a call through a Unix Domain Socket
 This shows the response of the php-fpm status page.
 
 
+[v2.7.1]: https://github.com/hollodotme/fast-cgi-client/blob/v2.7.1/README.md
 [v2.7.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.7.0/README.md
 [v2.6.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.6.0/README.md
 [v2.5.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.5.0/README.md

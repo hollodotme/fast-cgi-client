@@ -95,7 +95,6 @@ final class UnixDomainSocketTest extends TestCase
 		$requestId = $this->client->sendAsyncRequest( $request );
 		$response  = $this->client->readResponse( $requestId );
 
-		$this->assertEquals( $expectedResponse, $response->getRawResponse() );
 		$this->assertEquals( $expectedResponse, $response->getOutput() );
 		$this->assertSame( 'unit', $response->getBody() );
 		$this->assertGreaterThan( 0, $response->getDuration() );
@@ -118,7 +117,7 @@ final class UnixDomainSocketTest extends TestCase
 
 		$response = $this->client->sendRequest( $request );
 
-		$this->assertEquals( $expectedResponse, $response->getRawResponse() );
+		$this->assertEquals( $expectedResponse, $response->getOutput() );
 		$this->assertSame( 'unit', $response->getBody() );
 		$this->assertGreaterThan( 0, $response->getDuration() );
 
@@ -497,7 +496,7 @@ final class UnixDomainSocketTest extends TestCase
 
 		$response = $this->client->sendRequest( $request );
 
-		$this->assertSame( '404 Not Found', $response->getHeader( 'Status' ) );
+		$this->assertSame( '404 Not Found', $response->getHeaderLine( 'Status' ) );
 		$this->assertSame( "File not found.\n", $response->getBody() );
 		$this->assertRegExp( "#^Primary script unknown\n?$#", $response->getError() );
 	}
@@ -529,7 +528,7 @@ final class UnixDomainSocketTest extends TestCase
 
 		$response = $this->client->sendRequest( $request );
 
-		$this->assertSame( '403 Forbidden', $response->getHeader( 'Status' ) );
+		$this->assertSame( '403 Forbidden', $response->getHeaderLine( 'Status' ) );
 		$this->assertRegExp(
 			'#^Access to the script .+ has been denied \(see security\.limit_extensions\)$#',
 			$response->getError()
@@ -554,7 +553,7 @@ final class UnixDomainSocketTest extends TestCase
 		$request  = new GetRequest( $scriptPath, '' );
 		$response = $this->client->sendRequest( $request );
 
-		$this->assertSame( '403 Forbidden', $response->getHeader( 'Status' ) );
+		$this->assertSame( '403 Forbidden', $response->getHeaderLine( 'Status' ) );
 		$this->assertRegExp(
 			'#^Unable to open primary script\: .+ \(Permission denied\)$#',
 			$response->getError()

@@ -36,25 +36,76 @@ final class ResponseTest extends TestCase
 	 */
 	public function testCanGetHeaders() : void
 	{
-		$output   = "X-Powered-By: PHP/7.1.0\r\n"
-		            . "X-Custom: Header\r\n"
-		            . "Content-type: text/html; charset=UTF-8\r\n"
-		            . "\r\n"
-		            . 'unit';
+		$output = "X-Powered-By: PHP/7.3.0\r\n"
+		          . "X-Custom: Header\r\n"
+		          . "Set-Cookie: yummy_cookie=choco\r\n"
+		          . "Set-Cookie: tasty_cookie=strawberry\r\n"
+		          . "Set-cookie: delicious_cookie=cherry\r\n"
+		          . "Content-type: text/html; charset=UTF-8\r\n"
+		          . "\r\n"
+		          . 'unit';
+
 		$error    = '';
 		$duration = 0.54321;
 		$response = new Response( 1234, $output, $error, $duration );
 
 		$expectedHeaders = [
-			'X-Powered-By' => 'PHP/7.1.0',
-			'X-Custom'     => 'Header',
-			'Content-type' => 'text/html; charset=UTF-8',
+			'X-Powered-By' => [
+				'PHP/7.3.0',
+			],
+			'X-Custom'     => [
+				'Header',
+			],
+			'Set-Cookie'   => [
+				'yummy_cookie=choco',
+				'tasty_cookie=strawberry',
+			],
+			'Set-cookie'   => [
+				'delicious_cookie=cherry',
+			],
+			'Content-type' => [
+				'text/html; charset=UTF-8',
+			],
 		];
 
+		# All headers
 		$this->assertSame( $expectedHeaders, $response->getHeaders() );
-		$this->assertSame( 'PHP/7.1.0', $response->getHeader( 'X-Powered-By' ) );
-		$this->assertSame( 'Header', $response->getHeader( 'X-Custom' ) );
-		$this->assertSame( 'text/html; charset=UTF-8', $response->getHeader( 'Content-type' ) );
+
+		# Header values by keys
+		$this->assertSame( ['PHP/7.3.0'], $response->getHeader( 'X-Powered-By' ) );
+		$this->assertSame( ['Header'], $response->getHeader( 'X-Custom' ) );
+		$this->assertSame(
+			['yummy_cookie=choco', 'tasty_cookie=strawberry', 'delicious_cookie=cherry'],
+			$response->getHeader( 'Set-Cookie' )
+		);
+		$this->assertSame( ['text/html; charset=UTF-8'], $response->getHeader( 'Content-type' ) );
+
+		# Header lines by keys
+		$this->assertSame( 'PHP/7.3.0', $response->getHeaderLine( 'X-Powered-By' ) );
+		$this->assertSame( 'Header', $response->getHeaderLine( 'X-Custom' ) );
+		$this->assertSame(
+			'yummy_cookie=choco, tasty_cookie=strawberry, delicious_cookie=cherry',
+			$response->getHeaderLine( 'Set-Cookie' )
+		);
+		$this->assertSame( 'text/html; charset=UTF-8', $response->getHeaderLine( 'Content-type' ) );
+
+		# Header values by case-insensitive keys
+		$this->assertSame( ['PHP/7.3.0'], $response->getHeader( 'x-powered-by' ) );
+		$this->assertSame( ['Header'], $response->getHeader( 'X-CUSTOM' ) );
+		$this->assertSame(
+			['yummy_cookie=choco', 'tasty_cookie=strawberry', 'delicious_cookie=cherry'],
+			$response->getHeader( 'Set-cookie' )
+		);
+		$this->assertSame( ['text/html; charset=UTF-8'], $response->getHeader( 'Content-Type' ) );
+
+		# Header lines by case-insensitive keys
+		$this->assertSame( 'PHP/7.3.0', $response->getHeaderLine( 'x-powered-by' ) );
+		$this->assertSame( 'Header', $response->getHeaderLine( 'X-CUSTOM' ) );
+		$this->assertSame(
+			'yummy_cookie=choco, tasty_cookie=strawberry, delicious_cookie=cherry',
+			$response->getHeaderLine( 'Set-cookie' )
+		);
+		$this->assertSame( 'text/html; charset=UTF-8', $response->getHeaderLine( 'Content-Type' ) );
 	}
 
 	/**
@@ -82,27 +133,6 @@ final class ResponseTest extends TestCase
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
 	 */
-	public function testCanGetRawResponse() : void
-	{
-		$output   = "X-Powered-By: PHP/7.1.0\r\n"
-		            . "X-Custom: Header\r\n"
-		            . "Content-type: text/html; charset=UTF-8\r\n"
-		            . "\r\n"
-		            . "unit\r\n"
-		            . 'test';
-		$error    = '';
-		$duration = 0.54321;
-		$response = new Response( 1234, $output, $error, $duration );
-
-		$this->assertSame( $output, $response->getRawResponse() );
-		$this->assertSame( $duration, $response->getDuration() );
-		$this->assertSame( 1234, $response->getRequestId() );
-	}
-
-	/**
-	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
-	 */
 	public function testCanGetOutput() : void
 	{
 		$output   = "X-Powered-By: PHP/7.1.0\r\n"
@@ -116,7 +146,6 @@ final class ResponseTest extends TestCase
 		$response = new Response( 1234, $output, $error, $duration );
 
 		$this->assertSame( $output, $response->getOutput() );
-		$this->assertSame( $response->getRawResponse(), $response->getOutput() );
 		$this->assertSame( $duration, $response->getDuration() );
 		$this->assertSame( 1234, $response->getRequestId() );
 	}

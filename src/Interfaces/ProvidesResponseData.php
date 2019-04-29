@@ -33,15 +33,11 @@ interface ProvidesResponseData
 
 	public function getHeaders() : array;
 
-	public function getHeader( string $headerKey ) : string;
+	public function getHeader( string $headerKey ) : array;
+
+	public function getHeaderLine( string $headerKey ) : string;
 
 	public function getBody() : string;
-
-	/**
-	 * @return string
-	 * @deprecated Will be removed in v3.0.0. Please use ProvidesResponseData#getOutput() instead.
-	 */
-	public function getRawResponse() : string;
 
 	public function getOutput() : string;
 
