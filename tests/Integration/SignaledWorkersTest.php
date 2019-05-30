@@ -17,10 +17,13 @@ use PHPUnit\Framework\TestCase;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 use function escapeshellarg;
+use function exec;
 use function http_build_query;
+use function implode;
 use function preg_match;
 use function shell_exec;
 use function sleep;
+use function sprintf;
 
 final class SignaledWorkersTest extends TestCase
 {
@@ -127,7 +130,7 @@ final class SignaledWorkersTest extends TestCase
 
 				return (int)$matches[1];
 			},
-			explode( "\n", $list )
+			explode( "\n", trim( $list ) )
 		);
 	}
 
@@ -195,5 +198,121 @@ final class SignaledWorkersTest extends TestCase
 		$unixDomainSocket = new UnixDomainSocket( $this->getUnixDomainSocket() );
 
 		return new Client( $unixDomainSocket );
+	}
+
+	/**
+	 * @param int $signal
+	 *
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws \InvalidArgumentException
+	 * @throws ReadFailedException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 *
+	 * @dataProvider signalProvider
+	 */
+	public function testFailureCallbackGetsCalledIfAllProcessesGetInterruptedOnNetworkSocket( int $signal ) : void
+	{
+		$client   = $this->getClientWithNetworkSocket();
+		$request  = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', '' );
+		$success  = [];
+		$failures = [];
+
+		$request->addResponseCallbacks(
+			static function ( ProvidesResponseData $response ) use ( &$success )
+			{
+				$success[] = (int)$response->getBody();
+			}
+		);
+
+		$request->addFailureCallbacks(
+			static function ( Throwable $e ) use ( &$failures )
+			{
+				$failures[] = $e;
+			}
+		);
+
+		for ( $i = 0; $i < 3; $i++ )
+		{
+			$request->setContent( http_build_query( ['test-key' => $i, 'sleep' => 1] ) );
+
+			$client->sendAsyncRequest( $request );
+		}
+
+		$this->killPhpFpmChildProcesses( 'pool network', $signal );
+
+		$client->waitForResponses();
+
+		$this->assertCount( 0, $success );
+		$this->assertCount( 3, $failures );
+		$this->assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
+
+		sleep( 1 );
+	}
+
+	private function killPhpFpmChildProcesses( string $poolName, int $signal ) : void
+	{
+		$PIDs = $this->getPoolWorkerPIDs( $poolName );
+		$this->killPoolWorkers( $PIDs, $signal );
+	}
+
+	private function killPoolWorkers( array $PIDs, int $signal ) : void
+	{
+		$command = sprintf( 'kill -%d %s', $signal, implode( ' ', $PIDs ) );
+		exec( $command );
+	}
+
+	/**
+	 * @param int $signal
+	 *
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws \InvalidArgumentException
+	 * @throws ReadFailedException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 *
+	 * @dataProvider signalProvider
+	 */
+	public function testFailureCallbackGetsCalledIfAllProcessesGetInterruptedOnUnixDomainSocket( int $signal ) : void
+	{
+		$client   = $this->getClientWithUnixDomainSocket();
+		$request  = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', '' );
+		$success  = [];
+		$failures = [];
+
+		$request->addResponseCallbacks(
+			static function ( ProvidesResponseData $response ) use ( &$success )
+			{
+				$success[] = (int)$response->getBody();
+			}
+		);
+
+		$request->addFailureCallbacks(
+			static function ( Throwable $e ) use ( &$failures )
+			{
+				$failures[] = $e;
+			}
+		);
+
+		for ( $i = 0; $i < 3; $i++ )
+		{
+			$request->setContent( http_build_query( ['test-key' => $i, 'sleep' => 1] ) );
+
+			$client->sendAsyncRequest( $request );
+		}
+
+		$this->killPhpFpmChildProcesses( 'pool uds', $signal );
+
+		$client->waitForResponses();
+
+		$this->assertCount( 0, $success );
+		$this->assertCount( 3, $failures );
+		$this->assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
+
+		sleep( 1 );
 	}
 }
