@@ -19,6 +19,7 @@ use Throwable;
 use function http_build_query;
 use function parse_ini_file;
 use function range;
+use function sort;
 
 final class AsyncRequestsTest extends TestCase
 {
@@ -48,7 +49,7 @@ final class AsyncRequestsTest extends TestCase
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response ) use ( &$results )
 			{
-				$results[] = $response->getBody();
+				$results[] = (int)$response->getBody();
 			}
 		);
 
@@ -60,6 +61,8 @@ final class AsyncRequestsTest extends TestCase
 		}
 
 		$client->waitForResponses();
+
+		sort( $results );
 
 		$this->assertEquals( $expectedResults, $results );
 	}
@@ -108,7 +111,7 @@ final class AsyncRequestsTest extends TestCase
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response ) use ( &$results )
 			{
-				$results[] = $response->getBody();
+				$results[] = (int)$response->getBody();
 			}
 		);
 
@@ -120,6 +123,8 @@ final class AsyncRequestsTest extends TestCase
 		}
 
 		$client->waitForResponses();
+
+		sort( $results );
 
 		$this->assertEquals( $expectedResults, $results );
 	}
