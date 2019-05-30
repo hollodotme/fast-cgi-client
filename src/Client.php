@@ -193,9 +193,11 @@ class Client
 		}
 		catch ( Throwable $e )
 		{
-			$this->sockets->remove( $socket->getId() );
-
 			$socket->notifyFailureCallbacks( $e );
+		}
+		finally
+		{
+			$this->sockets->remove( $socket->getId() );
 		}
 	}
 
@@ -264,6 +266,10 @@ class Client
 				yield $this->sockets->getById( $requestId )->fetchResponse( $timeoutMs );
 			}
 			catch ( Throwable $e )
+			{
+				# Skip unknown request ids
+			}
+			finally
 			{
 				$this->sockets->remove( $requestId );
 			}
