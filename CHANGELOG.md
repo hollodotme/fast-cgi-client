@@ -5,6 +5,10 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CH
 
 ## [2.7.2] - YYYY-MM-DD
 
+### Improved
+
+* Handling of `stream_select` returning `false` in case of a system call interrupt. - [#41]
+
 ### Fixed
 
 * Remove/close sockets after fetching their responses triggered async requests in order to prevent halt on further 
@@ -230,3 +234,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#33]: https://github.com/hollodotme/fast-cgi-client/pull/33
 [#37]: https://github.com/hollodotme/fast-cgi-client/issue/37
 [#40]: https://github.com/hollodotme/fast-cgi-client/issue/40
+[#41]: https://github.com/hollodotme/fast-cgi-client/issue/41
