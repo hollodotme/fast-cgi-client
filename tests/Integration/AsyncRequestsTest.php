@@ -34,7 +34,8 @@ final class AsyncRequestsTest extends TestCase
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 */
-	public function testAsyncRequestsWillRespondIfRequestsExceedPhpFpmMaxChildrenSettingOnNetworkSocket() : void
+	public function testAsyncRequestsWillRespondToCallbackIfRequestsExceedPhpFpmMaxChildrenSettingOnNetworkSocket(
+	) : void
 	{
 		$maxChildren = $this->getMaxChildrenSettingFromNetworkSocket();
 		$limit       = $maxChildren + 5;
@@ -64,7 +65,7 @@ final class AsyncRequestsTest extends TestCase
 
 		sort( $results );
 
-		$this->assertEquals( $expectedResults, $results );
+		$this->assertSame( $expectedResults, $results );
 	}
 
 	private function getMaxChildrenSettingFromNetworkSocket() : int
@@ -96,7 +97,8 @@ final class AsyncRequestsTest extends TestCase
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 */
-	public function testAsyncRequestsWillRespondIfRequestsExceedPhpFpmMaxChildrenSettingOnUnixDomainSocket() : void
+	public function testAsyncRequestsWillRespondToCallbackIfRequestsExceedPhpFpmMaxChildrenSettingOnUnixDomainSocket(
+	) : void
 	{
 		$maxChildren = $this->getMaxChildrenSettingFromUnixDomainSocket();
 		$limit       = $maxChildren + 5;
@@ -126,7 +128,7 @@ final class AsyncRequestsTest extends TestCase
 
 		sort( $results );
 
-		$this->assertEquals( $expectedResults, $results );
+		$this->assertSame( $expectedResults, $results );
 	}
 
 	private function getMaxChildrenSettingFromUnixDomainSocket() : int
@@ -144,5 +146,94 @@ final class AsyncRequestsTest extends TestCase
 		$unixDomainSocket = new UnixDomainSocket( $this->getUnixDomainSocket() );
 
 		return new Client( $unixDomainSocket );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 */
+	public function testCanReadResponsesOfAsyncRequestsIfRequestsExceedPhpFpmMaxChildrenSettingOnNetworkSocket() : void
+	{
+		$maxChildren = $this->getMaxChildrenSettingFromNetworkSocket();
+		$limit       = $maxChildren + 5;
+
+		$this->assertTrue( $limit > 5 );
+
+		$client          = $this->getClientWithNetworkSocket();
+		$results         = [];
+		$expectedResults = range( 0, $limit - 1 );
+
+		$request = new PostRequest( __DIR__ . '/Workers/worker.php', '' );
+
+		for ( $i = 0; $i < $limit; $i++ )
+		{
+			$request->setContent( http_build_query( ['test-key' => $i] ) );
+
+			$client->sendAsyncRequest( $request );
+		}
+
+		while ( $client->hasUnhandledResponses() )
+		{
+			foreach ( $client->readReadyResponses() as $response )
+			{
+				$results[] = (int)$response->getBody();
+			}
+		}
+
+		sort( $results );
+
+		$this->assertSame( $expectedResults, $results );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 */
+	public function testCanReadResponsesOfAsyncRequestsIfRequestsExceedPhpFpmMaxChildrenSettingOnUnixDomainSocket(
+	) : void
+	{
+		$maxChildren = $this->getMaxChildrenSettingFromUnixDomainSocket();
+		$limit       = $maxChildren + 5;
+
+		$this->assertTrue( $limit > 5 );
+
+		$client          = $this->getClientWithUnixDomainSocket();
+		$results         = [];
+		$expectedResults = range( 0, $limit - 1 );
+
+		$request = new PostRequest( __DIR__ . '/Workers/worker.php', '' );
+		$request->addResponseCallbacks(
+			static function ( ProvidesResponseData $response ) use ( &$results )
+			{
+				$results[] = (int)$response->getBody();
+			}
+		);
+
+		for ( $i = 0; $i < $limit; $i++ )
+		{
+			$request->setContent( http_build_query( ['test-key' => $i] ) );
+
+			$client->sendAsyncRequest( $request );
+		}
+
+		while ( $client->hasUnhandledResponses() )
+		{
+			foreach ( $client->readReadyResponses() as $response )
+			{
+				$results[] = (int)$response->getBody();
+			}
+		}
+
+		sort( $results );
+
+		$this->assertSame( $expectedResults, $results );
 	}
 }
