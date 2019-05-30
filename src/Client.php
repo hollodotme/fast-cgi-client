@@ -231,7 +231,12 @@ class Client
 		$reads  = $this->sockets->collectResources();
 		$writes = $excepts = null;
 
-		@stream_select( $reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
+		$result = @stream_select( $reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
+
+		if ( false === $result || 0 === count( $reads ) )
+		{
+			return [];
+		}
 
 		return $this->sockets->getSocketIdsByResources( $reads );
 	}
