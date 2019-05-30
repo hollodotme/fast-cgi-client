@@ -52,8 +52,10 @@ use function stream_get_meta_data;
 use function stream_select;
 use function stream_set_timeout;
 use function stream_socket_client;
+use function stream_socket_shutdown;
 use function strlen;
 use function substr;
+use const STREAM_SHUT_RDWR;
 
 final class Socket
 {
@@ -541,6 +543,7 @@ final class Socket
 	{
 		if ( is_resource( $this->resource ) )
 		{
+			@stream_socket_shutdown( $this->resource, STREAM_SHUT_RDWR );
 			fclose( $this->resource );
 		}
 	}

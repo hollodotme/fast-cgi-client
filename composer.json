@@ -4,7 +4,8 @@
   "keywords": [
     "fastcgi",
     "php-fpm",
-    "socket"
+    "socket",
+    "async"
   ],
   "minimum-stability": "dev",
   "prefer-stable": true,
