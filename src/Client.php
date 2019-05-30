@@ -172,10 +172,7 @@ class Client
 
 		while ( $this->hasUnhandledResponses() )
 		{
-			foreach ( $this->getSocketsHavingResponse() as $socket )
-			{
-				$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
-			}
+			$this->handleReadyResponses( $timeoutMs );
 		}
 	}
 
@@ -210,18 +207,6 @@ class Client
 	}
 
 	/**
-	 * @return Generator|Socket[]
-	 * @throws ReadFailedException
-	 */
-	private function getSocketsHavingResponse() : Generator
-	{
-		foreach ( $this->getRequestIdsHavingResponse() as $requestId )
-		{
-			yield $this->sockets->getById( $requestId );
-		}
-	}
-
-	/**
 	 * @param int $requestId
 	 *
 	 * @return bool
@@ -246,7 +231,7 @@ class Client
 		$reads  = $this->sockets->collectResources();
 		$writes = $excepts = null;
 
-		stream_select( $reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
+		@stream_select( $reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
 
 		return $this->sockets->getSocketIdsByResources( $reads );
 	}
