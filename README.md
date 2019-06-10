@@ -743,7 +743,7 @@ if ('404 Not Found' === $response->getHeaderLine('Status'))
 
 # OR
 
-if ('File not found.' === $response->getOutput())
+if ('File not found.' === $response->getBody())
 {
     throw new Exception('Could not find or resolve path to script for execution.');
 }
