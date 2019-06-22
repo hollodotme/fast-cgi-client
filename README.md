@@ -19,7 +19,8 @@ Please have a look at the [backwards incompatible changes (BC breaks) in the cha
 Please see the following links for earlier releases: 
 
 * PHP >= 7.0 (EOL) [v1.0.0], [v1.0.1], [v1.1.0], [v1.2.0], [v1.3.0], [v1.4.0], [v1.4.1], [v1.4.2] 
-* PHP >= 7.1 [v2.0.0], [v2.0.1], [v2.1.0], [v2.2.0], [v2.3.0], [v2.4.0], [v2.4.1], [v2.4.2], [v2.4.3], [v2.5.0], [v2.6.0], [v2.7.0], [v2.7.1]
+* PHP >= 7.1 [v2.0.0], [v2.0.1], [v2.1.0], [v2.2.0], [v2.3.0], [v2.4.0], [v2.4.1], [v2.4.2], [v2.4.3], [v2.5.0], [v2.6.0], [v2.7.0], [v2.7.1],
+  [v2.7.2], [v3.0.0-alpha]
 
 Read more about the journey to and changes in `v2.6.0` in [this blog post](https://hollo.me/php/background-info-fast-cgi-client-v2.6.0.html).
 
@@ -42,44 +43,20 @@ composer require hollodotme/fast-cgi-client:3.0.0-alpha
 
 ---
 
-## Usage - single request
+## Usage - connections
 
-The following examples assume a that the content of `/path/to/target/script.php` looks like this:
+This library supports two types of connecting to a FastCGI server:
 
-```php
-<?php declare(strict_types=1);
+1. Via network socket
+2. Via unix domain socket
 
-sleep((int)($_REQUEST['sleep'] ?? 0));
-echo $_REQUEST['key'] ?? '';
-```
-
-### Init client with a unix domain socket connection
+### Create a network socket connection
 
 ```php
 <?php declare(strict_types=1);
 
 namespace YourVendor\YourProject;
 
-use hollodotme\FastCGI\Client;
-use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
-
-$connection = new UnixDomainSocket(
-	'/var/run/php/php7.3-fpm.sock',  # Socket path to php-fpm
-	5000,                            # Connect timeout in milliseconds (default: 5000)
-	5000                             # Read/write timeout in milliseconds (default: 5000)
-);
-
-$client = new Client( $connection );
-```
-
-### Init client with a network socket connection
-
-```php
-<?php declare(strict_types=1);
-
-namespace YourVendor\YourProject;
-
-use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 $connection = new NetworkSocket(
@@ -88,8 +65,33 @@ $connection = new NetworkSocket(
 	5000,           # Connect timeout in milliseconds (default: 5000)
 	5000            # Read/write timeout in milliseconds (default: 5000)
 );
+```
 
-$client = new Client( $connection );
+### Create a unix domain socket connection
+
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+
+$connection = new UnixDomainSocket(
+	'/var/run/php/php7.3-fpm.sock',     # Socket path
+	5000,                               # Connect timeout in milliseconds (default: 5000)
+	5000                                # Read/write timeout in milliseconds (default: 5000)
+);
+```
+
+## Usage - single request
+
+The following examples assume that the content of `/path/to/target/script.php` looks like this:
+
+```php
+<?php declare(strict_types=1);
+
+sleep((int)($_REQUEST['sleep'] ?? 0));
+echo $_REQUEST['key'] ?? '';
 ```
 
 ### Send request synchronously
@@ -101,14 +103,14 @@ namespace YourVendor\YourProject;
 
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
-use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
-$client  = new Client( new UnixDomainSocket( '/var/run/php/php7.3-fpm.sock' ) );
-$content = http_build_query(['key' => 'value']);
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
+$content    = http_build_query(['key' => 'value']);
+$request    = new PostRequest('/path/to/target/script.php', $content);
 
-$request = new PostRequest('/path/to/target/script.php', $content);
-
-$response = $client->sendRequest($request);
+$response = $client->sendRequest($connection, $request);
 
 echo $response->getBody();
 ```
@@ -128,12 +130,12 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
-$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
-$content = http_build_query(['key' => 'value']);
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
+$content    = http_build_query(['key' => 'value']);
+$request    = new PostRequest('/path/to/target/script.php', $content);
 
-$request = new PostRequest('/path/to/target/script.php', $content);
-
-$requestId = $client->sendAsyncRequest($request);
+$requestId = $client->sendAsyncRequest($connection, $request);
 
 echo "Request sent, got ID: {$requestId}";
 ```
@@ -149,12 +151,12 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
-$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
-$content = http_build_query(['key' => 'value']);
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
+$content    = http_build_query(['key' => 'value']);
+$request    = new PostRequest('/path/to/target/script.php', $content);
 
-$request = new PostRequest('/path/to/target/script.php', $content);
-
-$requestId = $client->sendAsyncRequest($request);
+$requestId = $client->sendAsyncRequest($connection, $request);
 
 echo "Request sent, got ID: {$requestId}";
 
@@ -192,10 +194,10 @@ use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use Throwable;
 
-$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
-$content = http_build_query(['key' => 'value']);
-
-$request = new PostRequest('/path/to/target/script.php', $content);
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
+$content    = http_build_query(['key' => 'value']);
+$request    = new PostRequest('/path/to/target/script.php', $content);
 
 # Register a response callback, expects a `ProvidesResponseData` instance as the only paramter
 $request->addResponseCallbacks(
@@ -213,7 +215,7 @@ $request->addFailureCallbacks(
 	}
 );
 
-$requestId = $client->sendAsyncRequest($request);
+$requestId = $client->sendAsyncRequest($connection, $request);
 
 echo "Request sent, got ID: {$requestId}";
 
@@ -259,7 +261,8 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
-$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
 
 $request1 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '1']));
 $request2 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '2']));
@@ -267,9 +270,9 @@ $request3 = new PostRequest('/path/to/target/script.php', http_build_query(['key
 
 $requestIds = [];
 
-$requestIds[] = $client->sendAsyncRequest($request1);
-$requestIds[] = $client->sendAsyncRequest($request2);
-$requestIds[] = $client->sendAsyncRequest($request3);
+$requestIds[] = $client->sendAsyncRequest($connection, $request1);
+$requestIds[] = $client->sendAsyncRequest($connection, $request2);
+$requestIds[] = $client->sendAsyncRequest($connection, $request3);
 
 echo 'Sent requests with IDs: ' . implode( ', ', $requestIds ) . "\n";
 
@@ -300,7 +303,8 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
-$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
 
 $request1 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '1', 'sleep' => 3]));
 $request2 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '2', 'sleep' => 2]));
@@ -308,9 +312,9 @@ $request3 = new PostRequest('/path/to/target/script.php', http_build_query(['key
 
 $requestIds = [];
 
-$requestIds[] = $client->sendAsyncRequest($request1);
-$requestIds[] = $client->sendAsyncRequest($request2);
-$requestIds[] = $client->sendAsyncRequest($request3);
+$requestIds[] = $client->sendAsyncRequest($connection, $request1);
+$requestIds[] = $client->sendAsyncRequest($connection, $request2);
+$requestIds[] = $client->sendAsyncRequest($connection, $request3);
 
 echo 'Sent requests with IDs: ' . implode( ', ', $requestIds ) . "\n";
 
@@ -380,7 +384,8 @@ use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use Throwable;
 
-$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
 
 $responseCallback = static function( ProvidesResponseData $response )
 {
@@ -407,9 +412,9 @@ $request3->addFailureCallbacks($failureCallback);
 
 $requestIds = [];
 
-$requestIds[] = $client->sendAsyncRequest($request1);
-$requestIds[] = $client->sendAsyncRequest($request2);
-$requestIds[] = $client->sendAsyncRequest($request3);
+$requestIds[] = $client->sendAsyncRequest($connection, $request1);
+$requestIds[] = $client->sendAsyncRequest($connection, $request2);
+$requestIds[] = $client->sendAsyncRequest($connection, $request3);
 
 echo 'Sent requests with IDs: ' . implode( ', ', $requestIds ) . "\n";
 
@@ -483,7 +488,8 @@ use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
-$client  = new Client( new NetworkSocket( '127.0.0.1', 9000 ) );
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
 
 $passThroughCallback = static function( string $outputBuffer, string $errorBuffer )
 {
@@ -494,7 +500,7 @@ $passThroughCallback = static function( string $outputBuffer, string $errorBuffe
 $request = new GetRequest('/path/to/target/script.php', '');
 $request->addPassThroughCallbacks( $passThroughCallback );
 
-$client->sendAsyncRequest($request);
+$client->sendAsyncRequest($connection, $request);
 $client->waitForResponses();
 ```
 
@@ -743,7 +749,7 @@ if ('404 Not Found' === $response->getHeaderLine('Status'))
 
 # OR
 
-if ('File not found.' === $response->getBody())
+if ('File not found.' === trim($response->getBody()))
 {
     throw new Exception('Could not find or resolve path to script for execution.');
 }
@@ -776,6 +782,8 @@ Run a call through a Unix Domain Socket
 This shows the response of the php-fpm status page.
 
 
+[v3.0.0-alpha]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.0-alpha/README.md
+[v2.7.2]: https://github.com/hollodotme/fast-cgi-client/blob/v2.7.2/README.md
 [v2.7.1]: https://github.com/hollodotme/fast-cgi-client/blob/v2.7.1/README.md
 [v2.7.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.7.0/README.md
 [v2.6.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.6.0/README.md
