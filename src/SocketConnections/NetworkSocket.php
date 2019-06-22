@@ -25,10 +25,6 @@ namespace hollodotme\FastCGI\SocketConnections;
 
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 
-/**
- * Class NetworkSocket
- * @package hollodotme\FastCGI\SocketConnections
- */
 class NetworkSocket implements ConfiguresSocketConnection
 {
 	/** @var string */
@@ -69,5 +65,12 @@ class NetworkSocket implements ConfiguresSocketConnection
 	public function getReadWriteTimeout() : int
 	{
 		return $this->readWriteTimeout;
+	}
+
+	public function equals( ConfiguresSocketConnection $other ) : bool
+	{
+		/** @noinspection TypeUnsafeComparisonInspection */
+		/** @noinspection PhpNonStrictObjectEqualityInspection */
+		return $this == $other;
 	}
 }
