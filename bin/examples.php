@@ -54,8 +54,8 @@ function printResponse( ProvidesResponseData $response )
 	printLine( 'Duration: ' . $response->getDuration() );
 }
 
+$client     = new Client();
 $connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-$client     = new Client( $connection );
 
 $workerPath = __DIR__ . '/exampleWorker.php';
 
@@ -80,11 +80,11 @@ printLine( '# Sending one synchronous request... (worker sleeps 1 second)' );
 printLine( 'CODE: $client->sendRequest( $request );', 'red' );
 printLine( "\n" );
 
-$request->setContent( http_build_query( [ 'sleep' => 1, 'key' => 'single synchronous request' ] ) );
+$request->setContent( http_build_query( ['sleep' => 1, 'key' => 'single synchronous request'] ) );
 
 sleep( 2 );
 
-$response = $client->sendRequest( $request );
+$response = $client->sendRequest( $connection, $request );
 
 printResponse( $response );
 printLine( "\n" );
@@ -95,11 +95,11 @@ printLine( '# Sending one asynchronous request... (worker sleeps 1 second)' );
 printLine( 'CODE: $client->sendAsyncRequest( $request );', 'red' );
 printLine( "\n" );
 
-$request->setContent( http_build_query( [ 'sleep' => 1, 'key' => 'single asynchronous request' ] ) );
+$request->setContent( http_build_query( ['sleep' => 1, 'key' => 'single asynchronous request'] ) );
 
 sleep( 2 );
 
-$requestId = $client->sendAsyncRequest( $request );
+$requestId = $client->sendAsyncRequest( $connection, $request );
 
 printLine( "Sent request with ID: {$requestId}" );
 
@@ -127,7 +127,7 @@ printLine( '        }', 'red' );
 printLine( '      );', 'red' );
 printLine( "\n" );
 
-$request->setContent( http_build_query( [ 'sleep' => 1, 'key' => 'single asynchronous request with callback' ] ) );
+$request->setContent( http_build_query( ['sleep' => 1, 'key' => 'single asynchronous request with callback'] ) );
 $request->addResponseCallbacks(
 	function ( ProvidesResponseData $response )
 	{
@@ -145,7 +145,7 @@ printLine( "\n" );
 
 sleep( 2 );
 
-$requestId = $client->sendAsyncRequest( $request );
+$requestId = $client->sendAsyncRequest( $connection, $request );
 
 printLine( "Sent request with ID: {$requestId}" );
 
@@ -172,17 +172,17 @@ printLine( '      $client->sendAsyncRequest( $request2 );', 'red' );
 printLine( '      $client->sendAsyncRequest( $request3 );', 'red' );
 printLine( "\n" );
 
-$request1 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 1, 'key' => 'Request 1' ] ) );
-$request2 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 1, 'key' => 'Request 2' ] ) );
-$request3 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 1, 'key' => 'Request 3' ] ) );
+$request1 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 1'] ) );
+$request2 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 2'] ) );
+$request3 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 3'] ) );
 
 $requestIds = [];
 
 sleep( 2 );
 
-$requestIds[] = $client->sendAsyncRequest( $request1 );
-$requestIds[] = $client->sendAsyncRequest( $request2 );
-$requestIds[] = $client->sendAsyncRequest( $request3 );
+$requestIds[] = $client->sendAsyncRequest( $connection, $request1 );
+$requestIds[] = $client->sendAsyncRequest( $connection, $request2 );
+$requestIds[] = $client->sendAsyncRequest( $connection, $request3 );
 
 printLine( 'Sent requests with IDs: ' . implode( ', ', $requestIds ) );
 
@@ -212,17 +212,17 @@ printLine( '      $client->sendAsyncRequest( $request2 );', 'red' );
 printLine( '      $client->sendAsyncRequest( $request3 );', 'red' );
 printLine( "\n" );
 
-$request1 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 3, 'key' => 'Request 1' ] ) );
-$request2 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 2, 'key' => 'Request 2' ] ) );
-$request3 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 1, 'key' => 'Request 3' ] ) );
+$request1 = new PostRequest( $workerPath, http_build_query( ['sleep' => 3, 'key' => 'Request 1'] ) );
+$request2 = new PostRequest( $workerPath, http_build_query( ['sleep' => 2, 'key' => 'Request 2'] ) );
+$request3 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 3'] ) );
 
 $requestIds = [];
 
 sleep( 2 );
 
-$requestIds[] = $client->sendAsyncRequest( $request1 );
-$requestIds[] = $client->sendAsyncRequest( $request2 );
-$requestIds[] = $client->sendAsyncRequest( $request3 );
+$requestIds[] = $client->sendAsyncRequest( $connection, $request1 );
+$requestIds[] = $client->sendAsyncRequest( $connection, $request2 );
+$requestIds[] = $client->sendAsyncRequest( $connection, $request3 );
 
 printLine( 'Sent requests with IDs: ' . implode( ', ', $requestIds ) );
 printLine( "\n" );
@@ -269,9 +269,9 @@ $responseCallback = function ( ProvidesResponseData $response )
 	printResponse( $response );
 };
 
-$request1 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 2, 'key' => 'Request 1' ] ) );
-$request2 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 3, 'key' => 'Request 2' ] ) );
-$request3 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 1, 'key' => 'Request 3' ] ) );
+$request1 = new PostRequest( $workerPath, http_build_query( ['sleep' => 2, 'key' => 'Request 1'] ) );
+$request2 = new PostRequest( $workerPath, http_build_query( ['sleep' => 3, 'key' => 'Request 2'] ) );
+$request3 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 3'] ) );
 
 $request1->addResponseCallbacks( $responseCallback );
 $request2->addResponseCallbacks( $responseCallback );
@@ -281,9 +281,9 @@ $requestIds = [];
 
 sleep( 2 );
 
-$requestIds[] = $client->sendAsyncRequest( $request1 );
-$requestIds[] = $client->sendAsyncRequest( $request2 );
-$requestIds[] = $client->sendAsyncRequest( $request3 );
+$requestIds[] = $client->sendAsyncRequest( $connection, $request1 );
+$requestIds[] = $client->sendAsyncRequest( $connection, $request2 );
+$requestIds[] = $client->sendAsyncRequest( $connection, $request3 );
 
 printLine( 'Sent requests with IDs: ' . implode( ', ', $requestIds ) );
 
