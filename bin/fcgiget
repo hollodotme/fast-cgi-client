@@ -91,14 +91,16 @@ else
 }
 if ( $sock )
 {
-	$client = new Client( new UnixDomainSocket( (string)$sock ) );
+	$connection = new UnixDomainSocket( (string)$sock );
+	$client     = new Client();
 	echo "Call: {$uri} on UDS unix://{$sock}\n\n";
 }
 else
 {
-	$host   = (string)($url['host'] ?? 'localhost');
-	$port   = (int)($url['port'] ?? 9000);
-	$client = new Client( new NetworkSocket( $host, $port ) );
+	$host       = (string)($url['host'] ?? 'localhost');
+	$port       = (int)($url['port'] ?? 9000);
+	$connection = new NetworkSocket( $host, $port );
+	$client     = new Client();
 
 	echo "Call: {$uri} on {$host}:{$port}\n\n";
 }
@@ -115,7 +117,7 @@ $request->addCustomVars(
 
 try
 {
-	$response = $client->sendRequest( $request );
+	$response = $client->sendRequest( $connection, $request );
 
 	if ( '' !== $response->getOutput() )
 	{
