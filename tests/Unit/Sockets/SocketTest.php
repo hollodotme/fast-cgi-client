@@ -33,6 +33,7 @@ use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use hollodotme\FastCGI\Sockets\Socket;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
@@ -335,5 +336,37 @@ final class SocketTest extends TestCase
 		$disconnectMethod->invoke( $socket );
 
 		$this->assertFalse( $socket->isUsable() );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws Exception
+	 */
+	public function testCanCheckIfSocketUsesConnection() : void
+	{
+		$unixDomainConnection = new UnixDomainSocket( $this->getUnixDomainSocket() );
+		$networkConnection    = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
+
+		$packetEncoder        = new PacketEncoder();
+		$nameValuePairEncoder = new NameValuePairEncoder();
+
+		$unixDomainSocket = new Socket(
+			$unixDomainConnection,
+			$packetEncoder,
+			$nameValuePairEncoder
+		);
+
+		$networkSocket = new Socket(
+			$networkConnection,
+			$packetEncoder,
+			$nameValuePairEncoder
+		);
+
+		$this->assertTrue( $unixDomainSocket->usesConnection( $unixDomainConnection ) );
+		$this->assertFalse( $unixDomainSocket->usesConnection( $networkConnection ) );
+
+		$this->assertTrue( $networkSocket->usesConnection( $networkConnection ) );
+		$this->assertFalse( $networkSocket->usesConnection( $unixDomainConnection ) );
 	}
 }
