@@ -44,7 +44,7 @@ final class SignaledWorkersTest extends TestCase
 	 */
 	public function testFailureCallbackGetsCalledIfOneProcessGetsInterruptedOnNetworkSocket( int $signal ) : void
 	{
-		$client   = $this->getClientWithNetworkSocket();
+		$client   = new Client();
 		$request  = new PostRequest( __DIR__ . '/Workers/worker.php', '' );
 		$success  = [];
 		$failures = [];
@@ -67,7 +67,7 @@ final class SignaledWorkersTest extends TestCase
 		{
 			$request->setContent( http_build_query( ['test-key' => $i] ) );
 
-			$client->sendAsyncRequest( $request );
+			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
 
 		$pids = $this->getPoolWorkerPIDs( 'pool network' );
@@ -105,14 +105,12 @@ final class SignaledWorkersTest extends TestCase
 		];
 	}
 
-	private function getClientWithNetworkSocket() : Client
+	private function getNetworkSocketConnection() : NetworkSocket
 	{
-		$networkSocket = new NetworkSocket(
+		return new NetworkSocket(
 			$this->getNetworkSocketHost(),
 			$this->getNetworkSocketPort()
 		);
-
-		return new Client( $networkSocket );
 	}
 
 	private function getPoolWorkerPIDs( string $poolName ) : array
@@ -154,7 +152,7 @@ final class SignaledWorkersTest extends TestCase
 	 */
 	public function testFailureCallbackGetsCalledIfOneProcessGetsInterruptedOnUnixDomainSocket( int $signal ) : void
 	{
-		$client   = $this->getClientWithUnixDomainSocket();
+		$client   = new Client();
 		$request  = new PostRequest( __DIR__ . '/Workers/worker.php', '' );
 		$success  = [];
 		$failures = [];
@@ -177,7 +175,7 @@ final class SignaledWorkersTest extends TestCase
 		{
 			$request->setContent( http_build_query( ['test-key' => $i] ) );
 
-			$client->sendAsyncRequest( $request );
+			$client->sendAsyncRequest( $this->getUnixDomainSocketConnection(), $request );
 		}
 
 		$pids = $this->getPoolWorkerPIDs( 'pool uds' );
@@ -193,11 +191,9 @@ final class SignaledWorkersTest extends TestCase
 		sleep( 1 );
 	}
 
-	private function getClientWithUnixDomainSocket() : Client
+	private function getUnixDomainSocketConnection() : UnixDomainSocket
 	{
-		$unixDomainSocket = new UnixDomainSocket( $this->getUnixDomainSocket() );
-
-		return new Client( $unixDomainSocket );
+		return new UnixDomainSocket( $this->getUnixDomainSocket() );
 	}
 
 	/**
@@ -215,7 +211,7 @@ final class SignaledWorkersTest extends TestCase
 	 */
 	public function testFailureCallbackGetsCalledIfAllProcessesGetInterruptedOnNetworkSocket( int $signal ) : void
 	{
-		$client   = $this->getClientWithNetworkSocket();
+		$client   = new Client();
 		$request  = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', '' );
 		$success  = [];
 		$failures = [];
@@ -238,7 +234,7 @@ final class SignaledWorkersTest extends TestCase
 		{
 			$request->setContent( http_build_query( ['test-key' => $i, 'sleep' => 1] ) );
 
-			$client->sendAsyncRequest( $request );
+			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
 
 		$this->killPhpFpmChildProcesses( 'pool network', $signal );
@@ -279,7 +275,7 @@ final class SignaledWorkersTest extends TestCase
 	 */
 	public function testFailureCallbackGetsCalledIfAllProcessesGetInterruptedOnUnixDomainSocket( int $signal ) : void
 	{
-		$client   = $this->getClientWithUnixDomainSocket();
+		$client   = new Client();
 		$request  = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', '' );
 		$success  = [];
 		$failures = [];
@@ -302,7 +298,7 @@ final class SignaledWorkersTest extends TestCase
 		{
 			$request->setContent( http_build_query( ['test-key' => $i, 'sleep' => 1] ) );
 
-			$client->sendAsyncRequest( $request );
+			$client->sendAsyncRequest( $this->getUnixDomainSocketConnection(), $request );
 		}
 
 		$this->killPhpFpmChildProcesses( 'pool uds', $signal );

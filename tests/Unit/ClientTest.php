@@ -30,7 +30,6 @@ use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Requests\PostRequest;
-use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\AssertionFailedError;
@@ -52,13 +51,14 @@ final class ClientTest extends TestCase
 	public function testConnectAttemptToNotExistingSocketThrowsException() : void
 	{
 		$connection = new UnixDomainSocket( $this->getNonExistingUnixDomainSocket() );
-		$client     = new Client( $connection );
+		$client     = new Client();
+		$request    = new PostRequest( '/path/to/script.php', '' );
 
 		$this->expectException( ConnectException::class );
 		$this->expectExceptionMessage( 'Unable to connect to FastCGI application: No such file or directory' );
 
 		/** @noinspection UnusedFunctionResultInspection */
-		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
+		$client->sendRequest( $connection, $request );
 	}
 
 	/**
@@ -73,13 +73,14 @@ final class ClientTest extends TestCase
 		$testSocket = realpath( __DIR__ . $this->getInvalidUnixDomainSocket() );
 
 		$connection = new UnixDomainSocket( '' . $testSocket );
-		$client     = new Client( $connection );
+		$client     = new Client();
+		$request    = new PostRequest( '/path/to/script.php', '' );
 
 		$this->expectException( ConnectException::class );
 		$this->expectExceptionMessage( 'Unable to connect to FastCGI application: Connection refused' );
 
 		/** @noinspection UnusedFunctionResultInspection */
-		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
+		$client->sendRequest( $connection, $request );
 	}
 
 	/**
@@ -87,8 +88,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testWaitingForUnknownRequestThrowsException() : void
 	{
-		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
-		$client     = new Client( $connection );
+		$client = new Client();
 
 		$this->expectException( ReadFailedException::class );
 		$this->expectExceptionMessage( 'Socket not found for request ID: 12345' );
@@ -102,8 +102,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testWaitingForResponsesWithoutRequestsThrowsException() : void
 	{
-		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
-		$client     = new Client( $connection );
+		$client = new Client();
 
 		$this->expectException( ReadFailedException::class );
 		$this->expectExceptionMessage( 'No pending requests found.' );
@@ -116,8 +115,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testHandlingUnknownRequestThrowsException() : void
 	{
-		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
-		$client     = new Client( $connection );
+		$client = new Client();
 
 		$this->expectException( ReadFailedException::class );
 		$this->expectExceptionMessage( 'Socket not found for request ID: 12345' );
@@ -130,8 +128,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testHandlingUnknownRequestsThrowsException() : void
 	{
-		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
-		$client     = new Client( $connection );
+		$client = new Client();
 
 		$this->expectException( ReadFailedException::class );
 		$this->expectExceptionMessage( 'Socket not found for request ID: 12345' );
@@ -148,13 +145,14 @@ final class ClientTest extends TestCase
 	public function testConnectAttemptToRestrictedUnixDomainSocketThrowsException() : void
 	{
 		$connection = new UnixDomainSocket( $this->getRestrictedUnixDomainSocket() );
-		$client     = new Client( $connection );
+		$client     = new Client();
+		$request    = new PostRequest( '/path/to/script.php', '' );
 
 		$this->expectException( ConnectException::class );
 		$this->expectExceptionMessageRegExp( '#.*unable to connect to.*#i' );
 
 		/** @noinspection UnusedFunctionResultInspection */
-		$client->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
+		$client->sendRequest( $connection, $request );
 	}
 
 	/**
@@ -164,8 +162,7 @@ final class ClientTest extends TestCase
 	 */
 	public function testHandlingReadyResponsesJustReturnsIfClientGotNoRequests() : void
 	{
-		$connection = new UnixDomainSocket( $this->getUnixDomainSocket() );
-		$client     = new Client( $connection );
+		$client = new Client();
 
 		$this->assertFalse( $client->hasUnhandledResponses() );
 

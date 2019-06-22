@@ -47,18 +47,22 @@ final class UnixDomainSocketTest extends TestCase
 {
 	use SocketDataProviding;
 
+	/** @var UnixDomainSocket */
+	private $connection;
+
 	/** @var Client */
 	private $client;
 
 	protected function setUp() : void
 	{
-		$connection   = new UnixDomainSocket( $this->getUnixDomainSocket() );
-		$this->client = new Client( $connection );
+		$this->connection = new UnixDomainSocket( $this->getUnixDomainSocket() );
+		$this->client     = new Client();
 	}
 
 	protected function tearDown() : void
 	{
-		$this->client = null;
+		$this->connection = null;
+		$this->client     = null;
 	}
 
 	/**
@@ -72,7 +76,7 @@ final class UnixDomainSocketTest extends TestCase
 		$content = http_build_query( ['test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$requestId = $this->client->sendAsyncRequest( $request );
+		$requestId = $this->client->sendAsyncRequest( $this->connection, $request );
 
 		$this->assertGreaterThanOrEqual( 1, $requestId );
 		$this->assertLessThanOrEqual( 65535, $requestId );
@@ -92,7 +96,7 @@ final class UnixDomainSocketTest extends TestCase
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
 
-		$requestId = $this->client->sendAsyncRequest( $request );
+		$requestId = $this->client->sendAsyncRequest( $this->connection, $request );
 		$response  = $this->client->readResponse( $requestId );
 
 		$this->assertEquals( $expectedResponse, $response->getOutput() );
@@ -115,7 +119,7 @@ final class UnixDomainSocketTest extends TestCase
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
 
-		$response = $this->client->sendRequest( $request );
+		$response = $this->client->sendRequest( $this->connection, $request );
 
 		$this->assertEquals( $expectedResponse, $response->getOutput() );
 		$this->assertSame( 'unit', $response->getBody() );
@@ -147,7 +151,7 @@ final class UnixDomainSocketTest extends TestCase
 			}
 		);
 
-		$this->client->sendAsyncRequest( $request );
+		$this->client->sendAsyncRequest( $this->connection, $request );
 		$this->client->waitForResponses();
 	}
 
@@ -181,7 +185,7 @@ final class UnixDomainSocketTest extends TestCase
 			}
 		);
 
-		$this->client->sendAsyncRequest( $request );
+		$this->client->sendAsyncRequest( $this->connection, $request );
 		$this->client->waitForResponses();
 	}
 
@@ -198,7 +202,7 @@ final class UnixDomainSocketTest extends TestCase
 		$content = http_build_query( ['test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$requestId = $this->client->sendAsyncRequest( $request );
+		$requestId = $this->client->sendAsyncRequest( $this->connection, $request );
 
 		usleep( 60000 );
 
@@ -217,11 +221,11 @@ final class UnixDomainSocketTest extends TestCase
 		$content = http_build_query( ['test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$requestIdOne = $this->client->sendAsyncRequest( $request );
+		$requestIdOne = $this->client->sendAsyncRequest( $this->connection, $request );
 
 		$request->setContent( http_build_query( ['test-key' => 'test'] ) );
 
-		$requestIdTwo = $this->client->sendAsyncRequest( $request );
+		$requestIdTwo = $this->client->sendAsyncRequest( $this->connection, $request );
 
 		usleep( 110000 );
 
@@ -257,11 +261,10 @@ final class UnixDomainSocketTest extends TestCase
 			Defaults::CONNECT_TIMEOUT,
 			100
 		);
-		$client     = new Client( $connection );
 		$content    = http_build_query( ['test-key' => 'unit'] );
 		$request    = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
 
-		$response = $client->sendRequest( $request );
+		$response = $this->client->sendRequest( $connection, $request );
 
 		$this->assertSame( 'unit - 0', $response->getBody() );
 
@@ -271,7 +274,7 @@ final class UnixDomainSocketTest extends TestCase
 		$this->expectException( TimedoutException::class );
 
 		/** @noinspection UnusedFunctionResultInspection */
-		$client->sendRequest( $request );
+		$this->client->sendRequest( $connection, $request );
 	}
 
 	/**
@@ -295,7 +298,7 @@ final class UnixDomainSocketTest extends TestCase
 			}
 		);
 
-		$this->client->sendAsyncRequest( $request );
+		$this->client->sendAsyncRequest( $this->connection, $request );
 
 		while ( $this->client->hasUnhandledResponses() )
 		{
@@ -314,7 +317,7 @@ final class UnixDomainSocketTest extends TestCase
 		$content = http_build_query( ['test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$this->client->sendAsyncRequest( $request );
+		$this->client->sendAsyncRequest( $this->connection, $request );
 
 		while ( $this->client->hasUnhandledResponses() )
 		{
@@ -348,7 +351,7 @@ final class UnixDomainSocketTest extends TestCase
 			}
 		);
 
-		$requestId = $this->client->sendAsyncRequest( $request );
+		$requestId = $this->client->sendAsyncRequest( $this->connection, $request );
 
 		$this->client->waitForResponse( $requestId );
 	}
@@ -367,7 +370,7 @@ final class UnixDomainSocketTest extends TestCase
 		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
 		$requestIds   = [];
-		$requestIds[] = $this->client->sendAsyncRequest( $request );
+		$requestIds[] = $this->client->sendAsyncRequest( $this->connection, $request );
 		$requestIds[] = 12345;
 
 		sleep( 1 );
@@ -422,7 +425,7 @@ final class UnixDomainSocketTest extends TestCase
 			}
 		);
 
-		$this->client->sendAsyncRequest( $request );
+		$this->client->sendAsyncRequest( $this->connection, $request );
 		$this->client->waitForResponses();
 	}
 
@@ -439,7 +442,7 @@ final class UnixDomainSocketTest extends TestCase
 		$content = str_repeat( 'a', $length );
 		$request = new PostRequest( __DIR__ . '/Workers/lengthWorker.php', $content );
 
-		$response = $this->client->sendRequest( $request );
+		$response = $this->client->sendRequest( $this->connection, $request );
 
 		$this->assertEquals( $length, $response->getBody() );
 	}
@@ -494,7 +497,7 @@ final class UnixDomainSocketTest extends TestCase
 	{
 		$request = new GetRequest( $scriptFilename, '' );
 
-		$response = $this->client->sendRequest( $request );
+		$response = $this->client->sendRequest( $this->connection, $request );
 
 		$this->assertSame( '404 Not Found', $response->getHeaderLine( 'Status' ) );
 		$this->assertSame( "File not found.\n", $response->getBody() );
@@ -526,7 +529,7 @@ final class UnixDomainSocketTest extends TestCase
 	{
 		$request = new GetRequest( __DIR__ . '/Workers/worker.php7', '' );
 
-		$response = $this->client->sendRequest( $request );
+		$response = $this->client->sendRequest( $this->connection, $request );
 
 		$this->assertSame( '403 Forbidden', $response->getHeaderLine( 'Status' ) );
 		$this->assertRegExp(
@@ -551,7 +554,7 @@ final class UnixDomainSocketTest extends TestCase
 		$this->makeFileUnaccessible( $scriptPath );
 
 		$request  = new GetRequest( $scriptPath, '' );
-		$response = $this->client->sendRequest( $request );
+		$response = $this->client->sendRequest( $this->connection, $request );
 
 		$this->assertSame( '403 Forbidden', $response->getHeaderLine( 'Status' ) );
 		$this->assertRegExp(
@@ -598,7 +601,7 @@ final class UnixDomainSocketTest extends TestCase
 			}
 		);
 
-		$requestId = $this->client->sendAsyncRequest( $request );
+		$requestId = $this->client->sendAsyncRequest( $this->connection, $request );
 		$this->client->handleResponse( $requestId );
 
 		$this->expectOutputRegex( $expectecOutputRegExp );
@@ -622,7 +625,7 @@ final class UnixDomainSocketTest extends TestCase
 			}
 		);
 
-		$requestId = $this->client->sendAsyncRequest( $request );
+		$requestId = $this->client->sendAsyncRequest( $this->connection, $request );
 		$this->client->handleResponse( $requestId );
 	}
 
@@ -637,7 +640,7 @@ final class UnixDomainSocketTest extends TestCase
 	public function testCanGetErrorOutputFromWorkerUsingErrorLog() : void
 	{
 		$request  = new GetRequest( __DIR__ . '/Workers/errorLogWorker.php', '' );
-		$response = $this->client->sendRequest( $request );
+		$response = $this->client->sendRequest( $this->connection, $request );
 
 		$expectedError = "#^PHP message: ERROR1\n\n?"
 		                 . "PHP message: ERROR2\n\n?"
@@ -660,12 +663,12 @@ final class UnixDomainSocketTest extends TestCase
 	{
 		$request = new GetRequest( __DIR__ . '/Workers/sleepWorker.php', '' );
 
-		$requestId = $this->client->sendRequest( $request )->getRequestId();
+		$requestId = $this->client->sendRequest( $this->connection, $request )->getRequestId();
 
 		$requestIds = [];
 		for ( $i = 0; $i < 5; $i++ )
 		{
-			$requestIds[] = $this->client->sendRequest( $request )->getRequestId();
+			$requestIds[] = $this->client->sendRequest( $this->connection, $request )->getRequestId();
 		}
 
 		$expectedRequestIds = [$requestId, $requestId, $requestId, $requestId, $requestId];

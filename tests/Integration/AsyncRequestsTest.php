@@ -42,7 +42,7 @@ final class AsyncRequestsTest extends TestCase
 
 		$this->assertTrue( $limit > 5 );
 
-		$client          = $this->getClientWithNetworkSocket();
+		$client          = new Client();
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
@@ -58,7 +58,7 @@ final class AsyncRequestsTest extends TestCase
 		{
 			$request->setContent( http_build_query( ['test-key' => $i] ) );
 
-			$client->sendAsyncRequest( $request );
+			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
 
 		$client->waitForResponses();
@@ -78,14 +78,12 @@ final class AsyncRequestsTest extends TestCase
 		return (int)$iniSettings['network']['pm.max_children'];
 	}
 
-	private function getClientWithNetworkSocket() : Client
+	private function getNetworkSocketConnection() : NetworkSocket
 	{
-		$networkSocket = new NetworkSocket(
+		return new NetworkSocket(
 			$this->getNetworkSocketHost(),
 			$this->getNetworkSocketPort()
 		);
-
-		return new Client( $networkSocket );
 	}
 
 	/**
@@ -105,7 +103,7 @@ final class AsyncRequestsTest extends TestCase
 
 		$this->assertTrue( $limit > 5 );
 
-		$client          = $this->getClientWithUnixDomainSocket();
+		$client          = new Client();
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
@@ -121,7 +119,7 @@ final class AsyncRequestsTest extends TestCase
 		{
 			$request->setContent( http_build_query( ['test-key' => $i] ) );
 
-			$client->sendAsyncRequest( $request );
+			$client->sendAsyncRequest( $this->getUnixDomainSocketConnection(), $request );
 		}
 
 		$client->waitForResponses();
@@ -141,11 +139,9 @@ final class AsyncRequestsTest extends TestCase
 		return (int)$iniSettings['uds']['pm.max_children'];
 	}
 
-	private function getClientWithUnixDomainSocket() : Client
+	private function getUnixDomainSocketConnection() : UnixDomainSocket
 	{
-		$unixDomainSocket = new UnixDomainSocket( $this->getUnixDomainSocket() );
-
-		return new Client( $unixDomainSocket );
+		return new UnixDomainSocket( $this->getUnixDomainSocket() );
 	}
 
 	/**
@@ -163,7 +159,7 @@ final class AsyncRequestsTest extends TestCase
 
 		$this->assertTrue( $limit > 5 );
 
-		$client          = $this->getClientWithNetworkSocket();
+		$client          = new Client();
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
@@ -173,7 +169,7 @@ final class AsyncRequestsTest extends TestCase
 		{
 			$request->setContent( http_build_query( ['test-key' => $i] ) );
 
-			$client->sendAsyncRequest( $request );
+			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
 
 		while ( $client->hasUnhandledResponses() )
@@ -205,7 +201,7 @@ final class AsyncRequestsTest extends TestCase
 
 		$this->assertTrue( $limit > 5 );
 
-		$client          = $this->getClientWithUnixDomainSocket();
+		$client          = new Client();
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
@@ -221,7 +217,7 @@ final class AsyncRequestsTest extends TestCase
 		{
 			$request->setContent( http_build_query( ['test-key' => $i] ) );
 
-			$client->sendAsyncRequest( $request );
+			$client->sendAsyncRequest( $this->getUnixDomainSocketConnection(), $request );
 		}
 
 		while ( $client->hasUnhandledResponses() )
