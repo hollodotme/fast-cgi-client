@@ -121,7 +121,7 @@ final class SocketCollection implements Countable
 		unset( $this->sockets[ $socketId ] );
 	}
 
-	public function getIdleSocket() : ?Socket
+	public function getIdleSocket( ConfiguresSocketConnection $connection ) : ?Socket
 	{
 		if ( $this->isEmpty() )
 		{
@@ -130,6 +130,11 @@ final class SocketCollection implements Countable
 
 		foreach ( $this->sockets as $socket )
 		{
+			if ( !$socket->usesConnection( $connection ) )
+			{
+				continue;
+			}
+
 			if ( !$socket->isIdle() )
 			{
 				continue;
