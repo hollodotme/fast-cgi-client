@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [3.0.0-beta] - YYYY-MM-DD
+
+### Backwards incompatible changes (BC breaks)
+
+* The socket conection parameter was **moved** from the `Client`'s constructor to
+
+  * `Client#sendRequest(ConfiguresSocketConnection $connection, ProvidesRequestData $request) : ProvidesResponseData` and
+  * `Client#sendAsyncRequest(ConfiguresSocketConnection $connection, ProvidesRequestData $request) : int`  
+
+  in order to allow sending (equal) requests to different FastCGI servers using the same `Client` instance. - [#45]
+
 ## [3.0.0-alpha] - 2019-04-30
 
 ### Backwards incompatible changes (BC breaks)
@@ -256,7 +267,8 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
-[3.0.0-alpha]: https://github.com/hollodotme/fast-cgi-client/compare/v2.7.1...v3.0.0-alpha
+[3.0.0-beta]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0-alpha...v3.0.0-beta
+[3.0.0-alpha]: https://github.com/hollodotme/fast-cgi-client/compare/v2.7.2...v3.0.0-alpha
 [2.7.2]: https://github.com/hollodotme/fast-cgi-client/compare/v2.7.1...v2.7.2
 [2.7.1]: https://github.com/hollodotme/fast-cgi-client/compare/v2.7.0...v2.7.1
 [2.7.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.6.0...v2.7.0
@@ -285,8 +297,9 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#26]: https://github.com/hollodotme/fast-cgi-client/issues/26
 [#27]: https://github.com/hollodotme/fast-cgi-client/issues/27
 [#33]: https://github.com/hollodotme/fast-cgi-client/pull/33
-[#35]: https://github.com/hollodotme/fast-cgi-client/issue/35
-[#36]: https://github.com/hollodotme/fast-cgi-client/issue/36
-[#37]: https://github.com/hollodotme/fast-cgi-client/issue/37
-[#40]: https://github.com/hollodotme/fast-cgi-client/issue/40
-[#41]: https://github.com/hollodotme/fast-cgi-client/issue/41
+[#35]: https://github.com/hollodotme/fast-cgi-client/issues/35
+[#36]: https://github.com/hollodotme/fast-cgi-client/issues/36
+[#37]: https://github.com/hollodotme/fast-cgi-client/issues/37
+[#40]: https://github.com/hollodotme/fast-cgi-client/issues/40
+[#41]: https://github.com/hollodotme/fast-cgi-client/issues/41
+[#45]: https://github.com/hollodotme/fast-cgi-client/issues/45
