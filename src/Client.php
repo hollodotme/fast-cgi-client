@@ -23,7 +23,6 @@
 
 namespace hollodotme\FastCGI;
 
-use Exception;
 use Generator;
 use hollodotme\FastCGI\Encoders\NameValuePairEncoder;
 use hollodotme\FastCGI\Encoders\PacketEncoder;
@@ -44,9 +43,6 @@ use function stream_select;
 
 class Client
 {
-	/** @var ConfiguresSocketConnection */
-	private $connection;
-
 	/** @var SocketCollection */
 	private $sockets;
 
@@ -56,47 +52,46 @@ class Client
 	/** @var EncodesNameValuePair */
 	private $nameValuePairEncoder;
 
-	/**
-	 * @param ConfiguresSocketConnection $connection
-	 */
-	public function __construct( ConfiguresSocketConnection $connection )
+	public function __construct()
 	{
-		$this->connection           = $connection;
 		$this->packetEncoder        = new PacketEncoder();
 		$this->nameValuePairEncoder = new NameValuePairEncoder();
 		$this->sockets              = new SocketCollection();
 	}
 
 	/**
-	 * @param ProvidesRequestData $request
+	 * @param ConfiguresSocketConnection $connection
+	 * @param ProvidesRequestData        $request
 	 *
 	 * @return ProvidesResponseData
-	 * @throws ConnectException
-	 * @throws Exception
 	 * @throws Throwable
-	 * @throws WriteFailedException
 	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws ConnectException
 	 */
-	public function sendRequest( ProvidesRequestData $request ) : ProvidesResponseData
+	public function sendRequest(
+		ConfiguresSocketConnection $connection,
+		ProvidesRequestData $request
+	) : ProvidesResponseData
 	{
-		$requestId = $this->sendAsyncRequest( $request );
+		$requestId = $this->sendAsyncRequest( $connection, $request );
 
 		return $this->readResponse( $requestId );
 	}
 
 	/**
-	 * @param ProvidesRequestData $request
+	 * @param ConfiguresSocketConnection $connection
+	 * @param ProvidesRequestData        $request
 	 *
 	 * @return int
 	 *
-	 * @throws ConnectException
-	 * @throws WriteFailedException
 	 * @throws TimedoutException
-	 * @throws Exception
+	 * @throws WriteFailedException
+	 * @throws ConnectException
 	 */
-	public function sendAsyncRequest( ProvidesRequestData $request ) : int
+	public function sendAsyncRequest( ConfiguresSocketConnection $connection, ProvidesRequestData $request ) : int
 	{
-		$socket = $this->sockets->getIdleSocket();
+		$socket = $this->sockets->getIdleSocket( $connection );
 
 		if ( null !== $socket )
 		{
@@ -106,7 +101,7 @@ class Client
 		}
 
 		$socket = $this->sockets->new(
-			$this->connection,
+			$connection,
 			$this->packetEncoder,
 			$this->nameValuePairEncoder
 		);
