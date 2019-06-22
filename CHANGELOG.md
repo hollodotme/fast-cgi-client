@@ -55,6 +55,17 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CH
 
 * Method `Response#getRawResponse() : string` that was deprecated in version [2.6.0](#260---2019-04-02) in favour of `Response#getOutput() : string`. - [#36]
 
+## [2.7.2] - 2019-05-31
+
+### Improved
+
+* Handling of `stream_select` returning `false` in case of a system call interrupt. - [#41]
+
+### Fixed
+
+* Remove/close sockets after fetching their responses triggered async requests in order to prevent halt on further 
+  request processing, if the number of requests exceeds php-fpm's `pm.max_children` setting. - [#40]
+
 ## [2.7.1] - 2019-04-29
 
 ### Fixed
@@ -246,6 +257,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Method `Client->getValues()`
 
 [3.0.0-alpha]: https://github.com/hollodotme/fast-cgi-client/compare/v2.7.1...v3.0.0-alpha
+[2.7.2]: https://github.com/hollodotme/fast-cgi-client/compare/v2.7.1...v2.7.2
 [2.7.1]: https://github.com/hollodotme/fast-cgi-client/compare/v2.7.0...v2.7.1
 [2.7.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.5.0...v2.6.0
@@ -276,3 +288,5 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#35]: https://github.com/hollodotme/fast-cgi-client/issue/35
 [#36]: https://github.com/hollodotme/fast-cgi-client/issue/36
 [#37]: https://github.com/hollodotme/fast-cgi-client/issue/37
+[#40]: https://github.com/hollodotme/fast-cgi-client/issue/40
+[#41]: https://github.com/hollodotme/fast-cgi-client/issue/41

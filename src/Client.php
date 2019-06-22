@@ -172,10 +172,7 @@ class Client
 
 		while ( $this->hasUnhandledResponses() )
 		{
-			foreach ( $this->getSocketsHavingResponse() as $socket )
-			{
-				$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
-			}
+			$this->handleReadyResponses( $timeoutMs );
 		}
 	}
 
@@ -193,9 +190,11 @@ class Client
 		}
 		catch ( Throwable $e )
 		{
-			$this->sockets->remove( $socket->getId() );
-
 			$socket->notifyFailureCallbacks( $e );
+		}
+		finally
+		{
+			$this->sockets->remove( $socket->getId() );
 		}
 	}
 
@@ -205,18 +204,6 @@ class Client
 	public function hasUnhandledResponses() : bool
 	{
 		return $this->sockets->hasBusySockets();
-	}
-
-	/**
-	 * @return Generator|Socket[]
-	 * @throws ReadFailedException
-	 */
-	private function getSocketsHavingResponse() : Generator
-	{
-		foreach ( $this->getRequestIdsHavingResponse() as $requestId )
-		{
-			yield $this->sockets->getById( $requestId );
-		}
 	}
 
 	/**
@@ -244,7 +231,12 @@ class Client
 		$reads  = $this->sockets->collectResources();
 		$writes = $excepts = null;
 
-		stream_select( $reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
+		$result = @stream_select( $reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
+
+		if ( false === $result || 0 === count( $reads ) )
+		{
+			return [];
+		}
 
 		return $this->sockets->getSocketIdsByResources( $reads );
 	}
@@ -264,6 +256,10 @@ class Client
 				yield $this->sockets->getById( $requestId )->fetchResponse( $timeoutMs );
 			}
 			catch ( Throwable $e )
+			{
+				# Skip unknown request ids
+			}
+			finally
 			{
 				$this->sockets->remove( $requestId );
 			}
