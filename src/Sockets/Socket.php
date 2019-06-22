@@ -154,6 +154,11 @@ final class Socket
 		return $this->id;
 	}
 
+	public function usesConnection( ConfiguresSocketConnection $connection ) : bool
+	{
+		return $this->connection->equals( $connection );
+	}
+
 	public function hasResponse() : bool
 	{
 		$reads  = [$this->resource];
