@@ -38,7 +38,7 @@ You can also find slides of my talks about this project on [speakerdeck.com](htt
 ## Installation
 
 ```bash
-composer require hollodotme/fast-cgi-client:3.0.0-alpha
+composer require hollodotme/fast-cgi-client:3.0.0-beta
 ```
 
 ---
@@ -135,9 +135,9 @@ $connection = new NetworkSocket('127.0.0.1', 9000);
 $content    = http_build_query(['key' => 'value']);
 $request    = new PostRequest('/path/to/target/script.php', $content);
 
-$requestId = $client->sendAsyncRequest($connection, $request);
+$socketId = $client->sendAsyncRequest($connection, $request);
 
-echo "Request sent, got ID: {$requestId}";
+echo "Request sent, got ID: {$socketId}";
 ```
 
 ### Read the response, after sending the async request
@@ -156,15 +156,15 @@ $connection = new NetworkSocket('127.0.0.1', 9000);
 $content    = http_build_query(['key' => 'value']);
 $request    = new PostRequest('/path/to/target/script.php', $content);
 
-$requestId = $client->sendAsyncRequest($connection, $request);
+$socketId = $client->sendAsyncRequest($connection, $request);
 
-echo "Request sent, got ID: {$requestId}";
+echo "Request sent, got ID: {$socketId}";
 
 # Do something else here in the meanwhile
 
 # Blocking call until response is received or read timed out
 $response = $client->readResponse( 
-	$requestId,     # The request ID 
+	$socketId,     # The socket ID 
 	3000            # Optional timeout to wait for response,
 					# defaults to read/write timeout in milliseconds set in connection
 );
@@ -181,7 +181,7 @@ value
 
 You can register response and failure callbacks for each request.
 In order to notify the callbacks when a response was received instead of returning it, 
-you need to use the `waitForResponse(int $requestId, ?int $timeoutMs = null)` method.
+you need to use the `waitForResponse(int $socketId, ?int $timeoutMs = null)` method.
 
 ```php
 <?php declare(strict_types=1);
@@ -215,16 +215,16 @@ $request->addFailureCallbacks(
 	}
 );
 
-$requestId = $client->sendAsyncRequest($connection, $request);
+$socketId = $client->sendAsyncRequest($connection, $request);
 
-echo "Request sent, got ID: {$requestId}";
+echo "Request sent, got ID: {$socketId}";
 
 # Do something else here in the meanwhile
 
 # Blocking call until response is received or read timed out
 # If response was received all registered response callbacks will be notified
 $client->waitForResponse( 
-	$requestId,     # The request ID 
+	$socketId,     # The socket ID 
 	3000            # Optional timeout to wait for response,
 					# defaults to read/write timeout in milliseconds set in connection
 );
@@ -233,9 +233,9 @@ $client->waitForResponse(
 
 while(true)
 {
-	if ($client->hasResponse($requestId))
+	if ($client->hasResponse($socketId))
 	{
-		$client->handleResponse($requestId, 3000);
+		$client->handleResponse($socketId, 3000);
 		break;
 	}
 }
@@ -268,19 +268,19 @@ $request1 = new PostRequest('/path/to/target/script.php', http_build_query(['key
 $request2 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '2']));
 $request3 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '3']));
 
-$requestIds = [];
+$socketIds = [];
 
-$requestIds[] = $client->sendAsyncRequest($connection, $request1);
-$requestIds[] = $client->sendAsyncRequest($connection, $request2);
-$requestIds[] = $client->sendAsyncRequest($connection, $request3);
+$socketIds[] = $client->sendAsyncRequest($connection, $request1);
+$socketIds[] = $client->sendAsyncRequest($connection, $request2);
+$socketIds[] = $client->sendAsyncRequest($connection, $request3);
 
-echo 'Sent requests with IDs: ' . implode( ', ', $requestIds ) . "\n";
+echo 'Sent requests with IDs: ' . implode( ', ', $socketIds ) . "\n";
 
 # Do something else here in the meanwhile
 
 # Blocking call until all responses are received or read timed out
 # Responses are read in same order the requests were sent
-foreach ($client->readResponses(3000, ...$requestIds) as $response)
+foreach ($client->readResponses(3000, ...$socketIds) as $response)
 {
 	echo $response->getBody() . "\n";	
 }
@@ -310,13 +310,13 @@ $request1 = new PostRequest('/path/to/target/script.php', http_build_query(['key
 $request2 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '2', 'sleep' => 2]));
 $request3 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '3', 'sleep' => 1]));
 
-$requestIds = [];
+$socketIds = [];
 
-$requestIds[] = $client->sendAsyncRequest($connection, $request1);
-$requestIds[] = $client->sendAsyncRequest($connection, $request2);
-$requestIds[] = $client->sendAsyncRequest($connection, $request3);
+$socketIds[] = $client->sendAsyncRequest($connection, $request1);
+$socketIds[] = $client->sendAsyncRequest($connection, $request2);
+$socketIds[] = $client->sendAsyncRequest($connection, $request3);
 
-echo 'Sent requests with IDs: ' . implode( ', ', $requestIds ) . "\n";
+echo 'Sent requests with IDs: ' . implode( ', ', $socketIds ) . "\n";
 
 # Do something else here in the meanwhile
 
@@ -336,10 +336,10 @@ while ( $client->hasUnhandledResponses() )
 
 while ( $client->hasUnhandledResponses() )
 {
-	$readyRequestIds = $client->getRequestIdsHavingResponse();
+	$readySocketIds = $client->getSocketIdsHavingResponse();
 	
 	# read all ready responses
-	foreach ( $client->readResponses( 3000, ...$readyRequestIds ) as $response )
+	foreach ( $client->readResponses( 3000, ...$readySocketIds ) as $response )
 	{
 		echo $response->getBody() . "\n";
 	}
@@ -351,12 +351,12 @@ while ( $client->hasUnhandledResponses() )
 
 while ( $client->hasUnhandledResponses() )
 {
-	$readyRequestIds = $client->getRequestIdsHavingResponse();
+	$readySocketIds = $client->getSocketIdsHavingResponse();
 	
 	# read all ready responses
-	foreach ($readyRequestIds as $requestId)
+	foreach ($readySocketIds as $socketId)
 	{
-		$response = $client->readResponse($requestId, 3000);
+		$response = $client->readResponse($socketId, 3000);
 		echo $response->getBody() . "\n";
 	}
 	
@@ -410,13 +410,13 @@ $request2->addFailureCallbacks($failureCallback);
 $request3->addResponseCallbacks($responseCallback);
 $request3->addFailureCallbacks($failureCallback);
 
-$requestIds = [];
+$socketIds = [];
 
-$requestIds[] = $client->sendAsyncRequest($connection, $request1);
-$requestIds[] = $client->sendAsyncRequest($connection, $request2);
-$requestIds[] = $client->sendAsyncRequest($connection, $request3);
+$socketIds[] = $client->sendAsyncRequest($connection, $request1);
+$socketIds[] = $client->sendAsyncRequest($connection, $request2);
+$socketIds[] = $client->sendAsyncRequest($connection, $request3);
 
-echo 'Sent requests with IDs: ' . implode( ', ', $requestIds ) . "\n";
+echo 'Sent requests with IDs: ' . implode( ', ', $socketIds ) . "\n";
 
 # Do something else here in the meanwhile
 
@@ -434,12 +434,12 @@ while ( $client->hasUnhandledResponses() )
 
 while ( $client->hasUnhandledResponses() )
 {
-	$readyRequestIds = $client->getRequestIdsHavingResponse();
+	$readySocketIds = $client->getSocketIdsHavingResponse();
 	
 	# read all ready responses
-	foreach ($readyRequestIds as $requestId)
+	foreach ($readySocketIds as $socketId)
 	{
-		$client->handleResponse($requestId, 3000);
+		$client->handleResponse($socketId, 3000);
 	}
 }
 ```
@@ -606,8 +606,6 @@ namespace hollodotme\FastCGI\Interfaces;
 
 interface ProvidesResponseData
 {
-	public function getRequestId() : int;
-
 	public function getHeaders() : array;
 
 	public function getHeader( string $headerKey ) : array;
@@ -672,9 +670,6 @@ Hello World
 You can retrieve all of the response data separately from the response object:
 
 ```php
-# Get the request ID
-echo $response->getRequestId(); # random int set by client
-
 # Get all values of a single response header
 $response->getHeader('Set-Cookie'); 
 // ['yummy_cookie=choco', 'tasty_cookie=strawberry']
