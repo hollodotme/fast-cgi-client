@@ -91,7 +91,7 @@ final class ClientTest extends TestCase
 		$client = new Client();
 
 		$this->expectException( ReadFailedException::class );
-		$this->expectExceptionMessage( 'Socket not found for request ID: 12345' );
+		$this->expectExceptionMessage( 'Socket not found for socket ID: 12345' );
 
 		$client->waitForResponse( 12345 );
 	}
@@ -118,7 +118,7 @@ final class ClientTest extends TestCase
 		$client = new Client();
 
 		$this->expectException( ReadFailedException::class );
-		$this->expectExceptionMessage( 'Socket not found for request ID: 12345' );
+		$this->expectExceptionMessage( 'Socket not found for socket ID: 12345' );
 
 		$client->handleResponse( 12345 );
 	}
@@ -131,7 +131,7 @@ final class ClientTest extends TestCase
 		$client = new Client();
 
 		$this->expectException( ReadFailedException::class );
-		$this->expectExceptionMessage( 'Socket not found for request ID: 12345' );
+		$this->expectExceptionMessage( 'Socket not found for socket ID: 12345' );
 
 		$client->handleResponses( null, 12345, 12346 );
 	}

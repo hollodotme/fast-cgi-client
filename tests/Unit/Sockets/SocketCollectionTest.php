@@ -397,7 +397,7 @@ final class SocketCollectionTest extends TestCase
 	public function testThrowsExceptionIfSocketCannotByFoundById() : void
 	{
 		$this->expectException( ReadFailedException::class );
-		$this->expectExceptionMessage( 'Socket not found for request ID: 123' );
+		$this->expectExceptionMessage( 'Socket not found for socket ID: 123' );
 
 		/** @noinspection UnusedFunctionResultInspection */
 		$this->collection->getById( 123 );

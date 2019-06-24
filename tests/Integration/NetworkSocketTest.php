@@ -34,10 +34,12 @@ use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+use hollodotme\FastCGI\Sockets\SocketCollection;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use RuntimeException;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
@@ -70,15 +72,15 @@ final class NetworkSocketTest extends TestCase
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 */
-	public function testCanSendAsyncRequestAndReceiveRequestId() : void
+	public function testCanSendAsyncRequestAndReceiveSocketId() : void
 	{
 		$content = http_build_query( ['test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$requestId = $this->client->sendAsyncRequest( $this->connection, $request );
+		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		$this->assertGreaterThanOrEqual( 1, $requestId );
-		$this->assertLessThanOrEqual( 65535, $requestId );
+		$this->assertGreaterThanOrEqual( 1, $socketId );
+		$this->assertLessThanOrEqual( 65535, $socketId );
 	}
 
 	/**
@@ -95,13 +97,12 @@ final class NetworkSocketTest extends TestCase
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
 
-		$requestId = $this->client->sendAsyncRequest( $this->connection, $request );
-		$response  = $this->client->readResponse( $requestId );
+		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
+		$response = $this->client->readResponse( $socketId );
 
 		$this->assertEquals( $expectedResponse, $response->getOutput() );
 		$this->assertSame( 'unit', $response->getBody() );
 		$this->assertGreaterThan( 0, $response->getDuration() );
-		$this->assertSame( $requestId, $response->getRequestId() );
 	}
 
 	/**
@@ -123,9 +124,6 @@ final class NetworkSocketTest extends TestCase
 		$this->assertEquals( $expectedResponse, $response->getOutput() );
 		$this->assertSame( 'unit', $response->getBody() );
 		$this->assertGreaterThan( 0, $response->getDuration() );
-
-		$this->assertGreaterThanOrEqual( 1, $response->getRequestId() );
-		$this->assertLessThanOrEqual( 65535, $response->getRequestId() );
 	}
 
 	/**
@@ -196,17 +194,17 @@ final class NetworkSocketTest extends TestCase
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 */
-	public function testCanCheckForRequestIdsHavingResponses() : void
+	public function testCanCheckForSocketIdsHavingResponses() : void
 	{
 		$content = http_build_query( ['test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$requestId = $this->client->sendAsyncRequest( $this->connection, $request );
+		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
 
 		usleep( 60000 );
 
-		$this->assertTrue( $this->client->hasResponse( $requestId ) );
-		$this->assertEquals( [$requestId], $this->client->getRequestIdsHavingResponse() );
+		$this->assertTrue( $this->client->hasResponse( $socketId ) );
+		$this->assertEquals( [$socketId], $this->client->getSocketIdsHavingResponse() );
 	}
 
 	/**
@@ -220,29 +218,24 @@ final class NetworkSocketTest extends TestCase
 		$content = http_build_query( ['test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$requestIdOne = $this->client->sendAsyncRequest( $this->connection, $request );
+		$socketIdOne = $this->client->sendAsyncRequest( $this->connection, $request );
 
 		$request->setContent( http_build_query( ['test-key' => 'test'] ) );
 
-		$requestIdTwo = $this->client->sendAsyncRequest( $this->connection, $request );
+		$socketIdTwo = $this->client->sendAsyncRequest( $this->connection, $request );
 
 		usleep( 110000 );
 
-		$requestIds = [$requestIdOne, $requestIdTwo];
+		$socketIds = [$socketIdOne, $socketIdTwo];
 
-		$this->assertEquals( $requestIds, $this->client->getRequestIdsHavingResponse() );
+		$this->assertEquals( $socketIds, $this->client->getSocketIdsHavingResponse() );
 
-		foreach ( $this->client->readResponses( null, ...$requestIds ) as $response )
+		$expectedBodies = ['unit' => 'unit', 'test' => 'test'];
+		foreach ( $this->client->readResponses( null, ...$socketIds ) as $response )
 		{
-			if ( $response->getRequestId() === $requestIdOne )
-			{
-				$this->assertSame( 'unit', $response->getBody() );
-			}
+			$this->assertContains( $response->getBody(), $expectedBodies );
 
-			if ( $response->getRequestId() === $requestIdTwo )
-			{
-				$this->assertSame( 'test', $response->getBody() );
-			}
+			unset( $expectedBodies[ $response->getBody() ] );
 		}
 	}
 
@@ -351,9 +344,9 @@ final class NetworkSocketTest extends TestCase
 			}
 		);
 
-		$requestId = $this->client->sendAsyncRequest( $this->connection, $request );
+		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		$this->client->waitForResponse( $requestId );
+		$this->client->waitForResponse( $socketId );
 	}
 
 	/**
@@ -364,18 +357,18 @@ final class NetworkSocketTest extends TestCase
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 */
-	public function testReadResponsesSkipsUnknownRequestIds() : void
+	public function testReadResponsesSkipsUnknownSocketIds() : void
 	{
 		$content = http_build_query( ['test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/worker.php', $content );
 
-		$requestIds   = [];
-		$requestIds[] = $this->client->sendAsyncRequest( $this->connection, $request );
-		$requestIds[] = 12345;
+		$socketIds   = [];
+		$socketIds[] = $this->client->sendAsyncRequest( $this->connection, $request );
+		$socketIds[] = 12345;
 
 		sleep( 1 );
 
-		foreach ( $this->client->readResponses( null, ...$requestIds ) as $response )
+		foreach ( $this->client->readResponses( null, ...$socketIds ) as $response )
 		{
 			echo $response->getBody();
 		}
@@ -604,8 +597,8 @@ final class NetworkSocketTest extends TestCase
 			}
 		);
 
-		$requestId = $this->client->sendAsyncRequest( $this->connection, $request );
-		$this->client->handleResponse( $requestId );
+		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
+		$this->client->handleResponse( $socketId );
 
 		$this->expectOutputRegex( $expectecOutputRegExp );
 	}
@@ -628,8 +621,8 @@ final class NetworkSocketTest extends TestCase
 			}
 		);
 
-		$requestId = $this->client->sendAsyncRequest( $this->connection, $request );
-		$this->client->handleResponse( $requestId );
+		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
+		$this->client->handleResponse( $socketId );
 	}
 
 	/**
@@ -666,16 +659,27 @@ final class NetworkSocketTest extends TestCase
 	{
 		$request = new GetRequest( __DIR__ . '/Workers/sleepWorker.php', '' );
 
-		$requestId = $this->client->sendRequest( $this->connection, $request )->getRequestId();
+		$sockets = (new ReflectionClass( $this->client ))->getProperty( 'sockets' );
+		$sockets->setAccessible( true );
 
-		$requestIds = [];
+		$this->assertCount( 0, $sockets->getValue( $this->client ) );
+
+		/** @noinspection UnusedFunctionResultInspection */
+		$this->client->sendRequest( $this->connection, $request );
+
+		/** @var SocketCollection $socketCollection */
+		$socketCollection = $sockets->getValue( $this->client );
+		$firstSocket      = $socketCollection->getIdleSocket( $this->connection );
+
 		for ( $i = 0; $i < 5; $i++ )
 		{
-			$requestIds[] = $this->client->sendRequest( $this->connection, $request )->getRequestId();
+			/** @noinspection UnusedFunctionResultInspection */
+			$this->client->sendRequest( $this->connection, $request );
 		}
 
-		$expectedRequestIds = [$requestId, $requestId, $requestId, $requestId, $requestId];
+		$lastSocket = $socketCollection->getIdleSocket( $this->connection );
 
-		$this->assertSame( $expectedRequestIds, $requestIds );
+		$this->assertSame( $firstSocket, $lastSocket );
+		$this->assertCount( 1, $sockets->getValue( $this->client ) );
 	}
 }
