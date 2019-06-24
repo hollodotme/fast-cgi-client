@@ -441,7 +441,6 @@ final class Socket
 		$this->guardRequestCompleted( ord( $character ) );
 
 		$this->response = new Response(
-			$this->id,
 			$output,
 			$error,
 			microtime( true ) - $this->startTime

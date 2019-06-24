@@ -37,9 +37,6 @@ class Response implements ProvidesResponseData
 {
 	private const HEADER_PATTERN = '#^([^\:]+):(.*)$#';
 
-	/** @var int */
-	private $requestId;
-
 	/** @var array */
 	private $normalizedHeaders;
 
@@ -58,9 +55,8 @@ class Response implements ProvidesResponseData
 	/** @var float */
 	private $duration;
 
-	public function __construct( int $requestId, string $output, string $error, float $duration )
+	public function __construct( string $output, string $error, float $duration )
 	{
-		$this->requestId         = $requestId;
 		$this->output            = $output;
 		$this->error             = $error;
 		$this->duration          = $duration;
@@ -119,11 +115,6 @@ class Response implements ProvidesResponseData
 		}
 
 		$this->normalizedHeaders[ $key ][] = $headerValue;
-	}
-
-	public function getRequestId() : int
-	{
-		return $this->requestId;
 	}
 
 	public function getHeader( string $headerKey ) : array
