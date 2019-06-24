@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
-## [3.0.0-beta] - YYYY-MM-DD
+## [3.0.0-beta] - 2019-06-24
 
 ### Backwards incompatible changes (BC breaks)
 
