@@ -10,6 +10,7 @@ use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
@@ -187,10 +188,13 @@ final class SocketCollectionTest extends TestCase
 	/**
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
+	 * @throws \Exception
 	 */
 	public function testEmptyCollectionHasNoIdleSocket() : void
 	{
-		$this->assertNull( $this->collection->getIdleSocket() );
+		$connection = $this->getSocketConnection();
+
+		$this->assertNull( $this->collection->getIdleSocket( $connection ) );
 	}
 
 	/**
@@ -214,7 +218,7 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$this->assertSame( $socket, $this->collection->getIdleSocket() );
+		$this->assertSame( $socket, $this->collection->getIdleSocket( $connection ) );
 	}
 
 	/**
@@ -250,7 +254,7 @@ final class SocketCollectionTest extends TestCase
 		/** @noinspection UnusedFunctionResultInspection */
 		$socket->fetchResponse( 2000 );
 
-		$this->assertSame( $socket, $this->collection->getIdleSocket() );
+		$this->assertSame( $socket, $this->collection->getIdleSocket( $connection ) );
 	}
 
 	/**
@@ -280,7 +284,7 @@ final class SocketCollectionTest extends TestCase
 			new PostRequest( '/some/script.php', '' )
 		);
 
-		$this->assertNull( $this->collection->getIdleSocket() );
+		$this->assertNull( $this->collection->getIdleSocket( $connection ) );
 	}
 
 	/**
@@ -318,7 +322,7 @@ final class SocketCollectionTest extends TestCase
 			}
 		}
 
-		$this->assertNull( $this->collection->getIdleSocket() );
+		$this->assertNull( $this->collection->getIdleSocket( $connection ) );
 
 		# Socket should also be removed from collection
 		$this->assertCount( 0, $this->collection );
@@ -355,7 +359,7 @@ final class SocketCollectionTest extends TestCase
 			fclose( $resource );
 		}
 
-		$this->assertNull( $this->collection->getIdleSocket() );
+		$this->assertNull( $this->collection->getIdleSocket( $connection ) );
 
 		# Socket should also be removed from collection
 		$this->assertCount( 0, $this->collection );
@@ -393,7 +397,7 @@ final class SocketCollectionTest extends TestCase
 	public function testThrowsExceptionIfSocketCannotByFoundById() : void
 	{
 		$this->expectException( ReadFailedException::class );
-		$this->expectExceptionMessage( 'Socket not found for request ID: 123' );
+		$this->expectExceptionMessage( 'Socket not found for socket ID: 123' );
 
 		/** @noinspection UnusedFunctionResultInspection */
 		$this->collection->getById( 123 );
@@ -535,5 +539,39 @@ final class SocketCollectionTest extends TestCase
 	public function testIsEmpty() : void
 	{
 		$this->assertTrue( $this->collection->isEmpty() );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws WriteFailedException
+	 */
+	public function testIdleSocketsAreIdentifiedByConnection() : void
+	{
+		$unixDomainConnection = new UnixDomainSocket( $this->getUnixDomainSocket() );
+		$networkConnection    = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
+
+		$packetEncoder        = new PacketEncoder();
+		$nameValuePairEncoder = new NameValuePairEncoder();
+
+		$unixDomainSocket = $this->collection->new(
+			$unixDomainConnection,
+			$packetEncoder,
+			$nameValuePairEncoder
+		);
+
+		$networkSocket = $this->collection->new(
+			$networkConnection,
+			$packetEncoder,
+			$nameValuePairEncoder
+		);
+
+		$this->assertCount( 2, $this->collection );
+
+		$this->assertSame( $unixDomainSocket, $this->collection->getIdleSocket( $unixDomainConnection ) );
+		$this->assertNotSame( $unixDomainSocket, $this->collection->getIdleSocket( $networkConnection ) );
+
+		$this->assertSame( $networkSocket, $this->collection->getIdleSocket( $networkConnection ) );
+		$this->assertNotSame( $networkSocket, $this->collection->getIdleSocket( $unixDomainConnection ) );
 	}
 }

@@ -29,8 +29,6 @@ namespace hollodotme\FastCGI\Interfaces;
  */
 interface ProvidesResponseData
 {
-	public function getRequestId() : int;
-
 	public function getHeaders() : array;
 
 	public function getHeader( string $headerKey ) : array;

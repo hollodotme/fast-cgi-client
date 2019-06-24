@@ -52,8 +52,10 @@ use function stream_get_meta_data;
 use function stream_select;
 use function stream_set_timeout;
 use function stream_socket_client;
+use function stream_socket_shutdown;
 use function strlen;
 use function substr;
+use const STREAM_SHUT_RDWR;
 
 final class Socket
 {
@@ -150,6 +152,11 @@ final class Socket
 	public function getId() : int
 	{
 		return $this->id;
+	}
+
+	public function usesConnection( ConfiguresSocketConnection $connection ) : bool
+	{
+		return $this->connection->equals( $connection );
 	}
 
 	public function hasResponse() : bool
@@ -434,7 +441,6 @@ final class Socket
 		$this->guardRequestCompleted( ord( $character ) );
 
 		$this->response = new Response(
-			$this->id,
 			$output,
 			$error,
 			microtime( true ) - $this->startTime
@@ -541,6 +547,7 @@ final class Socket
 	{
 		if ( is_resource( $this->resource ) )
 		{
+			@stream_socket_shutdown( $this->resource, STREAM_SHUT_RDWR );
 			fclose( $this->resource );
 		}
 	}

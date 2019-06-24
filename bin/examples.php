@@ -49,13 +49,13 @@ function printLine( string $text, string $color = 'default', bool $headline = fa
 
 function printResponse( ProvidesResponseData $response )
 {
-	printLine( "Response for request ID: {$response->getRequestId()}", 'green', true );
+	printLine( 'Response:', 'green', true );
 	printLine( $response->getBody() );
 	printLine( 'Duration: ' . $response->getDuration() );
 }
 
+$client     = new Client();
 $connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
-$client     = new Client( $connection );
 
 $workerPath = __DIR__ . '/exampleWorker.php';
 
@@ -80,11 +80,12 @@ printLine( '# Sending one synchronous request... (worker sleeps 1 second)' );
 printLine( 'CODE: $client->sendRequest( $request );', 'red' );
 printLine( "\n" );
 
-$request->setContent( http_build_query( [ 'sleep' => 1, 'key' => 'single synchronous request' ] ) );
+$request->setContent( http_build_query( ['sleep' => 1, 'key' => 'single synchronous request'] ) );
 
 sleep( 2 );
 
-$response = $client->sendRequest( $request );
+/** @noinspection PhpUnhandledExceptionInspection */
+$response = $client->sendRequest( $connection, $request );
 
 printResponse( $response );
 printLine( "\n" );
@@ -95,20 +96,22 @@ printLine( '# Sending one asynchronous request... (worker sleeps 1 second)' );
 printLine( 'CODE: $client->sendAsyncRequest( $request );', 'red' );
 printLine( "\n" );
 
-$request->setContent( http_build_query( [ 'sleep' => 1, 'key' => 'single asynchronous request' ] ) );
+$request->setContent( http_build_query( ['sleep' => 1, 'key' => 'single asynchronous request'] ) );
 
 sleep( 2 );
 
-$requestId = $client->sendAsyncRequest( $request );
+/** @noinspection PhpUnhandledExceptionInspection */
+$socketId = $client->sendAsyncRequest( $connection, $request );
 
-printLine( "Sent request with ID: {$requestId}" );
+printLine( "Sent request with ID: {$socketId}" );
 
 printLine( "\n" );
 printLine( '# Now reading response...' );
-printLine( 'CODE: $response = $client->readResponse( $requestId );', 'red' );
+printLine( 'CODE: $response = $client->readResponse( $socketId );', 'red' );
 printLine( "\n" );
 
-$response = $client->readResponse( $requestId );
+/** @noinspection PhpUnhandledExceptionInspection */
+$response = $client->readResponse( $socketId );
 
 printResponse( $response );
 printLine( "\n" );
@@ -127,9 +130,9 @@ printLine( '        }', 'red' );
 printLine( '      );', 'red' );
 printLine( "\n" );
 
-$request->setContent( http_build_query( [ 'sleep' => 1, 'key' => 'single asynchronous request with callback' ] ) );
+$request->setContent( http_build_query( ['sleep' => 1, 'key' => 'single asynchronous request with callback'] ) );
 $request->addResponseCallbacks(
-	function ( ProvidesResponseData $response )
+	static function ( ProvidesResponseData $response )
 	{
 		printLine( 'Callback notified!', 'green' );
 		printLine( "\n" );
@@ -145,16 +148,18 @@ printLine( "\n" );
 
 sleep( 2 );
 
-$requestId = $client->sendAsyncRequest( $request );
+/** @noinspection PhpUnhandledExceptionInspection */
+$socketId = $client->sendAsyncRequest( $connection, $request );
 
-printLine( "Sent request with ID: {$requestId}" );
+printLine( "Sent request with ID: {$socketId}" );
 
 printLine( "\n" );
 printLine( '# Now waiting for response...' );
-printLine( 'CODE: $client->waitForResponse( $requestId );', 'red' );
+printLine( 'CODE: $client->waitForResponse( $socketId );', 'red' );
 printLine( "\n" );
 
-$client->waitForResponse( $requestId );
+/** @noinspection PhpUnhandledExceptionInspection */
+$client->waitForResponse( $socketId );
 
 sleep( 2 );
 
@@ -172,29 +177,32 @@ printLine( '      $client->sendAsyncRequest( $request2 );', 'red' );
 printLine( '      $client->sendAsyncRequest( $request3 );', 'red' );
 printLine( "\n" );
 
-$request1 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 1, 'key' => 'Request 1' ] ) );
-$request2 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 1, 'key' => 'Request 2' ] ) );
-$request3 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 1, 'key' => 'Request 3' ] ) );
+$request1 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 1'] ) );
+$request2 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 2'] ) );
+$request3 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 3'] ) );
 
-$requestIds = [];
+$socketIds = [];
 
 sleep( 2 );
 
-$requestIds[] = $client->sendAsyncRequest( $request1 );
-$requestIds[] = $client->sendAsyncRequest( $request2 );
-$requestIds[] = $client->sendAsyncRequest( $request3 );
+/** @noinspection PhpUnhandledExceptionInspection */
+$socketIds[] = $client->sendAsyncRequest( $connection, $request1 );
+/** @noinspection PhpUnhandledExceptionInspection */
+$socketIds[] = $client->sendAsyncRequest( $connection, $request2 );
+/** @noinspection PhpUnhandledExceptionInspection */
+$socketIds[] = $client->sendAsyncRequest( $connection, $request3 );
 
-printLine( 'Sent requests with IDs: ' . implode( ', ', $requestIds ) );
+printLine( 'Sent requests with IDs: ' . implode( ', ', $socketIds ) );
 
 printLine( "\n" );
 printLine( '# Now reading responses... (request order will be preserved)' );
-printLine( 'CODE: foreach($client->readResponses(null, ...$requestIds) as $response)', 'red' );
+printLine( 'CODE: foreach($client->readResponses(null, ...$socketIds) as $response)', 'red' );
 printLine( '      {', 'red' );
 printLine( '        printResponse($response);', 'red' );
 printLine( '      }', 'red' );
 printLine( "\n" );
 
-foreach ( $client->readResponses( null, ...$requestIds ) as $response )
+foreach ( $client->readResponses( null, ...$socketIds ) as $response )
 {
 	printResponse( $response );
 	printLine( "\n" );
@@ -212,19 +220,22 @@ printLine( '      $client->sendAsyncRequest( $request2 );', 'red' );
 printLine( '      $client->sendAsyncRequest( $request3 );', 'red' );
 printLine( "\n" );
 
-$request1 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 3, 'key' => 'Request 1' ] ) );
-$request2 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 2, 'key' => 'Request 2' ] ) );
-$request3 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 1, 'key' => 'Request 3' ] ) );
+$request1 = new PostRequest( $workerPath, http_build_query( ['sleep' => 3, 'key' => 'Request 1'] ) );
+$request2 = new PostRequest( $workerPath, http_build_query( ['sleep' => 2, 'key' => 'Request 2'] ) );
+$request3 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 3'] ) );
 
-$requestIds = [];
+$socketIds = [];
 
 sleep( 2 );
 
-$requestIds[] = $client->sendAsyncRequest( $request1 );
-$requestIds[] = $client->sendAsyncRequest( $request2 );
-$requestIds[] = $client->sendAsyncRequest( $request3 );
+/** @noinspection PhpUnhandledExceptionInspection */
+$socketIds[] = $client->sendAsyncRequest( $connection, $request1 );
+/** @noinspection PhpUnhandledExceptionInspection */
+$socketIds[] = $client->sendAsyncRequest( $connection, $request2 );
+/** @noinspection PhpUnhandledExceptionInspection */
+$socketIds[] = $client->sendAsyncRequest( $connection, $request3 );
 
-printLine( 'Sent requests with IDs: ' . implode( ', ', $requestIds ) );
+printLine( 'Sent requests with IDs: ' . implode( ', ', $socketIds ) );
 printLine( "\n" );
 printLine( '# Now reading ready responses... (reactive)' );
 printLine( 'CODE: while($client->hasUnhandledResponses())', 'red' );
@@ -241,6 +252,7 @@ while ( $client->hasUnhandledResponses() )
 {
 	echo '.';
 
+	/** @noinspection PhpUnhandledExceptionInspection */
 	foreach ( $client->readReadyResponses() as $response )
 	{
 		printLine( "\n" );
@@ -261,7 +273,7 @@ printLine( '      $client->sendAsyncRequest( $request2 );', 'red' );
 printLine( '      $client->sendAsyncRequest( $request3 );', 'red' );
 printLine( "\n" );
 
-$responseCallback = function ( ProvidesResponseData $response )
+$responseCallback = static function ( ProvidesResponseData $response )
 {
 	printLine( "\n" );
 	printLine( 'Callback notified!', 'green' );
@@ -269,29 +281,33 @@ $responseCallback = function ( ProvidesResponseData $response )
 	printResponse( $response );
 };
 
-$request1 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 2, 'key' => 'Request 1' ] ) );
-$request2 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 3, 'key' => 'Request 2' ] ) );
-$request3 = new PostRequest( $workerPath, http_build_query( [ 'sleep' => 1, 'key' => 'Request 3' ] ) );
+$request1 = new PostRequest( $workerPath, http_build_query( ['sleep' => 2, 'key' => 'Request 1'] ) );
+$request2 = new PostRequest( $workerPath, http_build_query( ['sleep' => 3, 'key' => 'Request 2'] ) );
+$request3 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 3'] ) );
 
 $request1->addResponseCallbacks( $responseCallback );
 $request2->addResponseCallbacks( $responseCallback );
 $request3->addResponseCallbacks( $responseCallback );
 
-$requestIds = [];
+$socketIds = [];
 
 sleep( 2 );
 
-$requestIds[] = $client->sendAsyncRequest( $request1 );
-$requestIds[] = $client->sendAsyncRequest( $request2 );
-$requestIds[] = $client->sendAsyncRequest( $request3 );
+/** @noinspection PhpUnhandledExceptionInspection */
+$socketIds[] = $client->sendAsyncRequest( $connection, $request1 );
+/** @noinspection PhpUnhandledExceptionInspection */
+$socketIds[] = $client->sendAsyncRequest( $connection, $request2 );
+/** @noinspection PhpUnhandledExceptionInspection */
+$socketIds[] = $client->sendAsyncRequest( $connection, $request3 );
 
-printLine( 'Sent requests with IDs: ' . implode( ', ', $requestIds ) );
+printLine( 'Sent requests with IDs: ' . implode( ', ', $socketIds ) );
 
 printLine( "\n" );
 printLine( '# Now waiting for responses... (reactive)' );
 printLine( 'CODE: $client->waitForResponses()', 'red' );
 printLine( "\n" );
 
+/** @noinspection PhpUnhandledExceptionInspection */
 $client->waitForResponses();
 
 printLine( "\n" );

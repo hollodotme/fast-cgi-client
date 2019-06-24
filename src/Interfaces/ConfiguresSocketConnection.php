@@ -34,4 +34,6 @@ interface ConfiguresSocketConnection
 	public function getConnectTimeout() : int;
 
 	public function getReadWriteTimeout() : int;
+
+	public function equals( ConfiguresSocketConnection $other ) : bool;
 }

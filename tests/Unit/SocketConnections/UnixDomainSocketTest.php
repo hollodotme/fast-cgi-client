@@ -25,6 +25,7 @@ namespace hollodotme\FastCGI\Tests\Unit\SocketConnections;
 
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\SocketConnections\Defaults;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\Exception;
@@ -77,5 +78,51 @@ final class UnixDomainSocketTest extends TestCase
 		$this->assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
 		$this->assertSame( 2000, $connection->getConnectTimeout() );
 		$this->assertSame( 3000, $connection->getReadWriteTimeout() );
+	}
+
+	/**
+	 * @param ConfiguresSocketConnection $connection
+	 * @param bool                       $expectedEqual
+	 *
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @dataProvider connectionProvider
+	 */
+	public function testCanCheckForEquality( ConfiguresSocketConnection $connection, bool $expectedEqual ) : void
+	{
+		$unixDomainConnection = new UnixDomainSocket( $this->getUnixDomainSocket() );
+
+		$this->assertSame( $expectedEqual, $unixDomainConnection->equals( $connection ) );
+		$this->assertSame( $expectedEqual, $connection->equals( $unixDomainConnection ) );
+	}
+
+	public function connectionProvider() : array
+	{
+		return [
+			[
+				'connection'    => new UnixDomainSocket( $this->getUnixDomainSocket() ),
+				'expectedEqual' => true,
+			],
+			[
+				'connection'    => new UnixDomainSocket(
+					$this->getUnixDomainSocket(),
+					1000,
+					Defaults::READ_WRITE_TIMEOUT
+				),
+				'expectedEqual' => false,
+			],
+			[
+				'connection'    => new UnixDomainSocket(
+					$this->getUnixDomainSocket(),
+					Defaults::CONNECT_TIMEOUT,
+					1000
+				),
+				'expectedEqual' => false,
+			],
+			[
+				'connection'    => new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() ),
+				'expectedEqual' => false,
+			],
+		];
 	}
 }

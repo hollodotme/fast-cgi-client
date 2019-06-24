@@ -46,7 +46,7 @@ final class SocketCollection implements Countable
 			return $socket;
 		}
 
-		throw new WriteFailedException( 'Could not allocate a new request ID' );
+		throw new WriteFailedException( 'Could not allocate a new socket ID' );
 	}
 
 	/**
@@ -107,7 +107,7 @@ final class SocketCollection implements Countable
 	{
 		if ( !$this->exists( $socketId ) )
 		{
-			throw new ReadFailedException( 'Socket not found for request ID: ' . $socketId );
+			throw new ReadFailedException( 'Socket not found for socket ID: ' . $socketId );
 		}
 	}
 
@@ -121,7 +121,7 @@ final class SocketCollection implements Countable
 		unset( $this->sockets[ $socketId ] );
 	}
 
-	public function getIdleSocket() : ?Socket
+	public function getIdleSocket( ConfiguresSocketConnection $connection ) : ?Socket
 	{
 		if ( $this->isEmpty() )
 		{
@@ -130,6 +130,11 @@ final class SocketCollection implements Countable
 
 		foreach ( $this->sockets as $socket )
 		{
+			if ( !$socket->usesConnection( $connection ) )
+			{
+				continue;
+			}
+
 			if ( !$socket->isIdle() )
 			{
 				continue;

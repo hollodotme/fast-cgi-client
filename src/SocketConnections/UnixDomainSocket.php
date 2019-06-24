@@ -65,4 +65,11 @@ class UnixDomainSocket implements ConfiguresSocketConnection
 	{
 		return $this->readWriteTimeout;
 	}
+
+	public function equals( ConfiguresSocketConnection $other ) : bool
+	{
+		/** @noinspection TypeUnsafeComparisonInspection */
+		/** @noinspection PhpNonStrictObjectEqualityInspection */
+		return $this == $other;
+	}
 }

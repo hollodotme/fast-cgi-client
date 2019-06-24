@@ -47,7 +47,7 @@ final class ResponseTest extends TestCase
 
 		$error    = '';
 		$duration = 0.54321;
-		$response = new Response( 1234, $output, $error, $duration );
+		$response = new Response( $output, $error, $duration );
 
 		$expectedHeaders = [
 			'X-Powered-By' => [
@@ -122,7 +122,7 @@ final class ResponseTest extends TestCase
 		            . 'test';
 		$error    = '';
 		$duration = 0.54321;
-		$response = new Response( 1234, $output, $error, $duration );
+		$response = new Response( $output, $error, $duration );
 
 		$expectedBody = "unit\r\ntest";
 
@@ -143,11 +143,10 @@ final class ResponseTest extends TestCase
 		            . 'test';
 		$error    = '';
 		$duration = 0.54321;
-		$response = new Response( 1234, $output, $error, $duration );
+		$response = new Response( $output, $error, $duration );
 
 		$this->assertSame( $output, $response->getOutput() );
 		$this->assertSame( $duration, $response->getDuration() );
-		$this->assertSame( 1234, $response->getRequestId() );
 	}
 
 	/**
@@ -164,12 +163,11 @@ final class ResponseTest extends TestCase
 		            . 'File not found.';
 		$error    = 'Primary script unknown';
 		$duration = 0.54321;
-		$response = new Response( 1234, $output, $error, $duration );
+		$response = new Response( $output, $error, $duration );
 
 		$this->assertSame( $output, $response->getOutput() );
 		$this->assertSame( 'File not found.', $response->getBody() );
 		$this->assertSame( $error, $response->getError() );
 		$this->assertSame( $duration, $response->getDuration() );
-		$this->assertSame( 1234, $response->getRequestId() );
 	}
 }
