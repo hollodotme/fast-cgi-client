@@ -14,6 +14,15 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CH
 
   in order to allow sending (equal) requests to different FastCGI servers using the same `Client` instance. - [#45]
 
+* Removed method `ProvidesResponseData#getRequestId() : int` and `Response#getRequestId() : int` resepctivly in order 
+  to avoid confusion about the semantics of the term "request ID" and misusage by assuming it is a unique ID for each request (which it is not).
+  Also the first constructor parameter of the `Response` class was removed wiht this change. - [#39]
+  
+* Renamed all `$requestId(s)` parameters to `$socketId(s)` in order to reflect the correct semantics of the ID. - [#39]
+
+* Renamed method `Client#getRequestIdsHavingResponse() : array<int>` to `Client#getSocketIdsHavingResponse() : array<int>` in order to reflect 
+  the correct semantics of the returned array of IDs. - [#39] 
+
 ## [3.0.0-alpha] - 2019-04-30
 
 ### Backwards incompatible changes (BC breaks)
@@ -300,6 +309,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#35]: https://github.com/hollodotme/fast-cgi-client/issues/35
 [#36]: https://github.com/hollodotme/fast-cgi-client/issues/36
 [#37]: https://github.com/hollodotme/fast-cgi-client/issues/37
+[#39]: https://github.com/hollodotme/fast-cgi-client/issues/39
 [#40]: https://github.com/hollodotme/fast-cgi-client/issues/40
 [#41]: https://github.com/hollodotme/fast-cgi-client/issues/41
 [#45]: https://github.com/hollodotme/fast-cgi-client/issues/45
