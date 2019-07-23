@@ -59,31 +59,33 @@ use const STREAM_SHUT_RDWR;
 
 final class Socket
 {
-	private const BEGIN_REQUEST        = 1;
+	private const BEGIN_REQUEST    = 1;
 
-	private const END_REQUEST          = 3;
+	private const ABORT_REQUEST    = 2;
 
-	private const PARAMS               = 4;
+	private const END_REQUEST      = 3;
 
-	private const STDIN                = 5;
+	private const PARAMS           = 4;
 
-	private const STDOUT               = 6;
+	private const STDIN            = 5;
 
-	private const STDERR               = 7;
+	private const STDOUT           = 6;
 
-	private const RESPONDER            = 1;
+	private const STDERR           = 7;
 
-	private const REQUEST_COMPLETE     = 0;
+	private const RESPONDER        = 1;
 
-	private const CANT_MPX_CONN        = 1;
+	private const REQUEST_COMPLETE = 0;
 
-	private const OVERLOADED           = 2;
+	private const CANT_MPX_CONN    = 1;
 
-	private const UNKNOWN_ROLE         = 3;
+	private const OVERLOADED       = 2;
 
-	private const HEADER_LEN           = 8;
+	private const UNKNOWN_ROLE     = 3;
 
-	private const SOCK_STATE_INIT      = 1;
+	private const HEADER_LEN       = 8;
+
+	private const SOCK_STATE_INIT  = 1;
 
 	private const SOCK_STATE_BUSY      = 2;
 
