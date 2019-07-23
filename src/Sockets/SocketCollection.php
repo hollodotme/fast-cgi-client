@@ -34,16 +34,21 @@ final class SocketCollection implements Countable
 	{
 		for ( $i = 0; $i < 10; $i++ )
 		{
-			$socket = new Socket( $connection, $packetEncoder, $nameValuePairEncoder );
+			$socketId = SocketId::new();
 
-			if ( $this->exists( $socket->getId() ) )
+			if ( $this->exists( $socketId->getValue() ) )
 			{
 				continue;
 			}
 
-			$this->sockets[ $socket->getId() ] = $socket;
+			$this->sockets[ $socketId->getValue() ] = new Socket(
+				$socketId,
+				$connection,
+				$packetEncoder,
+				$nameValuePairEncoder
+			);
 
-			return $socket;
+			return $this->sockets[ $socketId->getValue() ];
 		}
 
 		throw new WriteFailedException( 'Could not allocate a new socket ID' );

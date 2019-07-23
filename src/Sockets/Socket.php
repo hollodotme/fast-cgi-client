@@ -46,7 +46,6 @@ use function fwrite;
 use function is_resource;
 use function microtime;
 use function ord;
-use function random_int;
 use function str_repeat;
 use function stream_get_meta_data;
 use function stream_select;
@@ -59,33 +58,33 @@ use const STREAM_SHUT_RDWR;
 
 final class Socket
 {
-	private const BEGIN_REQUEST    = 1;
+	private const BEGIN_REQUEST        = 1;
 
-	private const ABORT_REQUEST    = 2;
+	private const ABORT_REQUEST        = 2;
 
-	private const END_REQUEST      = 3;
+	private const END_REQUEST          = 3;
 
-	private const PARAMS           = 4;
+	private const PARAMS               = 4;
 
-	private const STDIN            = 5;
+	private const STDIN                = 5;
 
-	private const STDOUT           = 6;
+	private const STDOUT               = 6;
 
-	private const STDERR           = 7;
+	private const STDERR               = 7;
 
-	private const RESPONDER        = 1;
+	private const RESPONDER            = 1;
 
-	private const REQUEST_COMPLETE = 0;
+	private const REQUEST_COMPLETE     = 0;
 
-	private const CANT_MPX_CONN    = 1;
+	private const CANT_MPX_CONN        = 1;
 
-	private const OVERLOADED       = 2;
+	private const OVERLOADED           = 2;
 
-	private const UNKNOWN_ROLE     = 3;
+	private const UNKNOWN_ROLE         = 3;
 
-	private const HEADER_LEN       = 8;
+	private const HEADER_LEN           = 8;
 
-	private const SOCK_STATE_INIT  = 1;
+	private const SOCK_STATE_INIT      = 1;
 
 	private const SOCK_STATE_BUSY      = 2;
 
@@ -95,7 +94,7 @@ final class Socket
 
 	public const  STREAM_SELECT_USEC   = 200000;
 
-	/** @var int */
+	/** @var SocketId */
 	private $id;
 
 	/** @var ConfiguresSocketConnection */
@@ -129,6 +128,7 @@ final class Socket
 	private $status;
 
 	/**
+	 * @param SocketId                   $socketId
 	 * @param ConfiguresSocketConnection $connection
 	 * @param EncodesPacket              $packetEncoder
 	 * @param EncodesNameValuePair       $nameValuePairEncoder
@@ -136,12 +136,13 @@ final class Socket
 	 * @throws Exception
 	 */
 	public function __construct(
+		SocketId $socketId,
 		ConfiguresSocketConnection $connection,
 		EncodesPacket $packetEncoder,
 		EncodesNameValuePair $nameValuePairEncoder
 	)
 	{
-		$this->id                   = random_int( 1, (1 << 16) - 1 );
+		$this->id                   = $socketId;
 		$this->connection           = $connection;
 		$this->packetEncoder        = $packetEncoder;
 		$this->nameValuePairEncoder = $nameValuePairEncoder;
@@ -153,7 +154,7 @@ final class Socket
 
 	public function getId() : int
 	{
-		return $this->id;
+		return $this->id->getValue();
 	}
 
 	public function usesConnection( ConfiguresSocketConnection $connection ) : bool
@@ -333,17 +334,21 @@ final class Socket
 		$requestPackets = $this->packetEncoder->encodePacket(
 			self::BEGIN_REQUEST,
 			chr( 0 ) . chr( self::RESPONDER ) . chr( 1 ) . str_repeat( chr( 0 ), 5 ),
-			$this->id
+			$this->id->getValue()
 		);
 
 		$paramsRequest = $this->nameValuePairEncoder->encodePairs( $request->getParams() );
 
 		if ( $paramsRequest )
 		{
-			$requestPackets .= $this->packetEncoder->encodePacket( self::PARAMS, $paramsRequest, $this->id );
+			$requestPackets .= $this->packetEncoder->encodePacket(
+				self::PARAMS,
+				$paramsRequest,
+				$this->id->getValue()
+			);
 		}
 
-		$requestPackets .= $this->packetEncoder->encodePacket( self::PARAMS, '', $this->id );
+		$requestPackets .= $this->packetEncoder->encodePacket( self::PARAMS, '', $this->id->getValue() );
 
 		if ( $request->getContent() )
 		{
@@ -357,14 +362,14 @@ final class Socket
 						$offset,
 						self::REQ_MAX_CONTENT_SIZE
 					),
-					$this->id
+					$this->id->getValue()
 				);
 				$offset         += self::REQ_MAX_CONTENT_SIZE;
 			}
 			while ( $offset < $request->getContentLength() );
 		}
 
-		$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, '', $this->id );
+		$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, '', $this->id->getValue() );
 
 		return $requestPackets;
 	}
@@ -431,7 +436,7 @@ final class Socket
 				continue;
 			}
 
-			if ( self::END_REQUEST === $packetType && $packet['requestId'] === $this->id )
+			if ( self::END_REQUEST === $packetType && $packet['requestId'] === $this->id->getValue() )
 			{
 				break;
 			}
@@ -579,7 +584,7 @@ final class Socket
 	{
 		if ( null !== $this->resource )
 		{
-			$resources[ (string)$this->id ] = $this->resource;
+			$resources[ (string)$this->id->getValue() ] = $this->resource;
 		}
 	}
 }

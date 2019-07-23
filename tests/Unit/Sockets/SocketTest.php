@@ -36,6 +36,7 @@ use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use hollodotme\FastCGI\Sockets\Socket;
+use hollodotme\FastCGI\Sockets\SocketId;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\ExpectationFailedException;
@@ -83,7 +84,7 @@ final class SocketTest extends TestCase
 			$readWriteTimeout
 		);
 
-		return new Socket( $connection, $packetEncoder, $nameValuePairEncoder );
+		return new Socket( SocketId::new(), $connection, $packetEncoder, $nameValuePairEncoder );
 	}
 
 	/**
@@ -352,12 +353,14 @@ final class SocketTest extends TestCase
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
 		$unixDomainSocket = new Socket(
+			SocketId::new(),
 			$unixDomainConnection,
 			$packetEncoder,
 			$nameValuePairEncoder
 		);
 
 		$networkSocket = new Socket(
+			SocketId::new(),
 			$networkConnection,
 			$packetEncoder,
 			$nameValuePairEncoder
