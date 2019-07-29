@@ -22,14 +22,14 @@ Please see the following links for earlier releases:
 * PHP >= 7.1 [v2.0.0], [v2.0.1], [v2.1.0], [v2.2.0], [v2.3.0], [v2.4.0], [v2.4.1], [v2.4.2], [v2.4.3], [v2.5.0], [v2.6.0], [v2.7.0], [v2.7.1],
   [v2.7.2], [v3.0.0-alpha], [v3.0.0-beta]
 
-Read more about the journey to and changes in `v2.6.0` in [this blog post|](wiki/Background-Info-FastCgiClient-Version-2.6.0).
+Read more about the journey to and changes in `v2.6.0` in [this blog post|](/hollodotme/fast-cgi-client/wiki/Background-Info-FastCgiClient-Version-2.6.0).
 
 ---
 
 You can find an experimental use-case in my related blog posts:
  
-* [Experimental async PHP vol. 1](wiki/Experimental-Async-Php-Volume-1)
-* [Experimental async PHP vol. 2](wiki/Experimental-Async-Php-Volume-2)
+* [Experimental async PHP vol. 1](/hollodotme/fast-cgi-client/wiki/Experimental-Async-Php-Volume-1)
+* [Experimental async PHP vol. 2](/hollodotme/fast-cgi-client/wiki/Experimental-Async-Php-Volume-2)
 
 You can also find slides of my talks about this project on [speakerdeck.com](https://speakerdeck.com/hollodotme).
 
