@@ -43,6 +43,7 @@ use ReflectionClass;
 use RuntimeException;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
+use function http_build_query;
 
 final class NetworkSocketTest extends TestCase
 {
