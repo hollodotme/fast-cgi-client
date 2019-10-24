@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [3.0.1] - 2019-10-24
+
+### Added
+
+* PHP 7.4 CI pipeline and docker-compose environment
+* Explicitly set `error_reporting=-1` for CI and tests in order to capture deprecation warnings
+
+### Fixed
+
+* Replace usage of curly brace syntax for accessing string offsets, which is deprecated in PHP 7.4 - [#51] 
+
 ## [3.0.0] - 2019-07-29
 
 **Please take notice of the backwards incompatible changes (BC breaks) documented below 
@@ -291,6 +302,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[3.0.1]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0-beta...v3.0.0
 [3.0.0-beta]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0-alpha...v3.0.0-beta
 [3.0.0-alpha]: https://github.com/hollodotme/fast-cgi-client/compare/v2.7.2...v3.0.0-alpha
@@ -329,3 +341,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#40]: https://github.com/hollodotme/fast-cgi-client/issues/40
 [#41]: https://github.com/hollodotme/fast-cgi-client/issues/41
 [#45]: https://github.com/hollodotme/fast-cgi-client/issues/45
+[#51]: https://github.com/hollodotme/fast-cgi-client/issues/51
