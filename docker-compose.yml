@@ -34,6 +34,17 @@ services:
     volumes:
       - ./:/repo
 
+  php74:
+    build:
+      dockerfile: 7.4/Dockerfile
+      context: .docker/php
+    container_name: fcc_php74
+    restart: "no"
+    networks:
+      - fcc_network
+    volumes:
+      - ./:/repo
+
   composer:
     image: composer:latest
     container_name: fcc_composer

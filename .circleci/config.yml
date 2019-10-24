@@ -12,6 +12,9 @@ workdir-72: &workdir-72
 workdir-73: &workdir-73
   working_directory: /repo/7.3
 
+workdir-74: &workdir-74
+  working_directory: /repo/7.4
+
 # Define steps to build docker images for each PHP version
 shared-build: &shared-build
   working_directory: ~/repo
@@ -22,7 +25,7 @@ shared-build: &shared-build
     - run:
         name: Build docker image
         command: >
-          docker build
+          docker build --pull
           -t "hollodotme/fast-cgi-client:$PHP_VERSION-fpm"
           -f .docker/php/$PHP_VERSION/Dockerfile
           .docker/php
@@ -119,7 +122,7 @@ shared-unit-tests: &shared-unit-tests
 
     - run:
         name: Run unit tests
-        command: php -d auto_prepend_file=build/xdebug-filter.php vendor/bin/phpunit$PHPUNIT_VERSION.phar -c build --testsuite Unit --log-junit build/logs/junit/junit.xml --coverage-html build/logs/coverage --coverage-clover=coverage.xml
+        command: php -d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php vendor/bin/phpunit$PHPUNIT_VERSION.phar -c build --testsuite Unit --log-junit build/logs/junit/junit.xml --coverage-html build/logs/coverage --coverage-clover=coverage.xml
 
     - run:
         name: Upload code coverage to codecov.io
@@ -152,7 +155,7 @@ shared-integration-tests: &shared-integration-tests
 
     - run:
         name: Run integration tests
-        command: php -d auto_prepend_file=build/xdebug-filter.php vendor/bin/phpunit$PHPUNIT_VERSION.phar -c build --testsuite Integration --log-junit build/logs/junit/junit.xml
+        command: php -d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php vendor/bin/phpunit$PHPUNIT_VERSION.phar -c build --testsuite Integration --log-junit build/logs/junit/junit.xml
 
     - store_test_results:
         path: build/logs/junit
@@ -184,6 +187,9 @@ jobs:
   "php-7.3-build":
     <<: *shared-build
 
+  "php-7.4-build":
+    <<: *shared-build
+
   "php-7.1-code":
     <<: *shared-code
     <<: *workdir-71
@@ -195,6 +201,10 @@ jobs:
   "php-7.3-code":
     <<: *shared-code
     <<: *workdir-73
+
+  "php-7.4-code":
+    <<: *shared-code
+    <<: *workdir-74
 
   "php-7.1-linting":
     <<: *shared-linting
@@ -208,6 +218,10 @@ jobs:
     <<: *shared-linting
     <<: *workdir-73
 
+  "php-7.4-linting":
+    <<: *shared-linting
+    <<: *workdir-74
+
   "php-7.1-unit-tests":
     <<: *shared-unit-tests
     <<: *workdir-71
@@ -219,6 +233,10 @@ jobs:
   "php-7.3-unit-tests":
     <<: *shared-unit-tests
     <<: *workdir-73
+
+  "php-7.4-unit-tests":
+    <<: *shared-unit-tests
+    <<: *workdir-74
 
   "php-7.1-integration-tests":
     <<: *shared-integration-tests
@@ -232,6 +250,10 @@ jobs:
     <<: *shared-integration-tests
     <<: *workdir-73
 
+  "php-7.4-integration-tests":
+    <<: *shared-integration-tests
+    <<: *workdir-74
+
   "php-7.1-phpstan":
     <<: *shared-phpstan
     <<: *workdir-71
@@ -243,6 +265,10 @@ jobs:
   "php-7.3-phpstan":
     <<: *shared-phpstan
     <<: *workdir-73
+
+  "php-7.4-phpstan":
+    <<: *shared-phpstan
+    <<: *workdir-74
 
 # Define the workflows for each PHP version
 workflows:
@@ -330,3 +356,30 @@ workflows:
           requires:
             - "php-7.3-linting"
             - "php-7.3-phpstan"
+
+      # PHP 7.4 jobs
+
+      - "php-7.4-build":
+          context: php74
+      - "php-7.4-code":
+          context: php74
+          requires:
+            - "php-7.4-build"
+      - "php-7.4-linting":
+          context: php74
+          requires:
+            - "php-7.4-code"
+      - "php-7.4-phpstan":
+          context: php74
+          requires:
+            - "php-7.4-code"
+      - "php-7.4-unit-tests":
+          context: php74
+          requires:
+            - "php-7.4-linting"
+            - "php-7.4-phpstan"
+      - "php-7.4-integration-tests":
+          context: php74
+          requires:
+            - "php-7.4-linting"
+            - "php-7.4-phpstan"
