@@ -54,12 +54,12 @@ final class PacketEncoder implements EncodesPacket
 	public function decodeHeader( string $data ) : array
 	{
 		$header                  = [];
-		$header['version']       = ord( $data{0} );
-		$header['type']          = ord( $data{1} );
-		$header['requestId']     = (ord( $data{2} ) << 8) + ord( $data{3} );
-		$header['contentLength'] = (ord( $data{4} ) << 8) + ord( $data{5} );
-		$header['paddingLength'] = ord( $data{6} );
-		$header['reserved']      = ord( $data{7} );
+		$header['version']       = ord( $data[0] );
+		$header['type']          = ord( $data[1] );
+		$header['requestId']     = (ord( $data[2] ) << 8) + ord( $data[3] );
+		$header['contentLength'] = (ord( $data[4] ) << 8) + ord( $data[5] );
+		$header['paddingLength'] = ord( $data[6] );
+		$header['reserved']      = ord( $data[7] );
 
 		return $header;
 	}
