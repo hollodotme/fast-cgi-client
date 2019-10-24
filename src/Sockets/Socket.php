@@ -419,7 +419,13 @@ final class Socket
 
 		do
 		{
-			$packet     = $this->readPacket();
+			$packet = $this->readPacket();
+
+			if ( null === $packet )
+			{
+				break;
+			}
+
 			$packetType = (int)$packet['type'];
 
 			if ( self::STDERR === $packetType )
@@ -444,7 +450,7 @@ final class Socket
 		while ( null !== $packet );
 
 		$this->handleNullPacket( $packet );
-		$character = (string)$packet['content'][4];
+		$character = ((string)$packet['content'])[4];
 		$this->guardRequestCompleted( ord( $character ) );
 
 		$this->response = new Response(
