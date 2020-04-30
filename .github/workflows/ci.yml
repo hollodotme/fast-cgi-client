@@ -56,7 +56,7 @@ jobs:
           -c build
           --coverage-clover=/app/coverage.xml
         env:
-          PHP_OPTIONS="-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
+          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
@@ -68,7 +68,7 @@ jobs:
           -c build
           --coverage-clover=/app/coverage.xml
         env:
-          PHP_OPTIONS="-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
+          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
@@ -80,7 +80,7 @@ jobs:
           -c build
           --coverage-clover=/app/coverage.xml
         env:
-          PHP_OPTIONS="-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
+          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
@@ -92,7 +92,7 @@ jobs:
           -c build
           --coverage-clover=/app/coverage.xml
         env:
-          PHP_OPTIONS="-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
+          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
