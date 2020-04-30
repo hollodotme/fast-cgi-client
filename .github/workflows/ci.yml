@@ -56,6 +56,7 @@ jobs:
           -c build
           --coverage-clover=/app/coverage.xml
         env:
+          COMPOSE_INTERACTIVE_NO_CLI: 1
           PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
@@ -68,6 +69,7 @@ jobs:
           -c build
           --coverage-clover=/app/coverage.xml
         env:
+          COMPOSE_INTERACTIVE_NO_CLI: 1
           PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
@@ -80,6 +82,7 @@ jobs:
           -c build
           --coverage-clover=/app/coverage.xml
         env:
+          COMPOSE_INTERACTIVE_NO_CLI: 1
           PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
@@ -92,6 +95,7 @@ jobs:
           -c build
           --coverage-clover=/app/coverage.xml
         env:
+          COMPOSE_INTERACTIVE_NO_CLI: 1
           PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
