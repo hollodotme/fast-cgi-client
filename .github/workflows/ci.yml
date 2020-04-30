@@ -1,4 +1,4 @@
-name: FastCGI Client CI PHP 7.4
+name: FastCGI Client CI PHP 7.1 - 7.4
 
 on:
   push:
@@ -37,20 +37,62 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Build docker image
-        run: docker build --pull -t fastcgi_php -f .docker/php/7.4/Dockerfile .docker/php
+      - name: Build docker images
+        run: docker-compose build --pull --parallel
+
+      - name: Pull docker images
+        run: docker-compose pull
 
       - name: Composer update
-        run: docker run --rm -v $(pwd):/app composer update -o -v --ignore-platform-reqs
+        run: docker-compose run --rm composer
 
-      - name: Run unit tests
+      - name: Bring containers up
+        run: docker-compose up -d --force-recreate php71 php72 php73 php74
+
+      - name: Run unit tests on PHP 7.1
         run: >
-          docker run --rm -v $(pwd):/app fastcgi_php php
-          -dauto_prepend_file=/app/build/xdebug-filter.php
-          -derror_reporting=-1
-          /app/vendor/bin/phpunit9.phar
-          -c /app/build/phpunit.xml
+          docker-compose exec php71 php ${PHP_OPTIONS}
+          vendor/bin/phpunit7.phar
+          -c build
           --coverage-clover=/app/coverage.xml
+        env:
+          PHP_OPTIONS="-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
+
+      - name: Upload code coverage to codecov.io
+        run: bash <(curl -s https://codecov.io/bash)
+
+      - name: Run unit tests on PHP 7.2
+        run: >
+          docker-compose exec php72 php ${PHP_OPTIONS}
+          vendor/bin/phpunit8.phar
+          -c build
+          --coverage-clover=/app/coverage.xml
+        env:
+          PHP_OPTIONS="-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
+
+      - name: Upload code coverage to codecov.io
+        run: bash <(curl -s https://codecov.io/bash)
+
+      - name: Run unit tests on PHP 7.3
+        run: >
+          docker-compose exec php73 php ${PHP_OPTIONS}
+          vendor/bin/phpunit9.phar
+          -c build
+          --coverage-clover=/app/coverage.xml
+        env:
+          PHP_OPTIONS="-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
+
+      - name: Upload code coverage to codecov.io
+        run: bash <(curl -s https://codecov.io/bash)
+
+      - name: Run unit tests on PHP 7.4
+        run: >
+          docker-compose exec php74 php ${PHP_OPTIONS}
+          vendor/bin/phpunit9.phar
+          -c build
+          --coverage-clover=/app/coverage.xml
+        env:
+          PHP_OPTIONS="-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
