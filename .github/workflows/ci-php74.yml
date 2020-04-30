@@ -1,0 +1,89 @@
+name: FastCGI Client CI PHP 7.4
+
+on:
+  push:
+    branches:
+      - master
+      - development
+
+    tags:
+      - 'v*.*.*'
+
+  # Run tests for any PRs.
+  pull_request:
+
+jobs:
+  static-analyzers:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Check for PHP parse errors
+        run: docker run --rm -v $(pwd):/app php:7.4-cli -c 'find /app/src -type f -name "*.php" -print0 | xargs -0 -n1 -P4 php -l -n | (! grep -v "No syntax errors detected" )'
+
+      - name: Composer validate
+        run: docker run --rm -v $(pwd):/app composer validate
+
+      - name: Composer update
+        run: docker run --rm -v $(pwd):/app composer update -o -v --ignore-platform-reqs
+
+      - name: Run PHPStan
+        run: docker run --rm -v $(pwd):/app phpstan/phpstan analyze --level=max /app/src
+
+  unit-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build docker image
+        run: docker build --pull -t fastcgi_php -f .docker/php/7.4/Dockerfile .docker/php
+
+      - name: Composer update
+        run: docker run --rm -v $(pwd):/app composer update -o -v --ignore-platform-reqs
+
+      - name: Run unit tests
+        run: >
+          docker run --rm -v $(pwd):/app fastcgi_php php
+          -dauto_prepend_file=/app/build/xdebug-filter.php
+          -derror_reporting=-1
+          /app/vendor/bin/phpunit9.phar
+          -c /app/build/phpunit.xml
+          --coverage-clover=/app/coverage.xml
+
+      - name: Upload code coverage to codecov.io
+        run: bash <(curl -s https://codecov.io/bash)
+
+  release:
+    needs:
+      - unit-tests
+      - static-analyzers
+
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Extract version
+        id: data
+        run: |
+          # Strip git ref prefix from version
+          RELEASE_VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && RELEASE_VERSION=$(echo $RELEASE_VERSION | sed -e 's/^v//')
+
+          echo $RELEASE_VERSION
+          echo "##[set-output name=version;]$RELEASE_VERSION"
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          name: Version ${{ steps.data.outputs.version }}
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
