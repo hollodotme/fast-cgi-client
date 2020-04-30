@@ -50,6 +50,11 @@
         "url": "https://phar.phpunit.de/phpunit-8.phar",
         "replace": true,
         "only-dev": true
+      },
+      "phpunit9": {
+        "url": "https://phar.phpunit.de/phpunit-9.phar",
+        "replace": true,
+        "only-dev": true
       }
     }
   }
