@@ -47,7 +47,7 @@ jobs:
         run: docker-compose run --rm composer
 
       - name: Bring containers up
-        run: docker-compose up -d --force-recreate php71 php72 php73 php74
+        run: docker-compose up -d --force-recreate php71
 
       - name: Run unit tests on PHP 7.1
         run: >
@@ -62,6 +62,11 @@ jobs:
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
 
+      - name: Bring containers up
+        run: |
+          docker-compose down
+          docker-compose up -d --force-recreate php72
+
       - name: Run unit tests on PHP 7.2
         run: >
           docker-compose exec -T php72 php ${PHP_OPTIONS}
@@ -75,6 +80,11 @@ jobs:
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
 
+      - name: Bring containers up
+        run: |
+          docker-compose down
+          docker-compose up -d --force-recreate php73
+
       - name: Run unit tests on PHP 7.3
         run: >
           docker-compose exec -T php73 php ${PHP_OPTIONS}
@@ -87,6 +97,11 @@ jobs:
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
+
+      - name: Bring containers up
+        run: |
+          docker-compose down
+          docker-compose up -d --force-recreate php74
 
       - name: Run unit tests on PHP 7.4
         run: >
