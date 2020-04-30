@@ -100,7 +100,7 @@ final class Socket
 	/** @var ConfiguresSocketConnection */
 	private $connection;
 
-	/** @var resource */
+	/** @var null|resource */
 	private $resource;
 
 	/** @var EncodesPacket */
@@ -164,6 +164,11 @@ final class Socket
 
 	public function hasResponse() : bool
 	{
+		if ( !is_resource( $this->resource ) )
+		{
+			return false;
+		}
+
 		$reads  = [$this->resource];
 		$writes = $excepts = null;
 
@@ -230,7 +235,7 @@ final class Socket
 			return true;
 		}
 
-		/** @var false|array $metaData */
+		/** @var false|array<string, mixed> $metaData */
 		$metaData = @stream_get_meta_data( $this->resource );
 
 		if ( false === $metaData )
@@ -321,6 +326,11 @@ final class Socket
 
 	private function setStreamTimeout( int $timeoutMs ) : bool
 	{
+		if ( !is_resource( $this->resource ) )
+		{
+			return false;
+		}
+
 		return stream_set_timeout(
 			$this->resource,
 			(int)floor( $timeoutMs / 1000 ),
@@ -382,6 +392,11 @@ final class Socket
 	 */
 	private function write( string $data ) : void
 	{
+		if ( !is_resource( $this->resource ) )
+		{
+			throw new WriteFailedException( 'Failed to write request to socket [broken pipe]' );
+		}
+
 		$writeResult = fwrite( $this->resource, $data );
 		$flushResult = fflush( $this->resource );
 
@@ -450,7 +465,7 @@ final class Socket
 		while ( null !== $packet );
 
 		$this->handleNullPacket( $packet );
-		$character = ((string)$packet['content'])[4];
+		$character = isset( $packet['content'] ) ? ((string)$packet['content'])[4] : '';
 		$this->guardRequestCompleted( ord( $character ) );
 
 		$this->response = new Response(
@@ -465,8 +480,16 @@ final class Socket
 		return $this->response;
 	}
 
+	/**
+	 * @return array<string, mixed>|null
+	 */
 	private function readPacket() : ?array
 	{
+		if ( !is_resource( $this->resource ) )
+		{
+			return null;
+		}
+
 		if ( $header = fread( $this->resource, self::HEADER_LEN ) )
 		{
 			$packet            = $this->packetEncoder->decodeHeader( $header );
@@ -486,7 +509,7 @@ final class Socket
 			if ( $packet['paddingLength'] )
 			{
 				/** @noinspection UnusedFunctionResultInspection */
-				fread( $this->resource, $packet['paddingLength'] );
+				fread( $this->resource, (int)$packet['paddingLength'] );
 			}
 
 			return $packet;
@@ -504,14 +527,14 @@ final class Socket
 	}
 
 	/**
-	 * @param array|null $packet
+	 * @param array<string, mixed>|null $packet
 	 *
 	 * @throws ReadFailedException
 	 * @throws TimedoutException
 	 */
 	private function handleNullPacket( ?array $packet ) : void
 	{
-		if ( $packet === null )
+		if ( $packet === null && is_resource( $this->resource ) )
 		{
 			$info = stream_get_meta_data( $this->resource );
 
@@ -586,6 +609,9 @@ final class Socket
 		}
 	}
 
+	/**
+	 * @param array<int, resource> $resources
+	 */
 	public function collectResource( array &$resources ) : void
 	{
 		if ( null !== $this->resource )

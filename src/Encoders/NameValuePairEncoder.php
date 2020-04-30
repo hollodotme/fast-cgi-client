@@ -34,6 +34,11 @@ use function strlen;
  */
 final class NameValuePairEncoder implements EncodesNameValuePair
 {
+	/**
+	 * @param array<string, string> $pairs
+	 *
+	 * @return string
+	 */
 	public function encodePairs( array $pairs ) : string
 	{
 		$encoded = '';
@@ -81,6 +86,12 @@ final class NameValuePairEncoder implements EncodesNameValuePair
 		return $nameValuePair . $name . $value;
 	}
 
+	/**
+	 * @param string $data
+	 * @param int    $length
+	 *
+	 * @return array<string, string>
+	 */
 	public function decodePairs( string $data, int $length = -1 ) : array
 	{
 		$array = [];

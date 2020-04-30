@@ -31,5 +31,10 @@ interface EncodesPacket
 {
 	public function encodePacket( int $type, string $content, int $requestId ) : string;
 
+	/**
+	 * @param string $data
+	 *
+	 * @return array<string, int>
+	 */
 	public function decodeHeader( string $data ) : array;
 }

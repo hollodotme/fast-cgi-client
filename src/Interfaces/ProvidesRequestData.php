@@ -55,15 +55,30 @@ interface ProvidesRequestData
 
 	public function getContent() : string;
 
+	/**
+	 * @return array<string, mixed>
+	 */
 	public function getCustomVars() : array;
 
+	/**
+	 * @return array<string, mixed>
+	 */
 	public function getParams() : array;
 
 	public function getRequestUri() : string;
 
+	/**
+	 * @return array<callable>
+	 */
 	public function getResponseCallbacks() : array;
 
+	/**
+	 * @return array<callable>
+	 */
 	public function getFailureCallbacks() : array;
 
+	/**
+	 * @return array<callable>
+	 */
 	public function getPassThroughCallbacks() : array;
 }

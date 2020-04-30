@@ -69,19 +69,19 @@ abstract class AbstractRequest implements ProvidesRequestData
 	/** @var string */
 	private $content;
 
-	/** @var array */
+	/** @var array<string, mixed> */
 	private $customVars = [];
 
 	/** @var string */
 	private $requestUri = '';
 
-	/** @var array|callable[] */
+	/** @var array<callable> */
 	private $responseCallbacks = [];
 
-	/** @var array|callable[] */
+	/** @var array<callable> */
 	private $failureCallbacks = [];
 
-	/** @var array|callable[] */
+	/** @var array<callable> */
 	private $passThroughCallbacks = [];
 
 	public function __construct( string $scriptFilename, string $content )
@@ -181,11 +181,18 @@ abstract class AbstractRequest implements ProvidesRequestData
 		$this->contentLength = strlen( $content );
 	}
 
+	/**
+	 * @param string $key
+	 * @param mixed  $value
+	 */
 	public function setCustomVar( string $key, $value ) : void
 	{
 		$this->customVars[ $key ] = $value;
 	}
 
+	/**
+	 * @param array<string, mixed> $vars
+	 */
 	public function addCustomVars( array $vars ) : void
 	{
 		$this->customVars = array_merge( $this->customVars, $vars );
@@ -196,6 +203,9 @@ abstract class AbstractRequest implements ProvidesRequestData
 		$this->customVars = [];
 	}
 
+	/**
+	 * @return array<string, mixed>
+	 */
 	public function getCustomVars() : array
 	{
 		return $this->customVars;
@@ -216,6 +226,9 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->contentLength;
 	}
 
+	/**
+	 * @return array<string, mixed>
+	 */
 	public function getParams() : array
 	{
 		return array_merge(
@@ -248,6 +261,9 @@ abstract class AbstractRequest implements ProvidesRequestData
 		$this->requestUri = $requestUri;
 	}
 
+	/**
+	 * @return array<callable>
+	 */
 	public function getResponseCallbacks() : array
 	{
 		return $this->responseCallbacks;
@@ -258,6 +274,9 @@ abstract class AbstractRequest implements ProvidesRequestData
 		$this->responseCallbacks = array_merge( $this->responseCallbacks, $callbacks );
 	}
 
+	/**
+	 * @return array<callable>
+	 */
 	public function getFailureCallbacks() : array
 	{
 		return $this->failureCallbacks;
@@ -268,6 +287,9 @@ abstract class AbstractRequest implements ProvidesRequestData
 		$this->failureCallbacks = array_merge( $this->failureCallbacks, $callbacks );
 	}
 
+	/**
+	 * @return array<callable>
+	 */
 	public function getPassThroughCallbacks() : array
 	{
 		return $this->passThroughCallbacks;

@@ -68,9 +68,9 @@ final class SocketCollection implements Countable
 	}
 
 	/**
-	 * @param array $resources
+	 * @param array<int, resource> $resources
 	 *
-	 * @return array
+	 * @return array<int>
 	 * @throws ReadFailedException
 	 */
 	public function getSocketIdsByResources( array $resources ) : array
@@ -175,6 +175,9 @@ final class SocketCollection implements Countable
 		return false;
 	}
 
+	/**
+	 * @return array<int, resource>
+	 */
 	public function collectResources() : array
 	{
 		$resources = [];

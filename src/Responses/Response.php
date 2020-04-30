@@ -37,10 +37,10 @@ class Response implements ProvidesResponseData
 {
 	private const HEADER_PATTERN = '#^([^\:]+):(.*)$#';
 
-	/** @var array */
+	/** @var array<string, array<int, string>> */
 	private $normalizedHeaders;
 
-	/** @var array */
+	/** @var array<string, array<int, string>> */
 	private $headers;
 
 	/** @var string */
