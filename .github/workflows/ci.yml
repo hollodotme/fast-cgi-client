@@ -31,14 +31,14 @@ jobs:
       - name: Run PHPStan
         run: docker run --rm -v $(pwd):/app phpstan/phpstan analyze --level=max /app/src
 
-  unit-tests:
+  unit-tests-71:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Build docker images
-        run: docker-compose build --pull --parallel
+        run: docker-compose build --pull php71
 
       - name: Pull docker images
         run: docker-compose pull
@@ -47,64 +47,121 @@ jobs:
         run: docker-compose run --rm composer
 
       - name: Bring containers up
-        run: docker-compose up -d --force-recreate php71 php72 php73 php74
+        run: docker-compose up -d --force-recreate php71
 
       - name: Run unit tests on PHP 7.1
         run: >
           docker-compose exec -T php71 php ${PHP_OPTIONS}
-          vendor/bin/phpunit7.phar
-          -c build
-          --coverage-clover=/app/coverage.xml
+          /repo/vendor/bin/phpunit7.phar
+          -c /repo/build
+          --coverage-clover=/repo/coverage.xml
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
+          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=/repo/build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
+
+  unit-tests-72:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build docker images
+        run: docker-compose build --pull php72
+
+      - name: Pull docker images
+        run: docker-compose pull
+
+      - name: Composer update
+        run: docker-compose run --rm composer
+
+      - name: Bring containers up
+        run: docker-compose up -d --force-recreate php72
 
       - name: Run unit tests on PHP 7.2
         run: >
           docker-compose exec -T php72 php ${PHP_OPTIONS}
-          vendor/bin/phpunit8.phar
-          -c build
-          --coverage-clover=/app/coverage.xml
+          /repo/vendor/bin/phpunit8.phar
+          -c /repo/build
+          --coverage-clover=/repo/coverage.xml
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
+          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=/repo/build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
+
+  unit-tests-73:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build docker images
+        run: docker-compose build --pull php73
+
+      - name: Pull docker images
+        run: docker-compose pull
+
+      - name: Composer update
+        run: docker-compose run --rm composer
+
+      - name: Bring containers up
+        run: docker-compose up -d --force-recreate php73
 
       - name: Run unit tests on PHP 7.3
         run: >
           docker-compose exec -T php73 php ${PHP_OPTIONS}
-          vendor/bin/phpunit9.phar
-          -c build
-          --coverage-clover=/app/coverage.xml
+          /repo/vendor/bin/phpunit9.phar
+          -c /repo/build
+          --coverage-clover=/repo/coverage.xml
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
+          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=/repo/build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
 
+  unit-tests-74:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build docker images
+        run: docker-compose build --pull php74
+
+      - name: Pull docker images
+        run: docker-compose pull
+
+      - name: Composer update
+        run: docker-compose run --rm composer
+
+      - name: Bring containers up
+        run: docker-compose up -d --force-recreate php74
+
       - name: Run unit tests on PHP 7.4
         run: >
           docker-compose exec -T php74 php ${PHP_OPTIONS}
-          vendor/bin/phpunit9.phar
-          -c build
-          --coverage-clover=/app/coverage.xml
+          /repo/vendor/bin/phpunit9.phar
+          -c /repo/build
+          --coverage-clover=/repo/coverage.xml
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php"
+          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=/repo/build/xdebug-filter.php"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
 
   release:
     needs:
-      - unit-tests
       - static-analyzers
+      - unit-tests-71
+      - unit-tests-72
+      - unit-tests-73
+      - unit-tests-74
 
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
