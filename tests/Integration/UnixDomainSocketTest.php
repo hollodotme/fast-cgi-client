@@ -38,6 +38,7 @@ use hollodotme\FastCGI\Sockets\SocketCollection;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use InvalidArgumentException;
 use PHPUnit\Framework\AssertionFailedError;
+use PHPUnit\Framework\Constraint\RegularExpression;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -494,7 +495,7 @@ final class UnixDomainSocketTest extends TestCase
 
 		$this->assertSame( '404 Not Found', $response->getHeaderLine( 'Status' ) );
 		$this->assertSame( "File not found.\n", $response->getBody() );
-		$this->assertRegExp( "#^Primary script unknown\n?$#", $response->getError() );
+		$this->assertMatchesRegExp( "#^Primary script unknown\n?$#", $response->getError() );
 	}
 
 	public function invalidScriptFileNamesProvider() : array
@@ -525,7 +526,7 @@ final class UnixDomainSocketTest extends TestCase
 		$response = $this->client->sendRequest( $this->connection, $request );
 
 		$this->assertSame( '403 Forbidden', $response->getHeaderLine( 'Status' ) );
-		$this->assertRegExp(
+		$this->assertMatchesRegExp(
 			'#^Access to the script .+ has been denied \(see security\.limit_extensions\)$#',
 			$response->getError()
 		);
@@ -550,7 +551,7 @@ final class UnixDomainSocketTest extends TestCase
 		$response = $this->client->sendRequest( $this->connection, $request );
 
 		$this->assertSame( '403 Forbidden', $response->getHeaderLine( 'Status' ) );
-		$this->assertRegExp(
+		$this->assertMatchesRegExp(
 			'#^Unable to open primary script\: .+ \(Permission denied\)$#',
 			$response->getError()
 		);
@@ -641,7 +642,20 @@ final class UnixDomainSocketTest extends TestCase
 		                 . "PHP message: ERROR4\n\n?"
 		                 . "PHP message: ERROR5\n\n?$#";
 
-		$this->assertRegExp( $expectedError, $response->getError() );
+		$this->assertMatchesRegExp( $expectedError, $response->getError() );
+	}
+
+	/**
+	 * @param string $pattern
+	 * @param string $string
+	 * @param string $message
+	 *
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	private function assertMatchesRegExp( string $pattern, string $string, string $message = '' ) : void
+	{
+		static::assertThat( $string, new RegularExpression( $pattern ), $message );
 	}
 
 	/**

@@ -149,7 +149,7 @@ final class ClientTest extends TestCase
 		$request    = new PostRequest( '/path/to/script.php', '' );
 
 		$this->expectException( ConnectException::class );
-		$this->expectExceptionMessageRegExp( '#.*unable to connect to.*#i' );
+		$this->expectExceptionMessage( 'Unable to connect to FastCGI application: No such file or directory' );
 
 		/** @noinspection UnusedFunctionResultInspection */
 		$client->sendRequest( $connection, $request );
