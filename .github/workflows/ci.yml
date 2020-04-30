@@ -31,14 +31,14 @@ jobs:
       - name: Run PHPStan
         run: docker run --rm -v $(pwd):/app phpstan/phpstan analyze --level=max /app/src
 
-  unit-tests-71:
+  unit-tests:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
 
       - name: Build docker images
-        run: docker-compose build --pull php71
+        run: docker-compose build --pull --parallel
 
       - name: Pull docker images
         run: docker-compose pull
@@ -47,7 +47,7 @@ jobs:
         run: docker-compose run --rm composer
 
       - name: Bring containers up
-        run: docker-compose up -d --force-recreate php71
+        run: docker-compose up -d --force-recreate php71 php72 php73 php74
 
       - name: Run unit tests on PHP 7.1
         run: >
@@ -62,24 +62,6 @@ jobs:
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
 
-  unit-tests-72:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Build docker images
-        run: docker-compose build --pull php72
-
-      - name: Pull docker images
-        run: docker-compose pull
-
-      - name: Composer update
-        run: docker-compose run --rm composer
-
-      - name: Bring containers up
-        run: docker-compose up -d --force-recreate php72
-
       - name: Run unit tests on PHP 7.2
         run: >
           docker-compose exec -T php72 php ${PHP_OPTIONS}
@@ -93,24 +75,6 @@ jobs:
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
 
-  unit-tests-73:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Build docker images
-        run: docker-compose build --pull php73
-
-      - name: Pull docker images
-        run: docker-compose pull
-
-      - name: Composer update
-        run: docker-compose run --rm composer
-
-      - name: Bring containers up
-        run: docker-compose up -d --force-recreate php73
-
       - name: Run unit tests on PHP 7.3
         run: >
           docker-compose exec -T php73 php ${PHP_OPTIONS}
@@ -123,24 +87,6 @@ jobs:
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
-
-  unit-tests-74:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Build docker images
-        run: docker-compose build --pull php74
-
-      - name: Pull docker images
-        run: docker-compose pull
-
-      - name: Composer update
-        run: docker-compose run --rm composer
-
-      - name: Bring containers up
-        run: docker-compose up -d --force-recreate php74
 
       - name: Run unit tests on PHP 7.4
         run: >
@@ -158,10 +104,7 @@ jobs:
   release:
     needs:
       - static-analyzers
-      - unit-tests-71
-      - unit-tests-72
-      - unit-tests-73
-      - unit-tests-74
+      - unit-tests
 
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
