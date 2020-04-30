@@ -51,7 +51,7 @@ jobs:
 
       - name: Run unit tests on PHP 7.1
         run: >
-          docker-compose exec php71 php ${PHP_OPTIONS}
+          docker-compose exec -T php71 php ${PHP_OPTIONS}
           vendor/bin/phpunit7.phar
           -c build
           --coverage-clover=/app/coverage.xml
@@ -64,7 +64,7 @@ jobs:
 
       - name: Run unit tests on PHP 7.2
         run: >
-          docker-compose exec php72 php ${PHP_OPTIONS}
+          docker-compose exec -T php72 php ${PHP_OPTIONS}
           vendor/bin/phpunit8.phar
           -c build
           --coverage-clover=/app/coverage.xml
@@ -77,7 +77,7 @@ jobs:
 
       - name: Run unit tests on PHP 7.3
         run: >
-          docker-compose exec php73 php ${PHP_OPTIONS}
+          docker-compose exec -T php73 php ${PHP_OPTIONS}
           vendor/bin/phpunit9.phar
           -c build
           --coverage-clover=/app/coverage.xml
@@ -90,7 +90,7 @@ jobs:
 
       - name: Run unit tests on PHP 7.4
         run: >
-          docker-compose exec php74 php ${PHP_OPTIONS}
+          docker-compose exec -T php74 php ${PHP_OPTIONS}
           vendor/bin/phpunit9.phar
           -c build
           --coverage-clover=/app/coverage.xml
