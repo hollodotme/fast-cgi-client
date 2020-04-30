@@ -5,7 +5,6 @@ if ( !function_exists( 'xdebug_set_filter' ) )
 	return;
 }
 
-/** @noinspection PhpUndefinedFunctionInspection */
 /** @noinspection PhpUndefinedConstantInspection */
 xdebug_set_filter(
 	XDEBUG_FILTER_CODE_COVERAGE,
