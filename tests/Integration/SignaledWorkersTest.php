@@ -232,7 +232,7 @@ final class SignaledWorkersTest extends TestCase
 
 		for ( $i = 0; $i < 3; $i++ )
 		{
-			$request->setContent( http_build_query( ['test-key' => $i, 'sleep' => 1] ) );
+			$request->setContent( http_build_query( ['test-key' => $i, 'sleep' => 2] ) );
 
 			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
