@@ -8,7 +8,7 @@ This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CH
 ### Added
 
 * Interface for request content composers with implementations for URL encoded form-data, multipart form-data and JSON data.
-  This was inspired by - [53]
+  This was inspired by - [#53]
 * Named constructor `newWithRequestContent` to all request classes in order to simplify the use of the new request content type composers.
 * For more information and examples have a look at the documentation section ["Request contents"](./README.md#request-contents).
 
