@@ -1,7 +1,26 @@
-# Change Log
+# CHANGELOG
 
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
+
+## [3.1.0] - 2020-05-06
+
+### Added
+
+* Interface for request content composers with implementations for URL encoded form-data, multipart form-data and JSON data.
+  This was inspired by - [53]
+* Named constructor `newWithRequestContent` to all request classes in order to simplify the use of the new request content type composers.
+* For more information and examples have a look at the documentation section ["Request contents"](./README.md#request-contents).
+
+### Fixed
+
+* Inspection issues found by PHPStan
+
+### Updated
+
+* Test suites to cover PHP versions from 7.1 to 7.4
+* License dates
+* CI moved to GitHub actions
 
 ## [3.0.1] - 2019-10-24
 
@@ -302,6 +321,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[3.1.0]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.1...v3.1.0
 [3.0.1]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0-beta...v3.0.0
 [3.0.0-beta]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0-alpha...v3.0.0-beta
@@ -342,3 +362,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#41]: https://github.com/hollodotme/fast-cgi-client/issues/41
 [#45]: https://github.com/hollodotme/fast-cgi-client/issues/45
 [#51]: https://github.com/hollodotme/fast-cgi-client/issues/51
+[#53]: https://github.com/hollodotme/fast-cgi-client/issues/53
