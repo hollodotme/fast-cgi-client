@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [3.1.1] - 2020-05-06
+
+### Fixed
+
+* Backwards compatibility break in userland classes extending `AbstractRequest` due to a final constructor. - [#56]
+  See also: [#55] 
+
 ## [3.1.0] - 2020-05-06
 
 ### Added
@@ -321,6 +328,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[3.1.1]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.1...v3.1.0
 [3.0.1]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0-beta...v3.0.0
@@ -363,3 +371,5 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#45]: https://github.com/hollodotme/fast-cgi-client/issues/45
 [#51]: https://github.com/hollodotme/fast-cgi-client/issues/51
 [#53]: https://github.com/hollodotme/fast-cgi-client/issues/53
+[#55]: https://github.com/hollodotme/fast-cgi-client/pull/55
+[#56]: https://github.com/hollodotme/fast-cgi-client/issues/56
