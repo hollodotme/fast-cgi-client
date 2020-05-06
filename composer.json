@@ -30,7 +30,8 @@
     }
   },
   "require": {
-    "php": ">=7.1"
+    "php": ">=7.1",
+    "ext-json": "*"
   },
   "require-dev": {
     "tm/tooly-composer-script": "^1.0"
