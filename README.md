@@ -20,7 +20,7 @@ Please see the following links for earlier releases:
 
 * PHP >= 7.0 (EOL) [v1.0.0], [v1.0.1], [v1.1.0], [v1.2.0], [v1.3.0], [v1.4.0], [v1.4.1], [v1.4.2] 
 * PHP >= 7.1 [v2.0.0], [v2.0.1], [v2.1.0], [v2.2.0], [v2.3.0], [v2.4.0], [v2.4.1], [v2.4.2], [v2.4.3], [v2.5.0], [v2.6.0], [v2.7.0], [v2.7.1],
-  [v2.7.2], [v3.0.0-alpha], [v3.0.0-beta], [v3.0.0], [v3.0.1]
+  [v2.7.2], [v3.0.0-alpha], [v3.0.0-beta], [v3.0.0], [v3.0.1], [v3.1.0]
 
 Read more about the journey to and changes in `v2.6.0` in [this blog post](https://github.com/hollodotme/fast-cgi-client/wiki/Background-Info-FastCgiClient-Version-2.6.0).
 
@@ -38,7 +38,7 @@ You can also find slides of my talks about this project on [speakerdeck.com](htt
 ## Installation
 
 ```bash
-composer require hollodotme/fast-cgi-client:3.0.0-beta
+composer require hollodotme/fast-cgi-client:3.1.*
 ```
 
 ---
@@ -531,8 +531,6 @@ namespace hollodotme\FastCGI\Interfaces;
 
 interface ProvidesRequestData
 {
-    public static function newWithRequestContent( string $scriptFilename, ComposesRequestContent $requestContent );
-
 	public function getGatewayInterface() : string;
 
 	public function getRequestMethod() : string;
@@ -990,6 +988,7 @@ Run a call through a Unix Domain Socket
 This shows the response of the php-fpm status page.
 
 
+[v3.1.0]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.0/README.md
 [v3.0.1]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.1/README.md
 [v3.0.0]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.0/README.md
 [v3.0.0-beta]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.0-beta/README.md
