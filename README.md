@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/hollodotme/fast-cgi-client.svg?style=svg&circle-token=259b98920de0a0a72bc61325c6e9b76c409dc5b4)](https://circleci.com/gh/hollodotme/fast-cgi-client)
+![FastCGI Client CI PHP 7.1 - 7.4](https://github.com/hollodotme/fast-cgi-client/workflows/FastCGI%20Client%20CI%20PHP%207.1%20-%207.4/badge.svg)
 [![Latest Stable Version](https://poser.pugx.org/hollodotme/fast-cgi-client/v/stable)](https://packagist.org/packages/hollodotme/fast-cgi-client) 
 [![Total Downloads](https://poser.pugx.org/hollodotme/fast-cgi-client/downloads)](https://packagist.org/packages/hollodotme/fast-cgi-client) 
 [![codecov](https://codecov.io/gh/hollodotme/fast-cgi-client/branch/master/graph/badge.svg)](https://codecov.io/gh/hollodotme/fast-cgi-client)
