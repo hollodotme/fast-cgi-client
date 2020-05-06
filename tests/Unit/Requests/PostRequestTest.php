@@ -23,6 +23,7 @@
 
 namespace hollodotme\FastCGI\Tests\Unit\Requests;
 
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
@@ -39,5 +40,24 @@ final class PostRequestTest extends TestCase
 		$request = new PostRequest( '/path/to/script.php', 'Unit-Test' );
 
 		$this->assertSame( 'POST', $request->getRequestMethod() );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testCanCreateInstanceWithRequestContent() : void
+	{
+		$urlEncodedContent = new UrlEncodedFormData(
+			[
+				'unit' => 'test',
+				'test' => 'unit',
+			]
+		);
+
+		$request = PostRequest::newWithRequestContent( '/path/to/script.php', $urlEncodedContent );
+
+		$this->assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
+		$this->assertSame( 'unit=test&test=unit', $request->getContent() );
 	}
 }

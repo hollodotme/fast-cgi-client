@@ -2,7 +2,7 @@
 
 namespace hollodotme\FastCGI\RequestContents;
 
-use hollodotme\FastCGI\Interfaces\ProvidesRequestContent;
+use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
 use InvalidArgumentException;
 use function base64_encode;
 use function basename;
@@ -12,7 +12,7 @@ use function file_get_contents;
 use function implode;
 use function sprintf;
 
-final class MultipartFormData implements ProvidesRequestContent
+final class MultipartFormData implements ComposesRequestContent
 {
 	private const BOUNDARY_ID = '__X_FASTCGI_CLIENT_BOUNDARY__';
 

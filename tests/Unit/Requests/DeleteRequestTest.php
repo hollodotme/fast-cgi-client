@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
@@ -23,6 +23,7 @@
 
 namespace hollodotme\FastCGI\Tests\Unit\Requests;
 
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\DeleteRequest;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
@@ -39,5 +40,24 @@ final class DeleteRequestTest extends TestCase
 		$request = new DeleteRequest( '/path/to/script.php', 'Unit-Test' );
 
 		$this->assertSame( 'DELETE', $request->getRequestMethod() );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testCanCreateInstanceWithRequestContent() : void
+	{
+		$urlEncodedContent = new UrlEncodedFormData(
+			[
+				'unit' => 'test',
+				'test' => 'unit',
+			]
+		);
+
+		$request = DeleteRequest::newWithRequestContent( '/path/to/script.php', $urlEncodedContent );
+
+		$this->assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
+		$this->assertSame( 'unit=test&test=unit', $request->getContent() );
 	}
 }

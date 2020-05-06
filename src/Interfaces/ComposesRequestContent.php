@@ -2,7 +2,7 @@
 
 namespace hollodotme\FastCGI\Interfaces;
 
-interface ProvidesRequestContent
+interface ComposesRequestContent
 {
 	public function getContentType() : string;
 
