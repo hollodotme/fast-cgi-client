@@ -85,7 +85,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 	/** @var array<callable> */
 	private $passThroughCallbacks = [];
 
-	final public function __construct( string $scriptFilename, string $content )
+	public function __construct( string $scriptFilename, string $content )
 	{
 		$this->scriptFilename = $scriptFilename;
 		$this->setContent( $content );
