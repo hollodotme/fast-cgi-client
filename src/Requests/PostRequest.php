@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
@@ -24,6 +24,7 @@
 namespace hollodotme\FastCGI\Requests;
 
 use hollodotme\FastCGI\Constants\RequestMethod;
+use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
 
 /**
  * Class PostRequest
@@ -31,6 +32,17 @@ use hollodotme\FastCGI\Constants\RequestMethod;
  */
 class PostRequest extends AbstractRequest
 {
+	public static function newWithRequestContent(
+		string $scriptFilename,
+		ComposesRequestContent $requestContent
+	) : PostRequest
+	{
+		$instance = new self( $scriptFilename, $requestContent->getContent() );
+		$instance->setContentType( $requestContent->getContentType() );
+
+		return $instance;
+	}
+
 	public function getRequestMethod() : string
 	{
 		return RequestMethod::POST;

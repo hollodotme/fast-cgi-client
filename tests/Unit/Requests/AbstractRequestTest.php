@@ -24,14 +24,8 @@
 namespace hollodotme\FastCGI\Tests\Unit\Requests;
 
 use hollodotme\FastCGI\Requests\AbstractRequest;
-use hollodotme\FastCGI\Requests\DeleteRequest;
-use hollodotme\FastCGI\Requests\GetRequest;
-use hollodotme\FastCGI\Requests\PatchRequest;
-use hollodotme\FastCGI\Requests\PostRequest;
-use hollodotme\FastCGI\Requests\PutRequest;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 
 final class AbstractRequestTest extends TestCase
@@ -40,7 +34,7 @@ final class AbstractRequestTest extends TestCase
 	 * @param string $requestMethod
 	 *
 	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException|RuntimeException
+	 * @throws InvalidArgumentException
 	 * @dataProvider requestMethodProvider
 	 */
 	public function testCanGetDefaultValues( string $requestMethod ) : void
@@ -70,30 +64,24 @@ final class AbstractRequestTest extends TestCase
 	 * @param string $content
 	 *
 	 * @return AbstractRequest
-	 * @throws RuntimeException
 	 */
 	private function getRequest( string $requestMethod, string $scriptFilename, string $content ) : AbstractRequest
 	{
-		switch ( $requestMethod )
-		{
-			case 'GET':
-				return new GetRequest( $scriptFilename, $content );
+		return new class($requestMethod, $scriptFilename, $content) extends AbstractRequest {
+			/** @var string */
+			private $requestMethod;
 
-			case 'POST':
-				return new PostRequest( $scriptFilename, $content );
+			public function __construct( string $requestMethod, string $scriptFilename, string $content )
+			{
+				parent::__construct( $scriptFilename, $content );
+				$this->requestMethod = $requestMethod;
+			}
 
-			case 'PUT':
-				return new PutRequest( $scriptFilename, $content );
-
-			case 'PATCH':
-				return new PatchRequest( $scriptFilename, $content );
-
-			case 'DELETE':
-				return new DeleteRequest( $scriptFilename, $content );
-
-			default:
-				throw new RuntimeException( 'Method not implemented.' );
-		}
+			public function getRequestMethod() : string
+			{
+				return $this->requestMethod;
+			}
+		};
 	}
 
 	public function requestMethodProvider() : array
@@ -111,7 +99,7 @@ final class AbstractRequestTest extends TestCase
 	 * @param string $requestMethod
 	 *
 	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException|RuntimeException
+	 * @throws InvalidArgumentException
 	 * @dataProvider requestMethodProvider
 	 */
 	public function testCanGetParametersArray( string $requestMethod ) : void
@@ -142,7 +130,7 @@ final class AbstractRequestTest extends TestCase
 
 	/**
 	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException|RuntimeException
+	 * @throws InvalidArgumentException
 	 */
 	public function testContentLengthChangesWithContent() : void
 	{
@@ -157,7 +145,7 @@ final class AbstractRequestTest extends TestCase
 
 	/**
 	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException|RuntimeException
+	 * @throws InvalidArgumentException
 	 */
 	public function testCanOverwriteVars() : void
 	{
@@ -200,7 +188,7 @@ final class AbstractRequestTest extends TestCase
 
 	/**
 	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException|RuntimeException
+	 * @throws InvalidArgumentException
 	 */
 	public function testCanResetCustomVars() : void
 	{

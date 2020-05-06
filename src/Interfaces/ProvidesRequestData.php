@@ -29,14 +29,6 @@ namespace hollodotme\FastCGI\Interfaces;
  */
 interface ProvidesRequestData
 {
-	/**
-	 * @param string                 $scriptFilename
-	 * @param ComposesRequestContent $requestContent
-	 *
-	 * @return static
-	 */
-	public static function newWithRequestContent( string $scriptFilename, ComposesRequestContent $requestContent );
-
 	public function getGatewayInterface() : string;
 
 	public function getRequestMethod() : string;
