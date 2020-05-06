@@ -20,7 +20,7 @@ Please see the following links for earlier releases:
 
 * PHP >= 7.0 (EOL) [v1.0.0], [v1.0.1], [v1.1.0], [v1.2.0], [v1.3.0], [v1.4.0], [v1.4.1], [v1.4.2] 
 * PHP >= 7.1 [v2.0.0], [v2.0.1], [v2.1.0], [v2.2.0], [v2.3.0], [v2.4.0], [v2.4.1], [v2.4.2], [v2.4.3], [v2.5.0], [v2.6.0], [v2.7.0], [v2.7.1],
-  [v2.7.2], [v3.0.0-alpha], [v3.0.0-beta]
+  [v2.7.2], [v3.0.0-alpha], [v3.0.0-beta], [v3.0.0], [v3.0.1]
 
 Read more about the journey to and changes in `v2.6.0` in [this blog post](https://github.com/hollodotme/fast-cgi-client/wiki/Background-Info-FastCgiClient-Version-2.6.0).
 
@@ -522,7 +522,7 @@ Output: End
 
 ### Requests
 
-Request are defined by the following interface:
+Requests are defined by the following interface:
 
 ```php
 <?php declare(strict_types=1);
@@ -531,6 +531,8 @@ namespace hollodotme\FastCGI\Interfaces;
 
 interface ProvidesRequestData
 {
+    public static function newWithRequestContent( string $scriptFilename, ComposesRequestContent $requestContent );
+
 	public function getGatewayInterface() : string;
 
 	public function getRequestMethod() : string;
@@ -594,6 +596,217 @@ The abstract request class defines several default values which you can optional
 | REQUEST_URI       | <empty string>                    |                                                                                         |
 | CUSTOM_VARS       | empty array                       | You can use the methods `setCustomVar`, `addCustomVars` to add own key-value pairs      |
 
+#### Request contents
+
+In order to make the composition of different request content types easier there are classes covering the
+typical content types:
+
+* [UrlEncodedFormData](./src/RequestContents/UrlEncodedFormData.php)
+* [MultipartFormData](./src/RequestContents/MultipartFormData.php)
+* [JsonData](./src/RequestContents/JsonData.php)
+
+You can create your own request content type composer by implementing the following interface:
+
+[**ComposesRequestContent**](./src/Interfaces/ComposesRequestContent.php)
+```php
+interface ComposesRequestContent
+{
+	public function getContentType() : string;
+
+	public function getContent() : string;
+}
+```
+
+##### Request content example: URL encoded form data (application/x-www-form-urlencoded)
+
+```php
+<?php declare(strict_types=1);
+
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\Client;
+
+$client = new Client();
+$connection = new NetworkSocket( '127.0.0.1', 9000 );
+
+$urlEncodedContent = new UrlEncodedFormData(
+	[
+		'nested' => [
+			'one',
+			'two'   => 'value2',
+			'three' => [
+				'value3',
+			],
+		],
+	]
+);
+
+$postRequest = PostRequest::newWithRequestContent( '/path/to/target/script.php', $urlEncodedContent );
+
+$response = $client->sendRequest( $connection, $postRequest );
+```
+
+This example produces the following `$_POST` array at the target script:
+
+```
+Array
+(
+    [nested] => Array
+        (
+            [0] => one
+            [two] => value2
+            [three] => Array
+                (
+                    [0] => value3
+                )
+
+        )
+)
+```
+
+##### Request content example: multipart form data (multipart/form-data)
+
+Multipart form-data can be used to transfer any binary data as files to the target script just like a file upload in a browser does. 
+
+**PLEASE NOTE:** Multipart form-data content type works with POST requests only.
+
+```php
+<?php declare(strict_types=1);
+
+use hollodotme\FastCGI\RequestContents\MultipartFormData;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\Client;
+
+$client = new Client();
+$connection = new NetworkSocket( '127.0.0.1', 9000 );
+
+$multipartContent = new MultipartFormData(
+    # POST data
+	[
+        'simple'          => 'value',
+		'nested[]'        => 'one',
+		'nested[two]'     => 'value2',
+		'nested[three][]' => 'value3',
+	],
+	# FILES
+	[
+		'file1'        => __FILE__,
+		'files[1]'     => __FILE__,
+		'files[three]' => __FILE__,
+	]
+);
+
+$postRequest = PostRequest::newWithRequestContent( '/path/to/target/script.php', $multipartContent );
+
+$response = $client->sendRequest( $connection, $postRequest );
+```
+
+This example produces the following `$_POST` and `$_FILES` array at the target script:
+
+```
+# $_POST
+Array
+(
+    [simple] => value
+    [nested] => Array
+        (
+            [0] => one
+            [two] => value2
+            [three] => Array
+                (
+                    [0] => value3
+                )
+
+        )
+
+)
+
+# $_FILES
+Array
+(
+    [file1] => Array
+        (
+            [name] => multipart.php
+            [type] => application/octet-stream
+            [tmp_name] => /tmp/phpiIdCNM
+            [error] => 0
+            [size] => 1086
+        )
+
+    [files] => Array
+        (
+            [name] => Array
+                (
+                    [1] => multipart.php
+                    [three] => multipart.php
+                )
+
+            [type] => Array
+                (
+                    [1] => application/octet-stream
+                    [three] => application/octet-stream
+                )
+
+            [tmp_name] => Array
+                (
+                    [1] => /tmp/phpAjHINL
+                    [three] => /tmp/phpicAmjN
+                )
+
+            [error] => Array
+                (
+                    [1] => 0
+                    [three] => 0
+                )
+
+            [size] => Array
+                (
+                    [1] => 1086
+                    [three] => 1086
+                )
+
+        )
+
+)
+```
+
+##### Request content example: JSON encoded data (application/json)
+
+```php
+<?php declare(strict_types=1);
+
+use hollodotme\FastCGI\RequestContents\JsonData;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\Client;
+
+$client = new Client();
+$connection = new NetworkSocket( '127.0.0.1', 9000 );
+
+$jsonContent = new JsonData(
+	[
+		'nested' => [
+			'one',
+			'two'   => 'value2',
+			'three' => [
+				'value3',
+			],
+		],
+	]
+);
+
+$postRequest = PostRequest::newWithRequestContent( '/path/to/target/script.php', $jsonContent );
+
+$response = $client->sendRequest( $connection, $postRequest );
+```
+
+This example produces the following content for `php://input` at the target script:
+
+```json
+{"nested":{"0":"one","two":"value2","three":["value3"]}}
+```
 
 ### Responses
 
@@ -758,7 +971,7 @@ if ('File not found.' === trim($response->getBody()))
 
 ## Run examples
 
-	docker-compose exec php73 php bin/examples.php
+	docker-compose exec php74 php bin/examples.php
 
 ## Run all tests
 
@@ -768,15 +981,17 @@ if ('File not found.' === trim($response->getBody()))
 
 Run a call through a network socket:
 
-    docker-compose exec php73 php bin/fcgiget localhost:9001/status
+    docker-compose exec php74 php bin/fcgiget localhost:9001/status
 
 Run a call through a Unix Domain Socket
 
-    docker-compose exec php73 php bin/fcgiget unix:///var/run/php-uds.sock/status
+    docker-compose exec php74 php bin/fcgiget unix:///var/run/php-uds.sock/status
 
 This shows the response of the php-fpm status page.
 
 
+[v3.0.1]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.1/README.md
+[v3.0.0]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.0/README.md
 [v3.0.0-beta]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.0-beta/README.md
 [v3.0.0-alpha]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.0-alpha/README.md
 [v2.7.2]: https://github.com/hollodotme/fast-cgi-client/blob/v2.7.2/README.md
