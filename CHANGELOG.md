@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [3.1.2] - 2020-05-19
+
+### Added
+
+* `.gitattributes` file to exclude non-relevant files/directories from archives/releases installed by composer - [#58]
+
+### Fixed
+
+* Remove link to `bin/fcgiget` in `composer.json` as it is a potential security issue (because `bin/fcgiget` accepts any accessible fastCGI endpoint and may be exposed in some setups)
+
 ## [3.1.1] - 2020-05-06
 
 ### Fixed
@@ -328,6 +338,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[3.1.2]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.1...v3.1.2
 [3.1.1]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.0...v3.1.1
 [3.1.0]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.1...v3.1.0
 [3.0.1]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0...v3.0.1
@@ -373,3 +384,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#53]: https://github.com/hollodotme/fast-cgi-client/issues/53
 [#55]: https://github.com/hollodotme/fast-cgi-client/pull/55
 [#56]: https://github.com/hollodotme/fast-cgi-client/issues/56
+[#58]: https://github.com/hollodotme/fast-cgi-client/pull/58
