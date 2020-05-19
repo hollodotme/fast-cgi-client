@@ -1,0 +1,8 @@
+# Do not export those files in the Composer archive (lighter dependency)
+.circleci/ export-ignore
+.docker/ export-ignore
+.github/ export-ignore
+bin/ export-ignore
+build/ export-ignore
+tests/ export-ignore
+CHANGELOG.md export-ignore
