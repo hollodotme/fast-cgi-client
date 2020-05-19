@@ -16,9 +16,6 @@
       "email": "hw@hollo.me"
     }
   ],
-  "bin": [
-    "bin/fcgiget"
-  ],
   "autoload": {
     "psr-4": {
       "hollodotme\\FastCGI\\": "src/"
