@@ -311,4 +311,46 @@ final class SignaledWorkersTest extends TestCase
 
 		sleep( 1 );
 	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 */
+	public function testBrokenSocketGetsRemovedIfWritingRequestFailed() : void
+	{
+		$client     = new Client();
+		$request    = new PostRequest( __DIR__ . '/Workers/pidWorker.php', '' );
+		$connection = $this->getUnixDomainSocketConnection();
+
+		$socketId1 = $client->sendAsyncRequest( $connection, $request );
+		$pid1      = (int)$client->readResponse( $socketId1 )->getBody();
+
+		# This request should use the same socket and same PHP-FPM child process
+		$socketId2 = $client->sendAsyncRequest( $connection, $request );
+		$pid2      = (int)$client->readResponse( $socketId2 )->getBody();
+
+		self::assertSame( $socketId1, $socketId2 );
+		self::assertSame( $pid1, $pid2 );
+
+		$this->killPoolWorker( $pid2, 9 );
+
+		try
+		{
+			# This should fail because we killed the socket
+			$client->sendAsyncRequest( $connection, $request );
+		}
+		catch ( WriteFailedException $e )
+		{
+			# This request should use a new socket and a new PHP-FPM child process
+			$socketId3 = $client->sendAsyncRequest( $connection, $request );
+			$pid3      = (int)$client->readResponse( $socketId3 )->getBody();
+
+			self::assertNotSame( $socketId2, $socketId3 );
+			self::assertNotSame( $pid2, $pid3 );
+		}
+	}
 }
