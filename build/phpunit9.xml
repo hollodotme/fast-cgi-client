@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         bootstrap="../vendor/autoload.php"
+         verbose="true"
+         beStrictAboutOutputDuringTests="true"
+         colors="true"
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
+  <coverage processUncoveredFiles="true">
+    <include>
+      <directory suffix=".php">../src</directory>
+    </include>
+  </coverage>
+  <php>
+    <env name="network-socket-host" value="127.0.0.1"/>
+    <env name="network-socket-port" value="9001"/>
+    <env name="unix-domain-socket" value="/var/run/php-uds.sock"/>
+    <env name="restricted-unix-domain-socket" value="/var/run/php-ruds.sock"/>
+    <env name="non-existing-unix-domain-socket" value="/tmp/not/existing.sock"/>
+    <env name="invalid-unix-domain-socket" value="/Fixtures/test.sock"/>
+  </php>
+  <testsuites>
+    <testsuite name="Unit">
+      <directory>../tests/Unit</directory>
+    </testsuite>
+    <testsuite name="Integration">
+      <directory>../tests/Integration</directory>
+    </testsuite>
+  </testsuites>
+</phpunit>

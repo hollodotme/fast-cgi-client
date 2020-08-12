@@ -53,7 +53,7 @@ jobs:
         run: >
           docker-compose exec -T php71 php ${PHP_OPTIONS}
           /repo/vendor/bin/phpunit7.phar
-          -c /repo/build
+          -c /repo/build/phpunit7.xml
           --coverage-clover=/repo/coverage.xml
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
@@ -71,7 +71,7 @@ jobs:
         run: >
           docker-compose exec -T php72 php ${PHP_OPTIONS}
           /repo/vendor/bin/phpunit8.phar
-          -c /repo/build
+          -c /repo/build/phpunit8.xml
           --coverage-clover=/repo/coverage.xml
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
@@ -89,7 +89,7 @@ jobs:
         run: >
           docker-compose exec -T php73 php ${PHP_OPTIONS}
           /repo/vendor/bin/phpunit9.phar
-          -c /repo/build
+          -c /repo/build/phpunit9.xml
           --coverage-clover=/repo/coverage.xml
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
@@ -107,7 +107,7 @@ jobs:
         run: >
           docker-compose exec -T php74 php ${PHP_OPTIONS}
           /repo/vendor/bin/phpunit9.phar
-          -c /repo/build
+          -c /repo/build/phpunit9.xml
           --coverage-clover=/repo/coverage.xml
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
