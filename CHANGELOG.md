@@ -3,11 +3,13 @@
 All notable changes to this project will be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
-## [3.1.3] - UNRELEASED
+## [3.1.3] - 2020-08-13
 
 ### Fixed
 
 * Remove broken sockets from socket collection if writing the request to stream fails - [#61]
+* Do not export `docker-compose.yml` with composer archives via `.gitattributes`
+* Stabilize unreliable tests with signaled pool processes
 
 ## [3.1.2] - 2020-05-19
 
