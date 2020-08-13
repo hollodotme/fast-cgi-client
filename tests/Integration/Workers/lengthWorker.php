@@ -21,4 +21,4 @@
  * SOFTWARE.
  */
 
-echo strlen( file_get_contents( 'php://input' ) );
+echo strlen( (string)file_get_contents( 'php://input' ) );

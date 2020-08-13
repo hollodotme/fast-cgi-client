@@ -27,7 +27,6 @@ final class AsyncRequestsTest extends TestCase
 
 	/**
 	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
 	 * @throws Throwable
 	 * @throws ConnectException
 	 * @throws ReadFailedException
@@ -70,7 +69,7 @@ final class AsyncRequestsTest extends TestCase
 
 	private function getMaxChildrenSettingFromNetworkSocket() : int
 	{
-		$iniSettings = parse_ini_file(
+		$iniSettings = (array)parse_ini_file(
 			__DIR__ . '/../../.docker/php/network-socket.pool.conf',
 			true
 		);
@@ -89,7 +88,6 @@ final class AsyncRequestsTest extends TestCase
 	/**
 	 * @throws ConnectException
 	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
 	 * @throws ReadFailedException
 	 * @throws Throwable
 	 * @throws TimedoutException
@@ -131,7 +129,7 @@ final class AsyncRequestsTest extends TestCase
 
 	private function getMaxChildrenSettingFromUnixDomainSocket() : int
 	{
-		$iniSettings = parse_ini_file(
+		$iniSettings = (array)parse_ini_file(
 			__DIR__ . '/../../.docker/php/unix-domain-socket.pool.conf',
 			true
 		);
@@ -147,10 +145,10 @@ final class AsyncRequestsTest extends TestCase
 	/**
 	 * @throws ConnectException
 	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
 	 * @throws ReadFailedException
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
+	 * @throws InvalidArgumentException
 	 */
 	public function testCanReadResponsesOfAsyncRequestsIfRequestsExceedPhpFpmMaxChildrenSettingOnNetworkSocket() : void
 	{

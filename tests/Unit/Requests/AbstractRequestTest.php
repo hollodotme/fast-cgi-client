@@ -84,14 +84,27 @@ final class AbstractRequestTest extends TestCase
 		};
 	}
 
+	/**
+	 * @return array<array<string, string>>
+	 */
 	public function requestMethodProvider() : array
 	{
 		return [
-			['GET'],
-			['POST'],
-			['PUT'],
-			['PATCH'],
-			['DELETE'],
+			[
+				'requestMethod' => 'GET',
+			],
+			[
+				'requestMethod' => 'POST',
+			],
+			[
+				'requestMethod' => 'PUT',
+			],
+			[
+				'requestMethod' => 'PATCH',
+			],
+			[
+				'requestMethod' => 'DELETE',
+			],
 		];
 	}
 

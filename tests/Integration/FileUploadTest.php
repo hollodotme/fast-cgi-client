@@ -33,8 +33,8 @@ final class FileUploadTest extends TestCase
 
 	protected function tearDown() : void
 	{
-		$this->connection = null;
-		$this->client     = null;
+		$this->connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
+		$this->client     = new Client();
 	}
 
 	/**

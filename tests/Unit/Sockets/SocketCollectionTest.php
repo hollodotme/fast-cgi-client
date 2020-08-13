@@ -42,7 +42,7 @@ final class SocketCollectionTest extends TestCase
 
 	protected function tearDown() : void
 	{
-		$this->collection = null;
+		$this->collection = new SocketCollection();
 	}
 
 	/**

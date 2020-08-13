@@ -67,6 +67,9 @@ final class SocketIdTest extends TestCase
 		SocketId::fromInt( $socketIdValue );
 	}
 
+	/**
+	 * @return array<array<string, int>>
+	 */
 	public function outOfRangeSocketIdValueProvider() : array
 	{
 		return [

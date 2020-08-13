@@ -34,6 +34,9 @@ final class JsonDataTest extends TestCase
 		self::assertSame( $expectedContent, (new JsonData( $data ))->getContent() );
 	}
 
+	/**
+	 * @return array<array<string, mixed>>
+	 */
 	public function jsonDataProvider() : array
 	{
 		return [

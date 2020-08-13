@@ -96,6 +96,9 @@ final class UnixDomainSocketTest extends TestCase
 		self::assertSame( $expectedEqual, $connection->equals( $unixDomainConnection ) );
 	}
 
+	/**
+	 * @return array<array<string, ConfiguresSocketConnection|bool>>
+	 */
 	public function connectionProvider() : array
 	{
 		return [

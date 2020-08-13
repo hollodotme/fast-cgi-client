@@ -82,6 +82,9 @@ final class SignaledWorkersTest extends TestCase
 		sleep( 1 );
 	}
 
+	/**
+	 * @return array<array<string, int>>
+	 */
 	public function signalProvider() : array
 	{
 		return [
@@ -112,13 +115,18 @@ final class SignaledWorkersTest extends TestCase
 		);
 	}
 
+	/**
+	 * @param string $poolName
+	 *
+	 * @return array<int>
+	 */
 	private function getPoolWorkerPIDs( string $poolName ) : array
 	{
 		$command = sprintf(
 			'ps -o pid,args | grep %s | grep -v "grep"',
 			escapeshellarg( $poolName )
 		);
-		$list    = shell_exec( $command );
+		$list    = (string)shell_exec( $command );
 
 		return array_map(
 			static function ( string $item )
@@ -253,6 +261,10 @@ final class SignaledWorkersTest extends TestCase
 		$this->killPoolWorkers( $PIDs, $signal );
 	}
 
+	/**
+	 * @param array<int> $PIDs
+	 * @param int        $signal
+	 */
 	private function killPoolWorkers( array $PIDs, int $signal ) : void
 	{
 		foreach ( $PIDs as $PID )

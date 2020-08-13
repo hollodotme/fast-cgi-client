@@ -64,8 +64,8 @@ final class UnixDomainSocketTest extends TestCase
 
 	protected function tearDown() : void
 	{
-		$this->connection = null;
-		$this->client     = null;
+		$this->connection = new UnixDomainSocket( $this->getUnixDomainSocket() );
+		$this->client     = new Client();
 	}
 
 	/**
@@ -441,6 +441,9 @@ final class UnixDomainSocketTest extends TestCase
 		self::assertEquals( $length, $response->getBody() );
 	}
 
+	/**
+	 * @return array<array<string, int>>
+	 */
 	public function contentLengthProvider() : array
 	{
 		return [
@@ -498,6 +501,9 @@ final class UnixDomainSocketTest extends TestCase
 		$this->assertMatchesRegExp( "#^Primary script unknown\n?$#", $response->getError() );
 	}
 
+	/**
+	 * @return array<array<string, string>>
+	 */
 	public function invalidScriptFileNamesProvider() : array
 	{
 		return [

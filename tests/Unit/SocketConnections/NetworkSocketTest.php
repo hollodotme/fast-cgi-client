@@ -96,6 +96,9 @@ final class NetworkSocketTest extends TestCase
 		self::assertSame( $expectedEqual, $connection->equals( $networkConnection ) );
 	}
 
+	/**
+	 * @return array<array<string, ConfiguresSocketConnection|bool>>
+	 */
 	public function connectionProvider() : array
 	{
 		return [

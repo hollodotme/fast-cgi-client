@@ -252,6 +252,9 @@ final class SocketTest extends TestCase
 		self::fail( 'Expected an Exception to be thrown.' );
 	}
 
+	/**
+	 * @return array<array<string, int|string>>
+	 */
 	public function responseFlagProvider() : array
 	{
 		return [

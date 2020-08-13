@@ -64,8 +64,8 @@ final class NetworkSocketTest extends TestCase
 
 	protected function tearDown() : void
 	{
-		$this->connection = null;
-		$this->client     = null;
+		$this->connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
+		$this->client     = new Client();
 	}
 
 	/**
@@ -442,6 +442,9 @@ final class NetworkSocketTest extends TestCase
 		self::assertEquals( $length, $result->getBody() );
 	}
 
+	/**
+	 * @return array<array<string, int>>
+	 */
 	public function contentLengthProvider() : array
 	{
 		return [
@@ -515,6 +518,9 @@ final class NetworkSocketTest extends TestCase
 		static::assertThat( $string, new RegularExpression( $pattern ), $message );
 	}
 
+	/**
+	 * @return array<array<string, string>>
+	 */
 	public function invalidScriptFileNamesProvider() : array
 	{
 		return [
