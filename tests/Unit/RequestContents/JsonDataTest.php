@@ -16,7 +16,7 @@ final class JsonDataTest extends TestCase
 	 */
 	public function testGetContent() : void
 	{
-		$this->assertSame( 'application/json', (new JsonData( '' ))->getContentType() );
+		self::assertSame( 'application/json', (new JsonData( '' ))->getContentType() );
 	}
 
 	/**
@@ -31,7 +31,7 @@ final class JsonDataTest extends TestCase
 	 */
 	public function testGetContentType( $data, string $expectedContent ) : void
 	{
-		$this->assertSame( $expectedContent, (new JsonData( $data ))->getContent() );
+		self::assertSame( $expectedContent, (new JsonData( $data ))->getContent() );
 	}
 
 	public function jsonDataProvider() : array
@@ -68,6 +68,6 @@ final class JsonDataTest extends TestCase
 
 		$data = ['unit' => ['test' => ['level' => ['three' => ['and' => ['more']]]]]];
 
-		$this->assertSame( '', (new JsonData( $data, 0, 3 ))->getContent() );
+		self::assertSame( '', (new JsonData( $data, 0, 3 ))->getContent() );
 	}
 }

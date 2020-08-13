@@ -91,7 +91,7 @@ final class SocketCollectionTest extends TestCase
 		$socketOne->collectResource( $resources );
 		$socketTwo->collectResource( $resources );
 
-		$this->assertSame( $resources, $this->collection->collectResources() );
+		self::assertSame( $resources, $this->collection->collectResources() );
 	}
 
 	/**
@@ -124,7 +124,7 @@ final class SocketCollectionTest extends TestCase
 
 		$checkSocket = $this->collection->getByResource( reset( $resources ) );
 
-		$this->assertSame( $checkSocket, $socket );
+		self::assertSame( $checkSocket, $socket );
 	}
 
 	/**
@@ -139,7 +139,7 @@ final class SocketCollectionTest extends TestCase
 		/** @noinspection UnusedFunctionResultInspection */
 		$this->collection->getByResource( STDIN );
 
-		$this->fail( 'Expected a ReadFailedException for not found socket by resource.' );
+		self::fail( 'Expected a ReadFailedException for not found socket by resource.' );
 	}
 
 	/**
@@ -182,7 +182,7 @@ final class SocketCollectionTest extends TestCase
 
 		$expectedSocketIds = [$socketOne->getId(), $socketTwo->getId()];
 
-		$this->assertSame( $expectedSocketIds, $this->collection->getSocketIdsByResources( $resources ) );
+		self::assertSame( $expectedSocketIds, $this->collection->getSocketIdsByResources( $resources ) );
 	}
 
 	/**
@@ -194,7 +194,7 @@ final class SocketCollectionTest extends TestCase
 	{
 		$connection = $this->getSocketConnection();
 
-		$this->assertNull( $this->collection->getIdleSocket( $connection ) );
+		self::assertNull( $this->collection->getIdleSocket( $connection ) );
 	}
 
 	/**
@@ -210,7 +210,7 @@ final class SocketCollectionTest extends TestCase
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
-		$this->assertCount( 0, $this->collection );
+		self::assertCount( 0, $this->collection );
 
 		$socket = $this->collection->new(
 			$connection,
@@ -218,7 +218,7 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$this->assertSame( $socket, $this->collection->getIdleSocket( $connection ) );
+		self::assertSame( $socket, $this->collection->getIdleSocket( $connection ) );
 	}
 
 	/**
@@ -237,7 +237,7 @@ final class SocketCollectionTest extends TestCase
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
-		$this->assertCount( 0, $this->collection );
+		self::assertCount( 0, $this->collection );
 
 		$socket = $this->collection->new(
 			$connection,
@@ -254,7 +254,7 @@ final class SocketCollectionTest extends TestCase
 		/** @noinspection UnusedFunctionResultInspection */
 		$socket->fetchResponse( 2000 );
 
-		$this->assertSame( $socket, $this->collection->getIdleSocket( $connection ) );
+		self::assertSame( $socket, $this->collection->getIdleSocket( $connection ) );
 	}
 
 	/**
@@ -272,7 +272,7 @@ final class SocketCollectionTest extends TestCase
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
-		$this->assertCount( 0, $this->collection );
+		self::assertCount( 0, $this->collection );
 
 		$socket = $this->collection->new(
 			$connection,
@@ -284,7 +284,7 @@ final class SocketCollectionTest extends TestCase
 			new PostRequest( '/some/script.php', '' )
 		);
 
-		$this->assertNull( $this->collection->getIdleSocket( $connection ) );
+		self::assertNull( $this->collection->getIdleSocket( $connection ) );
 	}
 
 	/**
@@ -301,7 +301,7 @@ final class SocketCollectionTest extends TestCase
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
-		$this->assertCount( 0, $this->collection );
+		self::assertCount( 0, $this->collection );
 
 		$socket = $this->collection->new(
 			$connection,
@@ -322,10 +322,10 @@ final class SocketCollectionTest extends TestCase
 			}
 		}
 
-		$this->assertNull( $this->collection->getIdleSocket( $connection ) );
+		self::assertNull( $this->collection->getIdleSocket( $connection ) );
 
 		# Socket should also be removed from collection
-		$this->assertCount( 0, $this->collection );
+		self::assertCount( 0, $this->collection );
 	}
 
 	/**
@@ -342,7 +342,7 @@ final class SocketCollectionTest extends TestCase
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
-		$this->assertCount( 0, $this->collection );
+		self::assertCount( 0, $this->collection );
 
 		$socket = $this->collection->new(
 			$connection,
@@ -359,10 +359,10 @@ final class SocketCollectionTest extends TestCase
 			fclose( $resource );
 		}
 
-		$this->assertNull( $this->collection->getIdleSocket( $connection ) );
+		self::assertNull( $this->collection->getIdleSocket( $connection ) );
 
 		# Socket should also be removed from collection
-		$this->assertCount( 0, $this->collection );
+		self::assertCount( 0, $this->collection );
 	}
 
 	/**
@@ -387,7 +387,7 @@ final class SocketCollectionTest extends TestCase
 
 		$checkSocket = $this->collection->getById( $socket->getId() );
 
-		$this->assertSame( $checkSocket, $socket );
+		self::assertSame( $checkSocket, $socket );
 	}
 
 	/**
@@ -402,7 +402,7 @@ final class SocketCollectionTest extends TestCase
 		/** @noinspection UnusedFunctionResultInspection */
 		$this->collection->getById( 123 );
 
-		$this->fail( 'Expected a ReadFailedException to be thrown.' );
+		self::fail( 'Expected a ReadFailedException to be thrown.' );
 	}
 
 	/**
@@ -424,9 +424,9 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$this->assertGreaterThan( 0, $socketOne->getId() );
-		$this->assertCount( 1, $this->collection );
-		$this->assertSame( 1, $this->collection->count() );
+		self::assertGreaterThan( 0, $socketOne->getId() );
+		self::assertCount( 1, $this->collection );
+		self::assertSame( 1, $this->collection->count() );
 
 		$socketTwo = $this->collection->new(
 			$connection,
@@ -434,10 +434,10 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$this->assertGreaterThan( 0, $socketTwo->getId() );
-		$this->assertNotSame( $socketOne->getId(), $socketTwo->getId() );
-		$this->assertCount( 2, $this->collection );
-		$this->assertSame( 2, $this->collection->count() );
+		self::assertGreaterThan( 0, $socketTwo->getId() );
+		self::assertNotSame( $socketOne->getId(), $socketTwo->getId() );
+		self::assertCount( 2, $this->collection );
+		self::assertSame( 2, $this->collection->count() );
 	}
 
 	/**
@@ -459,7 +459,7 @@ final class SocketCollectionTest extends TestCase
 			$this->collection->new( $connection, $packetEncoder, $nameValuePairEncoder );
 		}
 
-		$this->fail( 'Expected WriteFailedException to be thrown.' );
+		self::fail( 'Expected WriteFailedException to be thrown.' );
 	}
 
 	/**
@@ -477,8 +477,8 @@ final class SocketCollectionTest extends TestCase
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
-		$this->assertCount( 0, $this->collection );
-		$this->assertFalse( $this->collection->hasBusySockets() );
+		self::assertCount( 0, $this->collection );
+		self::assertFalse( $this->collection->hasBusySockets() );
 
 		$socket = $this->collection->new(
 			$connection,
@@ -490,7 +490,7 @@ final class SocketCollectionTest extends TestCase
 			new PostRequest( '/some/sctipt.php', '' )
 		);
 
-		$this->assertTrue( $this->collection->hasBusySockets() );
+		self::assertTrue( $this->collection->hasBusySockets() );
 	}
 
 	/**
@@ -506,7 +506,7 @@ final class SocketCollectionTest extends TestCase
 		$packetEncoder        = new PacketEncoder();
 		$nameValuePairEncoder = new NameValuePairEncoder();
 
-		$this->assertCount( 0, $this->collection );
+		self::assertCount( 0, $this->collection );
 
 		$socket = $this->collection->new(
 			$connection,
@@ -514,11 +514,11 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$this->assertCount( 1, $this->collection );
+		self::assertCount( 1, $this->collection );
 
 		$this->collection->remove( $socket->getId() );
 
-		$this->assertCount( 0, $this->collection );
+		self::assertCount( 0, $this->collection );
 	}
 
 	/**
@@ -528,8 +528,8 @@ final class SocketCollectionTest extends TestCase
 	 */
 	public function testCount() : void
 	{
-		$this->assertSame( 0, $this->collection->count() );
-		$this->assertCount( 0, $this->collection );
+		self::assertSame( 0, $this->collection->count() );
+		self::assertCount( 0, $this->collection );
 	}
 
 	/**
@@ -538,10 +538,11 @@ final class SocketCollectionTest extends TestCase
 	 */
 	public function testIsEmpty() : void
 	{
-		$this->assertTrue( $this->collection->isEmpty() );
+		self::assertTrue( $this->collection->isEmpty() );
 	}
 
 	/**
+	 * @throws Exception
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
 	 * @throws WriteFailedException
@@ -566,12 +567,12 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$this->assertCount( 2, $this->collection );
+		self::assertCount( 2, $this->collection );
 
-		$this->assertSame( $unixDomainSocket, $this->collection->getIdleSocket( $unixDomainConnection ) );
-		$this->assertNotSame( $unixDomainSocket, $this->collection->getIdleSocket( $networkConnection ) );
+		self::assertSame( $unixDomainSocket, $this->collection->getIdleSocket( $unixDomainConnection ) );
+		self::assertNotSame( $unixDomainSocket, $this->collection->getIdleSocket( $networkConnection ) );
 
-		$this->assertSame( $networkSocket, $this->collection->getIdleSocket( $networkConnection ) );
-		$this->assertNotSame( $networkSocket, $this->collection->getIdleSocket( $unixDomainConnection ) );
+		self::assertSame( $networkSocket, $this->collection->getIdleSocket( $networkConnection ) );
+		self::assertNotSame( $networkSocket, $this->collection->getIdleSocket( $unixDomainConnection ) );
 	}
 }

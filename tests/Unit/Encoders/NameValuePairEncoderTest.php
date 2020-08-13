@@ -44,7 +44,7 @@ final class NameValuePairEncoderTest extends TestCase
 		$encoded = $nameValuePairEncoder->encodePairs( $pairs );
 		$decoded = $nameValuePairEncoder->decodePairs( $encoded );
 
-		$this->assertEquals( $pairs, $decoded );
+		self::assertEquals( $pairs, $decoded );
 	}
 
 	public function pairProvider() : array

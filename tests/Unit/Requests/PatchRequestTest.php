@@ -39,7 +39,7 @@ final class PatchRequestTest extends TestCase
 	{
 		$request = new PatchRequest( '/path/to/script.php', 'Unit-Test' );
 
-		$this->assertSame( 'PATCH', $request->getRequestMethod() );
+		self::assertSame( 'PATCH', $request->getRequestMethod() );
 	}
 
 	/**
@@ -57,7 +57,7 @@ final class PatchRequestTest extends TestCase
 
 		$request = PatchRequest::newWithRequestContent( '/path/to/script.php', $urlEncodedContent );
 
-		$this->assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
-		$this->assertSame( 'unit=test&test=unit', $request->getContent() );
+		self::assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
+		self::assertSame( 'unit=test&test=unit', $request->getContent() );
 	}
 }

@@ -49,8 +49,8 @@ final class PacketEncoderTest extends TestCase
 
 		$header = $packetEncoder->decodeHeader( $packet );
 
-		$this->assertEquals( $expectedHeader, $header );
-		$this->assertEquals( substr( $packet, -1 * strlen( $content ) ), $content );
+		self::assertEquals( $expectedHeader, $header );
+		self::assertEquals( substr( $packet, -1 * strlen( $content ) ), $content );
 	}
 
 	public function packetContentProvider() : array

@@ -15,7 +15,7 @@ final class UrlEncodedFormDataTest extends TestCase
 	 */
 	public function testGetContentType() : void
 	{
-		$this->assertSame( 'application/x-www-form-urlencoded', (new UrlEncodedFormData( [] ))->getContentType() );
+		self::assertSame( 'application/x-www-form-urlencoded', (new UrlEncodedFormData( [] ))->getContentType() );
 	}
 
 	/**
@@ -27,6 +27,6 @@ final class UrlEncodedFormDataTest extends TestCase
 		$formData        = ['unit' => 'test', 'test' => 'unit'];
 		$expectedContent = 'unit=test&test=unit';
 
-		$this->assertSame( $expectedContent, (new UrlEncodedFormData( $formData ))->getContent() );
+		self::assertSame( $expectedContent, (new UrlEncodedFormData( $formData ))->getContent() );
 	}
 }

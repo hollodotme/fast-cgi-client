@@ -41,21 +41,21 @@ final class AbstractRequestTest extends TestCase
 	{
 		$request = $this->getRequest( $requestMethod, '/path/to/script.php', 'Unit-Test' );
 
-		$this->assertSame( 'FastCGI/1.0', $request->getGatewayInterface() );
-		$this->assertSame( '/path/to/script.php', $request->getScriptFilename() );
-		$this->assertSame( 'Unit-Test', $request->getContent() );
-		$this->assertSame( 9, $request->getContentLength() );
-		$this->assertSame( '127.0.0.1', $request->getServerAddress() );
-		$this->assertSame( 'localhost', $request->getServerName() );
-		$this->assertSame( 'hollodotme/fast-cgi-client', $request->getServerSoftware() );
-		$this->assertSame( 80, $request->getServerPort() );
-		$this->assertSame( 'HTTP/1.1', $request->getServerProtocol() );
-		$this->assertSame( '192.168.0.1', $request->getRemoteAddress() );
-		$this->assertSame( 9985, $request->getRemotePort() );
-		$this->assertSame( $requestMethod, $request->getRequestMethod() );
-		$this->assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
-		$this->assertSame( [], $request->getCustomVars() );
-		$this->assertSame( '', $request->getRequestUri() );
+		self::assertSame( 'FastCGI/1.0', $request->getGatewayInterface() );
+		self::assertSame( '/path/to/script.php', $request->getScriptFilename() );
+		self::assertSame( 'Unit-Test', $request->getContent() );
+		self::assertSame( 9, $request->getContentLength() );
+		self::assertSame( '127.0.0.1', $request->getServerAddress() );
+		self::assertSame( 'localhost', $request->getServerName() );
+		self::assertSame( 'hollodotme/fast-cgi-client', $request->getServerSoftware() );
+		self::assertSame( 80, $request->getServerPort() );
+		self::assertSame( 'HTTP/1.1', $request->getServerProtocol() );
+		self::assertSame( '192.168.0.1', $request->getRemoteAddress() );
+		self::assertSame( 9985, $request->getRemotePort() );
+		self::assertSame( $requestMethod, $request->getRequestMethod() );
+		self::assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
+		self::assertSame( [], $request->getCustomVars() );
+		self::assertSame( '', $request->getRequestUri() );
 	}
 
 	/**
@@ -125,7 +125,7 @@ final class AbstractRequestTest extends TestCase
 			'CONTENT_LENGTH'    => 9,
 		];
 
-		$this->assertSame( $expectedParams, $request->getParams() );
+		self::assertSame( $expectedParams, $request->getParams() );
 	}
 
 	/**
@@ -136,11 +136,11 @@ final class AbstractRequestTest extends TestCase
 	{
 		$request = $this->getRequest( 'GET', '/path/to/script.php', 'Some content' );
 
-		$this->assertSame( 12, $request->getContentLength() );
+		self::assertSame( 12, $request->getContentLength() );
 
 		$request->setContent( 'Some new content' );
 
-		$this->assertSame( 16, $request->getContentLength() );
+		self::assertSame( 16, $request->getContentLength() );
 	}
 
 	/**
@@ -183,7 +183,7 @@ final class AbstractRequestTest extends TestCase
 			'CONTENT_LENGTH'    => 9,
 		];
 
-		$this->assertSame( $expectedParams, $request->getParams() );
+		self::assertSame( $expectedParams, $request->getParams() );
 	}
 
 	/**
@@ -195,10 +195,10 @@ final class AbstractRequestTest extends TestCase
 		$request = $this->getRequest( 'POST', '/path/to/script.php', 'Unit-Test' );
 		$request->setCustomVar( 'UNIT', 'Test' );
 
-		$this->assertSame( ['UNIT' => 'Test'], $request->getCustomVars() );
+		self::assertSame( ['UNIT' => 'Test'], $request->getCustomVars() );
 
 		$request->resetCustomVars();
 
-		$this->assertSame( [], $request->getCustomVars() );
+		self::assertSame( [], $request->getCustomVars() );
 	}
 }

@@ -76,9 +76,9 @@ final class SignaledWorkersTest extends TestCase
 
 		$client->waitForResponses();
 
-		$this->assertCount( 2, $success );
-		$this->assertCount( 1, $failures );
-		$this->assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
+		self::assertCount( 2, $success );
+		self::assertCount( 1, $failures );
+		self::assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
 
 		sleep( 1 );
 	}
@@ -184,9 +184,9 @@ final class SignaledWorkersTest extends TestCase
 
 		$client->waitForResponses();
 
-		$this->assertCount( 2, $success );
-		$this->assertCount( 1, $failures );
-		$this->assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
+		self::assertCount( 2, $success );
+		self::assertCount( 1, $failures );
+		self::assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
 
 		sleep( 1 );
 	}
@@ -241,9 +241,9 @@ final class SignaledWorkersTest extends TestCase
 
 		$client->waitForResponses();
 
-		$this->assertCount( 0, $success );
-		$this->assertCount( 3, $failures );
-		$this->assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
+		self::assertCount( 0, $success );
+		self::assertCount( 3, $failures );
+		self::assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
 
 		sleep( 1 );
 	}
@@ -305,9 +305,9 @@ final class SignaledWorkersTest extends TestCase
 
 		$client->waitForResponses();
 
-		$this->assertCount( 0, $success );
-		$this->assertCount( 3, $failures );
-		$this->assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
+		self::assertCount( 0, $success );
+		self::assertCount( 3, $failures );
+		self::assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
 
 		sleep( 1 );
 	}

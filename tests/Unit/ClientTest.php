@@ -164,7 +164,7 @@ final class ClientTest extends TestCase
 	{
 		$client = new Client();
 
-		$this->assertFalse( $client->hasUnhandledResponses() );
+		self::assertFalse( $client->hasUnhandledResponses() );
 
 		$client->handleReadyResponses();
 	}

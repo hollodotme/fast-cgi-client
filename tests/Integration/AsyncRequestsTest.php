@@ -40,7 +40,7 @@ final class AsyncRequestsTest extends TestCase
 		$maxChildren = $this->getMaxChildrenSettingFromNetworkSocket();
 		$limit       = $maxChildren + 5;
 
-		$this->assertTrue( $limit > 5 );
+		self::assertTrue( $limit > 5 );
 
 		$client          = new Client();
 		$results         = [];
@@ -65,7 +65,7 @@ final class AsyncRequestsTest extends TestCase
 
 		sort( $results );
 
-		$this->assertSame( $expectedResults, $results );
+		self::assertSame( $expectedResults, $results );
 	}
 
 	private function getMaxChildrenSettingFromNetworkSocket() : int
@@ -101,7 +101,7 @@ final class AsyncRequestsTest extends TestCase
 		$maxChildren = $this->getMaxChildrenSettingFromUnixDomainSocket();
 		$limit       = $maxChildren + 5;
 
-		$this->assertTrue( $limit > 5 );
+		self::assertTrue( $limit > 5 );
 
 		$client          = new Client();
 		$results         = [];
@@ -126,7 +126,7 @@ final class AsyncRequestsTest extends TestCase
 
 		sort( $results );
 
-		$this->assertSame( $expectedResults, $results );
+		self::assertSame( $expectedResults, $results );
 	}
 
 	private function getMaxChildrenSettingFromUnixDomainSocket() : int
@@ -157,7 +157,7 @@ final class AsyncRequestsTest extends TestCase
 		$maxChildren = $this->getMaxChildrenSettingFromNetworkSocket();
 		$limit       = $maxChildren + 5;
 
-		$this->assertTrue( $limit > 5 );
+		self::assertTrue( $limit > 5 );
 
 		$client          = new Client();
 		$results         = [];
@@ -182,7 +182,7 @@ final class AsyncRequestsTest extends TestCase
 
 		sort( $results );
 
-		$this->assertSame( $expectedResults, $results );
+		self::assertSame( $expectedResults, $results );
 	}
 
 	/**
@@ -199,7 +199,7 @@ final class AsyncRequestsTest extends TestCase
 		$maxChildren = $this->getMaxChildrenSettingFromUnixDomainSocket();
 		$limit       = $maxChildren + 5;
 
-		$this->assertTrue( $limit > 5 );
+		self::assertTrue( $limit > 5 );
 
 		$client          = new Client();
 		$results         = [];
@@ -230,6 +230,6 @@ final class AsyncRequestsTest extends TestCase
 
 		sort( $results );
 
-		$this->assertSame( $expectedResults, $results );
+		self::assertSame( $expectedResults, $results );
 	}
 }

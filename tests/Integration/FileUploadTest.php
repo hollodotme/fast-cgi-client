@@ -80,6 +80,6 @@ final class FileUploadTest extends TestCase
 		                . "FILENAME: TestFile.txt\n"
 		                . "SIZE: 24\n\n";
 
-		$this->assertSame( $expectedBody, $response->getBody() );
+		self::assertSame( $expectedBody, $response->getBody() );
 	}
 }
