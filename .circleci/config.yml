@@ -174,7 +174,7 @@ shared-phpstan: &shared-phpstan
 
     - run:
         name: Run PHPStan
-        command: phpstan analyze --level max src/
+        command: phpstan analyze
 
 # Define the actual jobs from the templates above
 jobs:
