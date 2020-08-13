@@ -23,6 +23,7 @@ use function preg_match;
 use function shell_exec;
 use function sleep;
 use function sprintf;
+use function usleep;
 
 final class SignaledWorkersTest extends TestCase
 {
@@ -257,6 +258,13 @@ final class SignaledWorkersTest extends TestCase
 
 	private function killPhpFpmChildProcesses( string $poolName, int $signal ) : void
 	{
+		usleep( 100000 );
+
+		$PIDs = $this->getPoolWorkerPIDs( $poolName );
+		$this->killPoolWorkers( $PIDs, $signal );
+
+		usleep( 100000 );
+
 		$PIDs = $this->getPoolWorkerPIDs( $poolName );
 		$this->killPoolWorkers( $PIDs, $signal );
 	}
