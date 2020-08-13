@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
@@ -32,16 +32,21 @@ use function strlen;
 final class PacketEncoderTest extends TestCase
 {
 	/**
-	 * @param int    $type
-	 * @param string $content
-	 * @param int    $requestId
-	 * @param array  $expectedHeader
+	 * @param int                $type
+	 * @param string             $content
+	 * @param int                $requestId
+	 * @param array<string, int> $expectedHeader
 	 *
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
 	 * @dataProvider packetContentProvider
 	 */
-	public function testCanEncodeAndDecodePacket( int $type, string $content, int $requestId, array $expectedHeader ) : void
+	public function testCanEncodeAndDecodePacket(
+		int $type,
+		string $content,
+		int $requestId,
+		array $expectedHeader
+	) : void
 	{
 		$packetEncoder = new PacketEncoder();
 
@@ -49,16 +54,21 @@ final class PacketEncoderTest extends TestCase
 
 		$header = $packetEncoder->decodeHeader( $packet );
 
-		$this->assertEquals( $expectedHeader, $header );
-		$this->assertEquals( substr( $packet, -1 * strlen( $content ) ), $content );
+		self::assertEquals( $expectedHeader, $header );
+		self::assertEquals( substr( $packet, -1 * strlen( $content ) ), $content );
 	}
 
+	/**
+	 * @return array<array<string, int|string|array<string, int>>>
+	 */
 	public function packetContentProvider() : array
 	{
 		return [
 			[
-				4, 'test', 1,
-				[
+				'type'           => 4,
+				'content'        => 'test',
+				'requestId'      => 1,
+				'expectedHeader' => [
 					'version'       => 1,
 					'type'          => 4,
 					'requestId'     => 1,
@@ -68,8 +78,10 @@ final class PacketEncoderTest extends TestCase
 				],
 			],
 			[
-				5, 'çélinö~ß', 12,
-				[
+				'type'           => 5,
+				'content'        => 'çélinö~ß',
+				'requestId'      => 12,
+				'expectedHeader' => [
 					'version'       => 1,
 					'type'          => 5,
 					'requestId'     => 12,

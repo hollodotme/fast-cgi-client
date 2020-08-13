@@ -20,8 +20,8 @@ final class SocketIdTest extends TestCase
 		{
 			$socketId = SocketId::new();
 
-			$this->assertGreaterThanOrEqual( 1, $socketId->getValue() );
-			$this->assertLessThanOrEqual( (1 << 16) - 1, $socketId->getValue() );
+			self::assertGreaterThanOrEqual( 1, $socketId->getValue() );
+			self::assertLessThanOrEqual( (1 << 16) - 1, $socketId->getValue() );
 		}
 	}
 
@@ -34,8 +34,8 @@ final class SocketIdTest extends TestCase
 	{
 		$socketId = SocketId::new();
 
-		$this->assertGreaterThanOrEqual( 1, $socketId->getValue() );
-		$this->assertLessThanOrEqual( (1 << 16) - 1, $socketId->getValue() );
+		self::assertGreaterThanOrEqual( 1, $socketId->getValue() );
+		self::assertLessThanOrEqual( (1 << 16) - 1, $socketId->getValue() );
 	}
 
 	/**
@@ -49,7 +49,7 @@ final class SocketIdTest extends TestCase
 		{
 			$socketId = SocketId::fromInt( $i );
 
-			$this->assertSame( $i, $socketId->getValue() );
+			self::assertSame( $i, $socketId->getValue() );
 		}
 	}
 
@@ -67,6 +67,9 @@ final class SocketIdTest extends TestCase
 		SocketId::fromInt( $socketIdValue );
 	}
 
+	/**
+	 * @return array<array<string, int>>
+	 */
 	public function outOfRangeSocketIdValueProvider() : array
 	{
 		return [
@@ -90,17 +93,17 @@ final class SocketIdTest extends TestCase
 		$otherEquals    = SocketId::fromInt( 123 );
 		$otherEqualsNot = SocketId::fromInt( 321 );
 
-		$this->assertNotSame( $socketId, $otherEquals );
-		$this->assertNotSame( $socketId, $otherEqualsNot );
-		$this->assertNotSame( $otherEquals, $otherEqualsNot );
+		self::assertNotSame( $socketId, $otherEquals );
+		self::assertNotSame( $socketId, $otherEqualsNot );
+		self::assertNotSame( $otherEquals, $otherEqualsNot );
 
-		$this->assertTrue( $socketId->equals( $otherEquals ) );
-		$this->assertTrue( $otherEquals->equals( $socketId ) );
+		self::assertTrue( $socketId->equals( $otherEquals ) );
+		self::assertTrue( $otherEquals->equals( $socketId ) );
 
-		$this->assertFalse( $socketId->equals( $otherEqualsNot ) );
-		$this->assertFalse( $otherEqualsNot->equals( $socketId ) );
+		self::assertFalse( $socketId->equals( $otherEqualsNot ) );
+		self::assertFalse( $otherEqualsNot->equals( $socketId ) );
 
-		$this->assertFalse( $otherEquals->equals( $otherEqualsNot ) );
-		$this->assertFalse( $otherEqualsNot->equals( $otherEquals ) );
+		self::assertFalse( $otherEquals->equals( $otherEqualsNot ) );
+		self::assertFalse( $otherEqualsNot->equals( $otherEquals ) );
 	}
 }

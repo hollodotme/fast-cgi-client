@@ -1,0 +1,7 @@
+parameters:
+    paths:
+        - src
+        - tests
+    level: max
+    bootstrapFiles:
+        - ./vendor/bin/phpunit7.phar

@@ -27,7 +27,6 @@ final class AsyncRequestsTest extends TestCase
 
 	/**
 	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
 	 * @throws Throwable
 	 * @throws ConnectException
 	 * @throws ReadFailedException
@@ -40,7 +39,7 @@ final class AsyncRequestsTest extends TestCase
 		$maxChildren = $this->getMaxChildrenSettingFromNetworkSocket();
 		$limit       = $maxChildren + 5;
 
-		$this->assertTrue( $limit > 5 );
+		self::assertTrue( $limit > 5 );
 
 		$client          = new Client();
 		$results         = [];
@@ -65,12 +64,12 @@ final class AsyncRequestsTest extends TestCase
 
 		sort( $results );
 
-		$this->assertSame( $expectedResults, $results );
+		self::assertSame( $expectedResults, $results );
 	}
 
 	private function getMaxChildrenSettingFromNetworkSocket() : int
 	{
-		$iniSettings = parse_ini_file(
+		$iniSettings = (array)parse_ini_file(
 			__DIR__ . '/../../.docker/php/network-socket.pool.conf',
 			true
 		);
@@ -89,7 +88,6 @@ final class AsyncRequestsTest extends TestCase
 	/**
 	 * @throws ConnectException
 	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
 	 * @throws ReadFailedException
 	 * @throws Throwable
 	 * @throws TimedoutException
@@ -101,7 +99,7 @@ final class AsyncRequestsTest extends TestCase
 		$maxChildren = $this->getMaxChildrenSettingFromUnixDomainSocket();
 		$limit       = $maxChildren + 5;
 
-		$this->assertTrue( $limit > 5 );
+		self::assertTrue( $limit > 5 );
 
 		$client          = new Client();
 		$results         = [];
@@ -126,12 +124,12 @@ final class AsyncRequestsTest extends TestCase
 
 		sort( $results );
 
-		$this->assertSame( $expectedResults, $results );
+		self::assertSame( $expectedResults, $results );
 	}
 
 	private function getMaxChildrenSettingFromUnixDomainSocket() : int
 	{
-		$iniSettings = parse_ini_file(
+		$iniSettings = (array)parse_ini_file(
 			__DIR__ . '/../../.docker/php/unix-domain-socket.pool.conf',
 			true
 		);
@@ -147,17 +145,17 @@ final class AsyncRequestsTest extends TestCase
 	/**
 	 * @throws ConnectException
 	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
 	 * @throws ReadFailedException
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
+	 * @throws InvalidArgumentException
 	 */
 	public function testCanReadResponsesOfAsyncRequestsIfRequestsExceedPhpFpmMaxChildrenSettingOnNetworkSocket() : void
 	{
 		$maxChildren = $this->getMaxChildrenSettingFromNetworkSocket();
 		$limit       = $maxChildren + 5;
 
-		$this->assertTrue( $limit > 5 );
+		self::assertTrue( $limit > 5 );
 
 		$client          = new Client();
 		$results         = [];
@@ -182,7 +180,7 @@ final class AsyncRequestsTest extends TestCase
 
 		sort( $results );
 
-		$this->assertSame( $expectedResults, $results );
+		self::assertSame( $expectedResults, $results );
 	}
 
 	/**
@@ -199,7 +197,7 @@ final class AsyncRequestsTest extends TestCase
 		$maxChildren = $this->getMaxChildrenSettingFromUnixDomainSocket();
 		$limit       = $maxChildren + 5;
 
-		$this->assertTrue( $limit > 5 );
+		self::assertTrue( $limit > 5 );
 
 		$client          = new Client();
 		$results         = [];
@@ -230,6 +228,6 @@ final class AsyncRequestsTest extends TestCase
 
 		sort( $results );
 
-		$this->assertSame( $expectedResults, $results );
+		self::assertSame( $expectedResults, $results );
 	}
 }

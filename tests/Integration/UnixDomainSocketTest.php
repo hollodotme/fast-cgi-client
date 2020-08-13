@@ -64,8 +64,8 @@ final class UnixDomainSocketTest extends TestCase
 
 	protected function tearDown() : void
 	{
-		$this->connection = null;
-		$this->client     = null;
+		$this->connection = new UnixDomainSocket( $this->getUnixDomainSocket() );
+		$this->client     = new Client();
 	}
 
 	/**
@@ -81,8 +81,8 @@ final class UnixDomainSocketTest extends TestCase
 
 		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		$this->assertGreaterThanOrEqual( 1, $socketId );
-		$this->assertLessThanOrEqual( 65535, $socketId );
+		self::assertGreaterThanOrEqual( 1, $socketId );
+		self::assertLessThanOrEqual( 65535, $socketId );
 	}
 
 	/**
@@ -102,9 +102,9 @@ final class UnixDomainSocketTest extends TestCase
 		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
 		$response = $this->client->readResponse( $socketId );
 
-		$this->assertEquals( $expectedResponse, $response->getOutput() );
-		$this->assertSame( 'unit', $response->getBody() );
-		$this->assertGreaterThan( 0, $response->getDuration() );
+		self::assertEquals( $expectedResponse, $response->getOutput() );
+		self::assertSame( 'unit', $response->getBody() );
+		self::assertGreaterThan( 0, $response->getDuration() );
 	}
 
 	/**
@@ -123,9 +123,9 @@ final class UnixDomainSocketTest extends TestCase
 
 		$response = $this->client->sendRequest( $this->connection, $request );
 
-		$this->assertEquals( $expectedResponse, $response->getOutput() );
-		$this->assertSame( 'unit', $response->getBody() );
-		$this->assertGreaterThan( 0, $response->getDuration() );
+		self::assertEquals( $expectedResponse, $response->getOutput() );
+		self::assertSame( 'unit', $response->getBody() );
+		self::assertGreaterThan( 0, $response->getDuration() );
 	}
 
 	/**
@@ -205,8 +205,8 @@ final class UnixDomainSocketTest extends TestCase
 
 		usleep( 60000 );
 
-		$this->assertTrue( $this->client->hasResponse( $socketId ) );
-		$this->assertEquals( [$socketId], $this->client->getSocketIdsHavingResponse() );
+		self::assertTrue( $this->client->hasResponse( $socketId ) );
+		self::assertEquals( [$socketId], $this->client->getSocketIdsHavingResponse() );
 	}
 
 	/**
@@ -230,12 +230,12 @@ final class UnixDomainSocketTest extends TestCase
 
 		$socketIds = [$socketIdOne, $socketIdTwo];
 
-		$this->assertEquals( $socketIds, $this->client->getSocketIdsHavingResponse() );
+		self::assertEquals( $socketIds, $this->client->getSocketIdsHavingResponse() );
 
 		$expectedBodies = ['unit' => 'unit', 'test' => 'test'];
 		foreach ( $this->client->readResponses( null, ...$socketIds ) as $response )
 		{
-			$this->assertContains( $response->getBody(), $expectedBodies );
+			self::assertContains( $response->getBody(), $expectedBodies );
 
 			unset( $expectedBodies[ $response->getBody() ] );
 		}
@@ -260,7 +260,7 @@ final class UnixDomainSocketTest extends TestCase
 
 		$response = $this->client->sendRequest( $connection, $request );
 
-		$this->assertSame( 'unit - 0', $response->getBody() );
+		self::assertSame( 'unit - 0', $response->getBody() );
 
 		$content = http_build_query( ['sleep' => 1, 'test-key' => 'unit'] );
 		$request = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', $content );
@@ -374,7 +374,7 @@ final class UnixDomainSocketTest extends TestCase
 			echo $response->getBody();
 		}
 
-		$this->assertFalse( $this->client->hasUnhandledResponses() );
+		self::assertFalse( $this->client->hasUnhandledResponses() );
 
 		$this->expectOutputString( 'unit' );
 	}
@@ -438,9 +438,12 @@ final class UnixDomainSocketTest extends TestCase
 
 		$response = $this->client->sendRequest( $this->connection, $request );
 
-		$this->assertEquals( $length, $response->getBody() );
+		self::assertEquals( $length, $response->getBody() );
 	}
 
+	/**
+	 * @return array<array<string, int>>
+	 */
 	public function contentLengthProvider() : array
 	{
 		return [
@@ -493,11 +496,14 @@ final class UnixDomainSocketTest extends TestCase
 
 		$response = $this->client->sendRequest( $this->connection, $request );
 
-		$this->assertSame( '404 Not Found', $response->getHeaderLine( 'Status' ) );
-		$this->assertSame( "File not found.\n", $response->getBody() );
+		self::assertSame( '404 Not Found', $response->getHeaderLine( 'Status' ) );
+		self::assertSame( "File not found.\n", $response->getBody() );
 		$this->assertMatchesRegExp( "#^Primary script unknown\n?$#", $response->getError() );
 	}
 
+	/**
+	 * @return array<array<string, string>>
+	 */
 	public function invalidScriptFileNamesProvider() : array
 	{
 		return [
@@ -525,12 +531,12 @@ final class UnixDomainSocketTest extends TestCase
 
 		$response = $this->client->sendRequest( $this->connection, $request );
 
-		$this->assertSame( '403 Forbidden', $response->getHeaderLine( 'Status' ) );
+		self::assertSame( '403 Forbidden', $response->getHeaderLine( 'Status' ) );
 		$this->assertMatchesRegExp(
 			'#^Access to the script .+ has been denied \(see security\.limit_extensions\)$#',
 			$response->getError()
 		);
-		$this->assertSame( "Access denied.\n", $response->getBody() );
+		self::assertSame( "Access denied.\n", $response->getBody() );
 	}
 
 	/**
@@ -550,12 +556,12 @@ final class UnixDomainSocketTest extends TestCase
 		$request  = new GetRequest( $scriptPath, '' );
 		$response = $this->client->sendRequest( $this->connection, $request );
 
-		$this->assertSame( '403 Forbidden', $response->getHeaderLine( 'Status' ) );
+		self::assertSame( '403 Forbidden', $response->getHeaderLine( 'Status' ) );
 		$this->assertMatchesRegExp(
 			'#^Unable to open primary script\: .+ \(Permission denied\)$#',
 			$response->getError()
 		);
-		$this->assertSame( "Access denied.\n", $response->getBody() );
+		self::assertSame( "Access denied.\n", $response->getBody() );
 
 		$this->makeFileAccessible( $scriptPath );
 	}
@@ -673,7 +679,7 @@ final class UnixDomainSocketTest extends TestCase
 		$sockets = (new ReflectionClass( $this->client ))->getProperty( 'sockets' );
 		$sockets->setAccessible( true );
 
-		$this->assertCount( 0, $sockets->getValue( $this->client ) );
+		self::assertCount( 0, $sockets->getValue( $this->client ) );
 
 		/** @noinspection UnusedFunctionResultInspection */
 		$this->client->sendRequest( $this->connection, $request );
@@ -690,7 +696,7 @@ final class UnixDomainSocketTest extends TestCase
 
 		$lastSocket = $socketCollection->getIdleSocket( $this->connection );
 
-		$this->assertSame( $firstSocket, $lastSocket );
-		$this->assertCount( 1, $sockets->getValue( $this->client ) );
+		self::assertSame( $firstSocket, $lastSocket );
+		self::assertCount( 1, $sockets->getValue( $this->client ) );
 	}
 }

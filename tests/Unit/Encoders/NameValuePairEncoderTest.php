@@ -31,7 +31,7 @@ use SebastianBergmann\RecursionContext\InvalidArgumentException;
 final class NameValuePairEncoderTest extends TestCase
 {
 	/**
-	 * @param array $pairs
+	 * @param array<mixed, mixed> $pairs
 	 *
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
@@ -44,26 +44,29 @@ final class NameValuePairEncoderTest extends TestCase
 		$encoded = $nameValuePairEncoder->encodePairs( $pairs );
 		$decoded = $nameValuePairEncoder->decodePairs( $encoded );
 
-		$this->assertEquals( $pairs, $decoded );
+		self::assertEquals( $pairs, $decoded );
 	}
 
+	/**
+	 * @return array<array<string, array<mixed, mixed>>>
+	 */
 	public function pairProvider() : array
 	{
 		return [
 			[
-				['unit' => 'test'],
+				'pairs' => ['unit' => 'test'],
 			],
 			# no strings
 			[
-				[10 => 12.3, 'null' => null],
+				'pairs' => [10 => 12.3, 'null' => null],
 			],
 			# name longer than 128 chars
 			[
-				[str_repeat( 'a', 129 ) => 'unit'],
+				'pairs' => [str_repeat( 'a', 129 ) => 'unit'],
 			],
 			# value longer than 128 chars
 			[
-				['unit' => str_repeat( 'b', 129 )],
+				'pairs' => ['unit' => str_repeat( 'b', 129 )],
 			],
 		];
 	}

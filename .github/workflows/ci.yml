@@ -29,7 +29,7 @@ jobs:
         run: docker run --rm -v $(pwd):/app composer update -o -v --ignore-platform-reqs
 
       - name: Run PHPStan
-        run: docker run --rm -v $(pwd):/app phpstan/phpstan analyze --level=max /app/src
+        run: docker run --rm -v $(pwd):/app phpstan/phpstan analyze
 
   unit-tests:
     runs-on: ubuntu-latest
@@ -53,8 +53,9 @@ jobs:
         run: >
           docker-compose exec -T php71 php ${PHP_OPTIONS}
           /repo/vendor/bin/phpunit7.phar
-          -c /repo/build
+          -c /repo/build/phpunit7.xml
           --coverage-clover=/repo/coverage.xml
+          --testdox
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
           PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=/repo/build/xdebug-filter.php"
@@ -71,8 +72,9 @@ jobs:
         run: >
           docker-compose exec -T php72 php ${PHP_OPTIONS}
           /repo/vendor/bin/phpunit8.phar
-          -c /repo/build
+          -c /repo/build/phpunit8.xml
           --coverage-clover=/repo/coverage.xml
+          --testdox
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
           PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=/repo/build/xdebug-filter.php"
@@ -89,8 +91,9 @@ jobs:
         run: >
           docker-compose exec -T php73 php ${PHP_OPTIONS}
           /repo/vendor/bin/phpunit9.phar
-          -c /repo/build
+          -c /repo/build/phpunit9.xml
           --coverage-clover=/repo/coverage.xml
+          --testdox
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
           PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=/repo/build/xdebug-filter.php"
@@ -107,8 +110,9 @@ jobs:
         run: >
           docker-compose exec -T php74 php ${PHP_OPTIONS}
           /repo/vendor/bin/phpunit9.phar
-          -c /repo/build
+          -c /repo/build/phpunit9.xml
           --coverage-clover=/repo/coverage.xml
+          --testdox
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
           PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=/repo/build/xdebug-filter.php"

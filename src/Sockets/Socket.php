@@ -397,8 +397,8 @@ final class Socket
 			throw new WriteFailedException( 'Failed to write request to socket [broken pipe]' );
 		}
 
-		$writeResult = fwrite( $this->resource, $data );
-		$flushResult = fflush( $this->resource );
+		$writeResult = @fwrite( $this->resource, $data );
+		$flushResult = @fflush( $this->resource );
 
 		if ( $writeResult === false || !$flushResult )
 		{

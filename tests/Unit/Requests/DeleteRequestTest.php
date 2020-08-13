@@ -39,7 +39,7 @@ final class DeleteRequestTest extends TestCase
 	{
 		$request = new DeleteRequest( '/path/to/script.php', 'Unit-Test' );
 
-		$this->assertSame( 'DELETE', $request->getRequestMethod() );
+		self::assertSame( 'DELETE', $request->getRequestMethod() );
 	}
 
 	/**
@@ -57,7 +57,7 @@ final class DeleteRequestTest extends TestCase
 
 		$request = DeleteRequest::newWithRequestContent( '/path/to/script.php', $urlEncodedContent );
 
-		$this->assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
-		$this->assertSame( 'unit=test&test=unit', $request->getContent() );
+		self::assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
+		self::assertSame( 'unit=test&test=unit', $request->getContent() );
 	}
 }

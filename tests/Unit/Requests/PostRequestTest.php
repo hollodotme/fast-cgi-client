@@ -39,7 +39,7 @@ final class PostRequestTest extends TestCase
 	{
 		$request = new PostRequest( '/path/to/script.php', 'Unit-Test' );
 
-		$this->assertSame( 'POST', $request->getRequestMethod() );
+		self::assertSame( 'POST', $request->getRequestMethod() );
 	}
 
 	/**
@@ -57,7 +57,7 @@ final class PostRequestTest extends TestCase
 
 		$request = PostRequest::newWithRequestContent( '/path/to/script.php', $urlEncodedContent );
 
-		$this->assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
-		$this->assertSame( 'unit=test&test=unit', $request->getContent() );
+		self::assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
+		self::assertSame( 'unit=test&test=unit', $request->getContent() );
 	}
 }

@@ -122,7 +122,7 @@ shared-unit-tests: &shared-unit-tests
 
     - run:
         name: Run unit tests
-        command: php -d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php vendor/bin/phpunit$PHPUNIT_VERSION.phar -c build --testsuite Unit --log-junit build/logs/junit/junit.xml --coverage-html build/logs/coverage --coverage-clover=coverage.xml
+        command: php -d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php vendor/bin/phpunit$PHPUNIT_VERSION.phar -c build/phpunit$PHPUNIT_VERSION.xml --testsuite Unit --log-junit build/logs/junit/junit.xml --coverage-html build/logs/coverage --coverage-clover=coverage.xml
 
     - run:
         name: Upload code coverage to codecov.io
@@ -155,7 +155,7 @@ shared-integration-tests: &shared-integration-tests
 
     - run:
         name: Run integration tests
-        command: php -d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php vendor/bin/phpunit$PHPUNIT_VERSION.phar -c build --testsuite Integration --log-junit build/logs/junit/junit.xml
+        command: php -d error_reporting=-1 -d auto_prepend_file=build/xdebug-filter.php vendor/bin/phpunit$PHPUNIT_VERSION.phar -c build/phpunit$PHPUNIT_VERSION.xml --testsuite Integration --log-junit build/logs/junit/junit.xml
 
     - store_test_results:
         path: build/logs/junit
@@ -174,7 +174,7 @@ shared-phpstan: &shared-phpstan
 
     - run:
         name: Run PHPStan
-        command: phpstan analyze --level max src/
+        command: phpstan analyze
 
 # Define the actual jobs from the templates above
 jobs:

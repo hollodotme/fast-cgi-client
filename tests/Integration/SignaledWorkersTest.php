@@ -19,11 +19,11 @@ use Throwable;
 use function escapeshellarg;
 use function exec;
 use function http_build_query;
-use function implode;
 use function preg_match;
 use function shell_exec;
 use function sleep;
 use function sprintf;
+use function usleep;
 
 final class SignaledWorkersTest extends TestCase
 {
@@ -76,13 +76,16 @@ final class SignaledWorkersTest extends TestCase
 
 		$client->waitForResponses();
 
-		$this->assertCount( 2, $success );
-		$this->assertCount( 1, $failures );
-		$this->assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
+		self::assertCount( 2, $success );
+		self::assertCount( 1, $failures );
+		self::assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
 
 		sleep( 1 );
 	}
 
+	/**
+	 * @return array<array<string, int>>
+	 */
 	public function signalProvider() : array
 	{
 		return [
@@ -113,13 +116,18 @@ final class SignaledWorkersTest extends TestCase
 		);
 	}
 
+	/**
+	 * @param string $poolName
+	 *
+	 * @return array<int>
+	 */
 	private function getPoolWorkerPIDs( string $poolName ) : array
 	{
 		$command = sprintf(
 			'ps -o pid,args | grep %s | grep -v "grep"',
 			escapeshellarg( $poolName )
 		);
-		$list    = shell_exec( $command );
+		$list    = (string)shell_exec( $command );
 
 		return array_map(
 			static function ( string $item )
@@ -184,9 +192,9 @@ final class SignaledWorkersTest extends TestCase
 
 		$client->waitForResponses();
 
-		$this->assertCount( 2, $success );
-		$this->assertCount( 1, $failures );
-		$this->assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
+		self::assertCount( 2, $success );
+		self::assertCount( 1, $failures );
+		self::assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
 
 		sleep( 1 );
 	}
@@ -241,23 +249,36 @@ final class SignaledWorkersTest extends TestCase
 
 		$client->waitForResponses();
 
-		$this->assertCount( 0, $success );
-		$this->assertCount( 3, $failures );
-		$this->assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
+		self::assertCount( 0, $success );
+		self::assertCount( 3, $failures );
+		self::assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
 
 		sleep( 1 );
 	}
 
 	private function killPhpFpmChildProcesses( string $poolName, int $signal ) : void
 	{
+		usleep( 100000 );
+
+		$PIDs = $this->getPoolWorkerPIDs( $poolName );
+		$this->killPoolWorkers( $PIDs, $signal );
+
+		usleep( 100000 );
+
 		$PIDs = $this->getPoolWorkerPIDs( $poolName );
 		$this->killPoolWorkers( $PIDs, $signal );
 	}
 
+	/**
+	 * @param array<int> $PIDs
+	 * @param int        $signal
+	 */
 	private function killPoolWorkers( array $PIDs, int $signal ) : void
 	{
-		$command = sprintf( 'kill -%d %s', $signal, implode( ' ', $PIDs ) );
-		exec( $command );
+		foreach ( $PIDs as $PID )
+		{
+			$this->killPoolWorker( $PID, $signal );
+		}
 	}
 
 	/**
@@ -305,10 +326,52 @@ final class SignaledWorkersTest extends TestCase
 
 		$client->waitForResponses();
 
-		$this->assertCount( 0, $success );
-		$this->assertCount( 3, $failures );
-		$this->assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
+		self::assertCount( 0, $success );
+		self::assertCount( 3, $failures );
+		self::assertContainsOnlyInstancesOf( ReadFailedException::class, $failures );
 
 		sleep( 1 );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 */
+	public function testBrokenSocketGetsRemovedIfWritingRequestFailed() : void
+	{
+		$client     = new Client();
+		$request    = new PostRequest( __DIR__ . '/Workers/pidWorker.php', '' );
+		$connection = $this->getUnixDomainSocketConnection();
+
+		$socketId1 = $client->sendAsyncRequest( $connection, $request );
+		$pid1      = (int)$client->readResponse( $socketId1 )->getBody();
+
+		# This request should use the same socket and same PHP-FPM child process
+		$socketId2 = $client->sendAsyncRequest( $connection, $request );
+		$pid2      = (int)$client->readResponse( $socketId2 )->getBody();
+
+		self::assertSame( $socketId1, $socketId2 );
+		self::assertSame( $pid1, $pid2 );
+
+		$this->killPoolWorker( $pid2, 9 );
+
+		try
+		{
+			# This should fail because we killed the socket
+			$client->sendAsyncRequest( $connection, $request );
+		}
+		catch ( WriteFailedException $e )
+		{
+			# This request should use a new socket and a new PHP-FPM child process
+			$socketId3 = $client->sendAsyncRequest( $connection, $request );
+			$pid3      = (int)$client->readResponse( $socketId3 )->getBody();
+
+			self::assertNotSame( $socketId2, $socketId3 );
+			self::assertNotSame( $pid2, $pid3 );
+		}
 	}
 }

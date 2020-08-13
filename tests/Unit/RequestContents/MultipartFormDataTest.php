@@ -31,7 +31,7 @@ final class MultipartFormDataTest extends TestCase
 		                   . "VGhpcyBpcyBhIHRlc3RmaWxl\r\n"
 		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__--\r\n\r\n";
 
-		$this->assertSame( $expectedContent, $multipartFormData->getContent() );
+		self::assertSame( $expectedContent, $multipartFormData->getContent() );
 	}
 
 	/**
@@ -56,7 +56,7 @@ final class MultipartFormDataTest extends TestCase
 		                   . "VGhpcyBpcyBhIHRlc3RmaWxl\r\n"
 		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__--\r\n\r\n";
 
-		$this->assertSame( $expectedContent, $multipartFormData->getContent() );
+		self::assertSame( $expectedContent, $multipartFormData->getContent() );
 	}
 
 	public function testConstructorThrowsExceptionIfFileDoesNotExist() : void
@@ -83,7 +83,7 @@ final class MultipartFormDataTest extends TestCase
 	 */
 	public function testGetContentType() : void
 	{
-		$this->assertSame(
+		self::assertSame(
 			'multipart/form-data; boundary=__X_FASTCGI_CLIENT_BOUNDARY__',
 			(new MultipartFormData( [], [] ))->getContentType()
 		);

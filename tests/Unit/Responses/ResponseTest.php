@@ -69,43 +69,43 @@ final class ResponseTest extends TestCase
 		];
 
 		# All headers
-		$this->assertSame( $expectedHeaders, $response->getHeaders() );
+		self::assertSame( $expectedHeaders, $response->getHeaders() );
 
 		# Header values by keys
-		$this->assertSame( ['PHP/7.3.0'], $response->getHeader( 'X-Powered-By' ) );
-		$this->assertSame( ['Header'], $response->getHeader( 'X-Custom' ) );
-		$this->assertSame(
+		self::assertSame( ['PHP/7.3.0'], $response->getHeader( 'X-Powered-By' ) );
+		self::assertSame( ['Header'], $response->getHeader( 'X-Custom' ) );
+		self::assertSame(
 			['yummy_cookie=choco', 'tasty_cookie=strawberry', 'delicious_cookie=cherry'],
 			$response->getHeader( 'Set-Cookie' )
 		);
-		$this->assertSame( ['text/html; charset=UTF-8'], $response->getHeader( 'Content-type' ) );
+		self::assertSame( ['text/html; charset=UTF-8'], $response->getHeader( 'Content-type' ) );
 
 		# Header lines by keys
-		$this->assertSame( 'PHP/7.3.0', $response->getHeaderLine( 'X-Powered-By' ) );
-		$this->assertSame( 'Header', $response->getHeaderLine( 'X-Custom' ) );
-		$this->assertSame(
+		self::assertSame( 'PHP/7.3.0', $response->getHeaderLine( 'X-Powered-By' ) );
+		self::assertSame( 'Header', $response->getHeaderLine( 'X-Custom' ) );
+		self::assertSame(
 			'yummy_cookie=choco, tasty_cookie=strawberry, delicious_cookie=cherry',
 			$response->getHeaderLine( 'Set-Cookie' )
 		);
-		$this->assertSame( 'text/html; charset=UTF-8', $response->getHeaderLine( 'Content-type' ) );
+		self::assertSame( 'text/html; charset=UTF-8', $response->getHeaderLine( 'Content-type' ) );
 
 		# Header values by case-insensitive keys
-		$this->assertSame( ['PHP/7.3.0'], $response->getHeader( 'x-powered-by' ) );
-		$this->assertSame( ['Header'], $response->getHeader( 'X-CUSTOM' ) );
-		$this->assertSame(
+		self::assertSame( ['PHP/7.3.0'], $response->getHeader( 'x-powered-by' ) );
+		self::assertSame( ['Header'], $response->getHeader( 'X-CUSTOM' ) );
+		self::assertSame(
 			['yummy_cookie=choco', 'tasty_cookie=strawberry', 'delicious_cookie=cherry'],
 			$response->getHeader( 'Set-cookie' )
 		);
-		$this->assertSame( ['text/html; charset=UTF-8'], $response->getHeader( 'Content-Type' ) );
+		self::assertSame( ['text/html; charset=UTF-8'], $response->getHeader( 'Content-Type' ) );
 
 		# Header lines by case-insensitive keys
-		$this->assertSame( 'PHP/7.3.0', $response->getHeaderLine( 'x-powered-by' ) );
-		$this->assertSame( 'Header', $response->getHeaderLine( 'X-CUSTOM' ) );
-		$this->assertSame(
+		self::assertSame( 'PHP/7.3.0', $response->getHeaderLine( 'x-powered-by' ) );
+		self::assertSame( 'Header', $response->getHeaderLine( 'X-CUSTOM' ) );
+		self::assertSame(
 			'yummy_cookie=choco, tasty_cookie=strawberry, delicious_cookie=cherry',
 			$response->getHeaderLine( 'Set-cookie' )
 		);
-		$this->assertSame( 'text/html; charset=UTF-8', $response->getHeaderLine( 'Content-Type' ) );
+		self::assertSame( 'text/html; charset=UTF-8', $response->getHeaderLine( 'Content-Type' ) );
 	}
 
 	/**
@@ -126,7 +126,7 @@ final class ResponseTest extends TestCase
 
 		$expectedBody = "unit\r\ntest";
 
-		$this->assertSame( $expectedBody, $response->getBody() );
+		self::assertSame( $expectedBody, $response->getBody() );
 	}
 
 	/**
@@ -145,8 +145,8 @@ final class ResponseTest extends TestCase
 		$duration = 0.54321;
 		$response = new Response( $output, $error, $duration );
 
-		$this->assertSame( $output, $response->getOutput() );
-		$this->assertSame( $duration, $response->getDuration() );
+		self::assertSame( $output, $response->getOutput() );
+		self::assertSame( $duration, $response->getDuration() );
 	}
 
 	/**
@@ -165,9 +165,9 @@ final class ResponseTest extends TestCase
 		$duration = 0.54321;
 		$response = new Response( $output, $error, $duration );
 
-		$this->assertSame( $output, $response->getOutput() );
-		$this->assertSame( 'File not found.', $response->getBody() );
-		$this->assertSame( $error, $response->getError() );
-		$this->assertSame( $duration, $response->getDuration() );
+		self::assertSame( $output, $response->getOutput() );
+		self::assertSame( 'File not found.', $response->getBody() );
+		self::assertSame( $error, $response->getError() );
+		self::assertSame( $duration, $response->getDuration() );
 	}
 }

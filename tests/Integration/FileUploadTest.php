@@ -33,8 +33,8 @@ final class FileUploadTest extends TestCase
 
 	protected function tearDown() : void
 	{
-		$this->connection = null;
-		$this->client     = null;
+		$this->connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
+		$this->client     = new Client();
 	}
 
 	/**
@@ -80,6 +80,6 @@ final class FileUploadTest extends TestCase
 		                . "FILENAME: TestFile.txt\n"
 		                . "SIZE: 24\n\n";
 
-		$this->assertSame( $expectedBody, $response->getBody() );
+		self::assertSame( $expectedBody, $response->getBody() );
 	}
 }

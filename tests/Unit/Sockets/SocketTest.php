@@ -60,8 +60,8 @@ final class SocketTest extends TestCase
 	{
 		$socket = $this->getSocket();
 
-		$this->assertGreaterThanOrEqual( 1, $socket->getId() );
-		$this->assertLessThanOrEqual( (1 << 16) - 1, $socket->getId() );
+		self::assertGreaterThanOrEqual( 1, $socket->getId() );
+		self::assertLessThanOrEqual( (1 << 16) - 1, $socket->getId() );
 	}
 
 	/**
@@ -107,11 +107,11 @@ final class SocketTest extends TestCase
 
 		$response = $socket->fetchResponse();
 
-		$this->assertSame( 'unit', $response->getBody() );
+		self::assertSame( 'unit', $response->getBody() );
 
 		$response2 = $socket->fetchResponse();
 
-		$this->assertSame( $response, $response2 );
+		self::assertSame( $response, $response2 );
 	}
 
 	/**
@@ -134,13 +134,13 @@ final class SocketTest extends TestCase
 
 		$socket->collectResource( $resources );
 
-		$this->assertEmpty( $resources );
+		self::assertEmpty( $resources );
 
 		$socket->sendRequest( $request );
 
 		$socket->collectResource( $resources );
 
-		$this->assertIsResource( $resources[ $socket->getId() ] );
+		self::assertIsResource( $resources[ $socket->getId() ] );
 	}
 
 	/**
@@ -219,7 +219,7 @@ final class SocketTest extends TestCase
 
 		$socket->sendRequest( $request );
 
-		$this->fail( 'Expected ConnectException to be thrown.' );
+		self::fail( 'Expected ConnectException to be thrown.' );
 	}
 
 	/**
@@ -249,9 +249,12 @@ final class SocketTest extends TestCase
 
 		$guardMethod->invoke( $socket, $flag );
 
-		$this->fail( 'Expected an Exception to be thrown.' );
+		self::fail( 'Expected an Exception to be thrown.' );
 	}
 
+	/**
+	 * @return array<array<string, int|string>>
+	 */
 	public function responseFlagProvider() : array
 	{
 		return [
@@ -287,7 +290,7 @@ final class SocketTest extends TestCase
 	{
 		$socket = $this->getSocket();
 
-		$this->assertTrue( $socket->isUsable() );
+		self::assertTrue( $socket->isUsable() );
 	}
 
 	/**
@@ -315,7 +318,7 @@ final class SocketTest extends TestCase
 		{
 		}
 
-		$this->assertFalse( $socket->isUsable() );
+		self::assertFalse( $socket->isUsable() );
 	}
 
 	/**
@@ -336,7 +339,7 @@ final class SocketTest extends TestCase
 		$disconnectMethod->setAccessible( true );
 		$disconnectMethod->invoke( $socket );
 
-		$this->assertFalse( $socket->isUsable() );
+		self::assertFalse( $socket->isUsable() );
 	}
 
 	/**
@@ -366,10 +369,10 @@ final class SocketTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$this->assertTrue( $unixDomainSocket->usesConnection( $unixDomainConnection ) );
-		$this->assertFalse( $unixDomainSocket->usesConnection( $networkConnection ) );
+		self::assertTrue( $unixDomainSocket->usesConnection( $unixDomainConnection ) );
+		self::assertFalse( $unixDomainSocket->usesConnection( $networkConnection ) );
 
-		$this->assertTrue( $networkSocket->usesConnection( $networkConnection ) );
-		$this->assertFalse( $networkSocket->usesConnection( $unixDomainConnection ) );
+		self::assertTrue( $networkSocket->usesConnection( $networkConnection ) );
+		self::assertFalse( $networkSocket->usesConnection( $unixDomainConnection ) );
 	}
 }

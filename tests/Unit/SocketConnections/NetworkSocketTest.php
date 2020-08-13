@@ -47,7 +47,7 @@ final class NetworkSocketTest extends TestCase
 	{
 		$connection = new NetworkSocket( 'localhost', 9000 );
 
-		$this->assertInstanceOf( ConfiguresSocketConnection::class, $connection );
+		self::assertInstanceOf( ConfiguresSocketConnection::class, $connection );
 	}
 
 	/**
@@ -60,9 +60,9 @@ final class NetworkSocketTest extends TestCase
 
 		$expectedSocketAddress = sprintf( 'tcp://%s:%d', $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
 
-		$this->assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
-		$this->assertSame( Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout() );
-		$this->assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
+		self::assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
+		self::assertSame( Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout() );
+		self::assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
 	}
 
 	/**
@@ -75,9 +75,9 @@ final class NetworkSocketTest extends TestCase
 
 		$expectedSocketAddress = sprintf( 'tcp://%s:%d', $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
 
-		$this->assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
-		$this->assertSame( 2000, $connection->getConnectTimeout() );
-		$this->assertSame( 3000, $connection->getReadWriteTimeout() );
+		self::assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
+		self::assertSame( 2000, $connection->getConnectTimeout() );
+		self::assertSame( 3000, $connection->getReadWriteTimeout() );
 	}
 
 	/**
@@ -92,10 +92,13 @@ final class NetworkSocketTest extends TestCase
 	{
 		$networkConnection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
 
-		$this->assertSame( $expectedEqual, $networkConnection->equals( $connection ) );
-		$this->assertSame( $expectedEqual, $connection->equals( $networkConnection ) );
+		self::assertSame( $expectedEqual, $networkConnection->equals( $connection ) );
+		self::assertSame( $expectedEqual, $connection->equals( $networkConnection ) );
 	}
 
+	/**
+	 * @return array<array<string, ConfiguresSocketConnection|bool>>
+	 */
 	public function connectionProvider() : array
 	{
 		return [

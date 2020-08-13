@@ -91,24 +91,21 @@ class Client
 	 */
 	public function sendAsyncRequest( ConfiguresSocketConnection $connection, ProvidesRequestData $request ) : int
 	{
-		$socket = $this->sockets->getIdleSocket( $connection );
+		$socket = $this->sockets->getIdleSocket( $connection )
+		          ?? $this->sockets->new( $connection, $this->packetEncoder, $this->nameValuePairEncoder );
 
-		if ( null !== $socket )
+		try
 		{
 			$socket->sendRequest( $request );
 
 			return $socket->getId();
 		}
+		catch ( TimedoutException | WriteFailedException $e )
+		{
+			$this->sockets->remove( $socket->getId() );
 
-		$socket = $this->sockets->new(
-			$connection,
-			$this->packetEncoder,
-			$this->nameValuePairEncoder
-		);
-
-		$socket->sendRequest( $request );
-
-		return $socket->getId();
+			throw $e;
+		}
 	}
 
 	/**

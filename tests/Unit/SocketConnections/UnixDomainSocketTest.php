@@ -47,7 +47,7 @@ final class UnixDomainSocketTest extends TestCase
 	{
 		$connection = new UnixDomainSocket( $this->getUnixDomainSocket() );
 
-		$this->assertInstanceOf( ConfiguresSocketConnection::class, $connection );
+		self::assertInstanceOf( ConfiguresSocketConnection::class, $connection );
 	}
 
 	/**
@@ -60,9 +60,9 @@ final class UnixDomainSocketTest extends TestCase
 
 		$expectedSocketAddress = sprintf( 'unix://%s', $this->getUnixDomainSocket() );
 
-		$this->assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
-		$this->assertSame( Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout() );
-		$this->assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
+		self::assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
+		self::assertSame( Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout() );
+		self::assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
 	}
 
 	/**
@@ -75,9 +75,9 @@ final class UnixDomainSocketTest extends TestCase
 
 		$expectedSocketAddress = sprintf( 'unix://%s', $this->getUnixDomainSocket() );
 
-		$this->assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
-		$this->assertSame( 2000, $connection->getConnectTimeout() );
-		$this->assertSame( 3000, $connection->getReadWriteTimeout() );
+		self::assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
+		self::assertSame( 2000, $connection->getConnectTimeout() );
+		self::assertSame( 3000, $connection->getReadWriteTimeout() );
 	}
 
 	/**
@@ -92,10 +92,13 @@ final class UnixDomainSocketTest extends TestCase
 	{
 		$unixDomainConnection = new UnixDomainSocket( $this->getUnixDomainSocket() );
 
-		$this->assertSame( $expectedEqual, $unixDomainConnection->equals( $connection ) );
-		$this->assertSame( $expectedEqual, $connection->equals( $unixDomainConnection ) );
+		self::assertSame( $expectedEqual, $unixDomainConnection->equals( $connection ) );
+		self::assertSame( $expectedEqual, $connection->equals( $unixDomainConnection ) );
 	}
 
+	/**
+	 * @return array<array<string, ConfiguresSocketConnection|bool>>
+	 */
 	public function connectionProvider() : array
 	{
 		return [
