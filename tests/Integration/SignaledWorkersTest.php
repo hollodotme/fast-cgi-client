@@ -19,7 +19,6 @@ use Throwable;
 use function escapeshellarg;
 use function exec;
 use function http_build_query;
-use function implode;
 use function preg_match;
 use function shell_exec;
 use function sleep;
@@ -256,8 +255,10 @@ final class SignaledWorkersTest extends TestCase
 
 	private function killPoolWorkers( array $PIDs, int $signal ) : void
 	{
-		$command = sprintf( 'kill -%d %s', $signal, implode( ' ', $PIDs ) );
-		exec( $command );
+		foreach ( $PIDs as $PID )
+		{
+			$this->killPoolWorker( $PID, $signal );
+		}
 	}
 
 	/**
