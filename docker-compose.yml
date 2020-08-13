@@ -61,7 +61,7 @@ services:
     container_name: fcc_phpstan
     working_dir: /repo
     restart: "no"
-    command: "analyze --level max src/"
+    command: "analyze"
     networks:
       - fcc_network
     volumes:
