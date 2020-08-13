@@ -394,4 +394,4 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#55]: https://github.com/hollodotme/fast-cgi-client/pull/55
 [#56]: https://github.com/hollodotme/fast-cgi-client/issues/56
 [#58]: https://github.com/hollodotme/fast-cgi-client/pull/58
-[#61]: https://github.com/hollodotme/fast-cgi-client/pull/61
+[#61]: https://github.com/hollodotme/fast-cgi-client/issues/61
