@@ -84,9 +84,9 @@ in the changelog of [3.0.0-alpha](#300-alpha---2019-04-30) & [3.0.0-beta](#300-b
 
   in order to allow sending (equal) requests to different FastCGI servers using the same `Client` instance. - [#45]
 
-* Removed method `ProvidesResponseData#getRequestId() : int` and `Response#getRequestId() : int` resepctivly in order 
+* Removed method `ProvidesResponseData#getRequestId() : int` and `Response#getRequestId() : int` respectively in order 
   to avoid confusion about the semantics of the term "request ID" and misusage by assuming it is a unique ID for each request (which it is not).
-  Also the first constructor parameter of the `Response` class was removed wiht this change. - [#39]
+  Also the first constructor parameter of the `Response` class was removed with this change. - [#39]
   
 * Renamed all `$requestId(s)` parameters to `$socketId(s)` in order to reflect the correct semantics of the ID. - [#39]
 
