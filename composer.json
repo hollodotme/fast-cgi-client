@@ -1,59 +1,60 @@
 {
-  "name": "hollodotme/fast-cgi-client",
-  "description": "A PHP fast CGI client to send requests (a)synchronously to PHP-FPM.",
-  "keywords": [
-    "fastcgi",
-    "php-fpm",
-    "socket",
-    "async"
-  ],
-  "minimum-stability": "dev",
-  "prefer-stable": true,
-  "license": "MIT",
-  "authors": [
-    {
-      "name": "Holger Woltersdorf",
-      "email": "hw@hollo.me"
+    "name": "hollodotme/fast-cgi-client",
+    "description": "A PHP fast CGI client to send requests (a)synchronously to PHP-FPM.",
+    "keywords": [
+        "fastcgi",
+        "php-fpm",
+        "socket",
+        "async"
+    ],
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Holger Woltersdorf",
+            "email": "hw@hollo.me"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "hollodotme\\FastCGI\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "hollodotme\\FastCGI\\Tests\\": "tests/"
+        }
+    },
+    "require": {
+        "php": ">=7.1",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "ext-xdebug": ">=2.6.0",
+        "tm/tooly-composer-script": "^1.4.1"
+    },
+    "scripts": {
+        "post-install-cmd": "Tooly\\ScriptHandler::installPharTools",
+        "post-update-cmd": "Tooly\\ScriptHandler::installPharTools"
+    },
+    "extra": {
+        "tools": {
+            "phpunit7": {
+                "url": "https://phar.phpunit.de/phpunit-7.phar",
+                "replace": true,
+                "only-dev": true
+            },
+            "phpunit8": {
+                "url": "https://phar.phpunit.de/phpunit-8.phar",
+                "replace": true,
+                "only-dev": true
+            },
+            "phpunit9": {
+                "url": "https://phar.phpunit.de/phpunit-9.phar",
+                "replace": true,
+                "only-dev": true
+            }
+        }
     }
-  ],
-  "autoload": {
-    "psr-4": {
-      "hollodotme\\FastCGI\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "hollodotme\\FastCGI\\Tests\\": "tests/"
-    }
-  },
-  "require": {
-    "php": ">=7.1",
-    "ext-json": "*"
-  },
-  "require-dev": {
-    "tm/tooly-composer-script": "^1.0"
-  },
-  "scripts": {
-    "post-install-cmd": "Tooly\\ScriptHandler::installPharTools",
-    "post-update-cmd": "Tooly\\ScriptHandler::installPharTools"
-  },
-  "extra": {
-    "tools": {
-      "phpunit7": {
-        "url": "https://phar.phpunit.de/phpunit-7.phar",
-        "replace": true,
-        "only-dev": true
-      },
-      "phpunit8": {
-        "url": "https://phar.phpunit.de/phpunit-8.phar",
-        "replace": true,
-        "only-dev": true
-      },
-      "phpunit9": {
-        "url": "https://phar.phpunit.de/phpunit-9.phar",
-        "replace": true,
-        "only-dev": true
-      }
-    }
-  }
 }
