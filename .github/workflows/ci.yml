@@ -28,7 +28,7 @@ jobs:
         run: docker run --rm -v $(pwd):/app composer validate
 
       - name: Composer update
-        run: docker run --rm -v $(pwd):/app composer update -o -v
+        run: docker run --rm -v $(pwd):/app composer update -o -v --ignore-platform-reqs
 
       - name: Run PHPStan
         run: docker run --rm -v $(pwd):/app phpstan/phpstan analyze
