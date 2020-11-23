@@ -61,7 +61,7 @@ services:
     container_name: fcc_composer
     working_dir: /repo
     restart: "no"
-    command: "update -o -v"
+    command: "update -o -v --ignore-platform-reqs"
     networks:
       - fcc_network
     volumes:
