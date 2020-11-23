@@ -45,8 +45,19 @@ services:
     volumes:
       - ./:/repo
 
+  php80:
+    build:
+      dockerfile: 8.0/Dockerfile
+      context: .docker/php
+    container_name: fcc_php80
+    restart: "no"
+    networks:
+      - fcc_network
+    volumes:
+      - ./:/repo
+
   composer:
-    image: composer:latest
+    image: library/composer:2
     container_name: fcc_composer
     working_dir: /repo
     restart: "no"
