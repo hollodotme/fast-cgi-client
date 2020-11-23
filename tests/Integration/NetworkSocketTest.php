@@ -573,12 +573,12 @@ final class NetworkSocketTest extends TestCase
 		$request  = new GetRequest( $scriptPath, '' );
 		$response = $this->client->sendRequest( $this->connection, $request );
 
-		self::assertSame( '404 Not Found', $response->getHeaderLine( 'Status' ) );
+		self::assertSame( '403 Forbidden', $response->getHeaderLine( 'Status' ) );
 		$this->assertMatchesRegExp(
-			'#^Unable to open primary script\: .+ \(Operation not permitted\)$#',
+			'#^Unable to open primary script\: .+ \(Permission denied\)$#',
 			$response->getError()
 		);
-		self::assertSame( "No input file specified.\n", $response->getBody() );
+		self::assertSame( "Access denied.\n", $response->getBody() );
 
 		$this->makeFileAccessible( $scriptPath );
 	}
