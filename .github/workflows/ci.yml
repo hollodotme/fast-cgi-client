@@ -1,4 +1,4 @@
-name: FastCGI Client CI PHP 7.1 - 7.4
+name: FastCGI Client CI PHP 7.1 - 8.0
 
 on:
   push:
@@ -12,6 +12,9 @@ on:
   # Run tests for any PRs.
   pull_request:
 
+  schedule:
+    - '7 7 * * *'
+
 jobs:
   static-analyzers:
     runs-on: ubuntu-latest
@@ -20,13 +23,13 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Check for PHP parse errors
-        run: docker run --rm -v $(pwd):/app php:7.4-cli -c 'find /app/src -type f -name "*.php" -print0 | xargs -0 -n1 -P4 php -l -n | (! grep -v "No syntax errors detected" )'
+        run: docker run --rm -v $(pwd):/app php:7.4-cli -c 'find /app/src -type f -name "*.php" -print0 | xargs -0 -n1 -P8 php -l -n | (! grep -v "No syntax errors detected" )'
 
       - name: Composer validate
         run: docker run --rm -v $(pwd):/app composer validate
 
       - name: Composer update
-        run: docker run --rm -v $(pwd):/app composer update -o -v --ignore-platform-reqs
+        run: docker run --rm -v $(pwd):/app composer update -o -v
 
       - name: Run PHPStan
         run: docker run --rm -v $(pwd):/app phpstan/phpstan analyze
@@ -37,88 +40,50 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Build docker images
-        run: docker-compose build --pull --parallel
-
-      - name: Pull docker images
-        run: docker-compose pull
-
-      - name: Composer update
-        run: docker-compose run --rm composer
-
-      - name: Bring containers up
-        run: docker-compose up -d --force-recreate php71
+      - name: Build environment
+        run: make update
 
       - name: Run unit tests on PHP 7.1
-        run: >
-          docker-compose exec -T php71 php ${PHP_OPTIONS}
-          /repo/vendor/bin/phpunit7.phar
-          -c /repo/build/phpunit7.xml
-          --coverage-clover=/repo/coverage.xml
-          --testdox
+        run: make test-php-71 -s
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=/repo/build/xdebug-filter.php"
+          PHPUNIT_OPTIONS: "--coverage-clover=/repo/coverage.xml --testdox"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
-
-      - name: Bring containers up
-        run: |
-          docker-compose down
-          docker-compose up -d --force-recreate php72
 
       - name: Run unit tests on PHP 7.2
-        run: >
-          docker-compose exec -T php72 php ${PHP_OPTIONS}
-          /repo/vendor/bin/phpunit8.phar
-          -c /repo/build/phpunit8.xml
-          --coverage-clover=/repo/coverage.xml
-          --testdox
+        run: make test-php-72 -s
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=/repo/build/xdebug-filter.php"
+          PHPUNIT_OPTIONS: "--coverage-clover=/repo/coverage.xml --testdox"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
-
-      - name: Bring containers up
-        run: |
-          docker-compose down
-          docker-compose up -d --force-recreate php73
 
       - name: Run unit tests on PHP 7.3
-        run: >
-          docker-compose exec -T php73 php ${PHP_OPTIONS}
-          /repo/vendor/bin/phpunit9.phar
-          -c /repo/build/phpunit9.xml
-          --coverage-clover=/repo/coverage.xml
-          --testdox
+        run: make test-php-73 -s
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=/repo/build/xdebug-filter.php"
+          PHPUNIT_OPTIONS: "--coverage-clover=/repo/coverage.xml --testdox"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
-
-      - name: Bring containers up
-        run: |
-          docker-compose down
-          docker-compose up -d --force-recreate php74
 
       - name: Run unit tests on PHP 7.4
-        run: >
-          docker-compose exec -T php74 php ${PHP_OPTIONS}
-          /repo/vendor/bin/phpunit9.phar
-          -c /repo/build/phpunit9.xml
-          --coverage-clover=/repo/coverage.xml
-          --testdox
+        run: make test-php-74 -s
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHP_OPTIONS: "-d error_reporting=-1 -d auto_prepend_file=/repo/build/xdebug-filter.php"
+          PHPUNIT_OPTIONS: "--coverage-clover=/repo/coverage.xml --testdox"
 
       - name: Upload code coverage to codecov.io
         run: bash <(curl -s https://codecov.io/bash)
+
+      - name: Run unit tests on PHP 8.0
+        run: make test-php-80 -s
+        env:
+          COMPOSE_INTERACTIVE_NO_CLI: 1
+          PHPUNIT_OPTIONS: "--testdox"
 
   release:
     needs:
