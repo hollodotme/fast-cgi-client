@@ -1,14 +1,17 @@
-![FastCGI Client CI PHP 7.1 - 7.4](https://github.com/hollodotme/fast-cgi-client/workflows/FastCGI%20Client%20CI%20PHP%207.1%20-%207.4/badge.svg)
-[![Latest Stable Version](https://poser.pugx.org/hollodotme/fast-cgi-client/v/stable)](https://packagist.org/packages/hollodotme/fast-cgi-client) 
-[![Total Downloads](https://poser.pugx.org/hollodotme/fast-cgi-client/downloads)](https://packagist.org/packages/hollodotme/fast-cgi-client) 
+![FastCGI Client CI PHP 7.1 - 8.0](https://github.com/hollodotme/fast-cgi-client/workflows/FastCGI%20Client%20CI%20PHP%207.1%20-%208.0/badge.svg)
+[![Latest Stable Version](https://poser.pugx.org/hollodotme/fast-cgi-client/v/stable)](https://packagist.org/packages/hollodotme/fast-cgi-client)
+[![Total Downloads](https://poser.pugx.org/hollodotme/fast-cgi-client/downloads)](https://packagist.org/packages/hollodotme/fast-cgi-client)
 [![codecov](https://codecov.io/gh/hollodotme/fast-cgi-client/branch/master/graph/badge.svg)](https://codecov.io/gh/hollodotme/fast-cgi-client)
 
 # Fast CGI Client
 
-A PHP fast CGI client to send requests (a)synchronously to PHP-FPM using the [FastCGI Protocol](http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html).
+A PHP fast CGI client to send requests (a)synchronously to PHP-FPM using
+the [FastCGI Protocol](http://www.mit.edu/~yandros/doc/specs/fcgi-spec.html).
 
-This library is based on the work of [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](https://github.com/adoy/PHP-FastCGI-Client/) 
-and was ported and modernized to latest PHP versions, extended with some features for handling multiple requests (in loops) and unit and integration tests as well.
+This library is based on the work
+of [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](https://github.com/adoy/PHP-FastCGI-Client/)
+and was ported and modernized to latest PHP versions, extended with some features for handling multiple requests (in
+loops) and unit and integration tests as well.
 
 ---
 
@@ -16,18 +19,20 @@ This is the documentation of the latest release.
 
 Please have a look at the [backwards incompatible changes (BC breaks) in the changelog](./CHANGELOG.md).
 
-Please see the following links for earlier releases: 
+Please see the following links for earlier releases:
 
-* PHP >= 7.0 (EOL) [v1.0.0], [v1.0.1], [v1.1.0], [v1.2.0], [v1.3.0], [v1.4.0], [v1.4.1], [v1.4.2] 
-* PHP >= 7.1 [v2.0.0], [v2.0.1], [v2.1.0], [v2.2.0], [v2.3.0], [v2.4.0], [v2.4.1], [v2.4.2], [v2.4.3], [v2.5.0], [v2.6.0], [v2.7.0], [v2.7.1],
-  [v2.7.2], [v3.0.0-alpha], [v3.0.0-beta], [v3.0.0], [v3.0.1], [v3.1.0], [v3.1.1]
+* PHP >= 7.0 (EOL) [v1.0.0], [v1.0.1], [v1.1.0], [v1.2.0], [v1.3.0], [v1.4.0], [v1.4.1], [v1.4.2]
+* PHP >= 7.1 [v2.0.0], [v2.0.1], [v2.1.0], [v2.2.0], [v2.3.0], [v2.4.0], [v2.4.1], [v2.4.2], [v2.4.3], [v2.5.0],
+  [v2.6.0], [v2.7.0], [v2.7.1], [v2.7.2], [v3.0.0-alpha], [v3.0.0-beta], [v3.0.0], [v3.0.1], [v3.1.0], [v3.1.1],
+  [v3.1.2], [v3.1.3]
 
-Read more about the journey to and changes in `v2.6.0` in [this blog post](https://github.com/hollodotme/fast-cgi-client/wiki/Background-Info-FastCgiClient-Version-2.6.0).
+Read more about the journey to and changes in `v2.6.0`
+in [this blog post](https://github.com/hollodotme/fast-cgi-client/wiki/Background-Info-FastCgiClient-Version-2.6.0).
 
 ---
 
 You can find an experimental use-case in my related blog posts:
- 
+
 * [Experimental async PHP vol. 1](https://github.com/hollodotme/fast-cgi-client/wiki/Experimental-Async-Php-Volume-1)
 * [Experimental async PHP vol. 2](https://github.com/hollodotme/fast-cgi-client/wiki/Experimental-Async-Php-Volume-2)
 
@@ -114,6 +119,7 @@ $response = $client->sendRequest($connection, $request);
 
 echo $response->getBody();
 ```
+
 ```
 # prints
 value
@@ -179,9 +185,8 @@ value
 
 ### Notify a callback when async request responded
 
-You can register response and failure callbacks for each request.
-In order to notify the callbacks when a response was received instead of returning it, 
-you need to use the `waitForResponse(int $socketId, ?int $timeoutMs = null)` method.
+You can register response and failure callbacks for each request. In order to notify the callbacks when a response was
+received instead of returning it, you need to use the `waitForResponse(int $socketId, ?int $timeoutMs = null)` method.
 
 ```php
 <?php declare(strict_types=1);
@@ -285,6 +290,7 @@ foreach ($client->readResponses(3000, ...$socketIds) as $response)
 	echo $response->getBody() . "\n";	
 }
 ```
+
 ```
 # prints
 1
@@ -453,11 +459,13 @@ while ( $client->hasUnhandledResponses() )
 
 ### Reading output buffer from worker script using pass through callbacks
 
-It may be useful to see the progression of a requested script by having access to the flushed output of that script.
-The php.ini default output buffering for php-fpm is 4096 bytes and is (hard-coded) disabled for CLI mode. ([See documentation](http://php.net/manual/en/outcontrol.configuration.php#ini.output-buffering))
-Calling `ob_implicit_flush()` causes every call to `echo` or `print` to immediately be flushed.  
+It may be useful to see the progression of a requested script by having access to the flushed output of that script. The
+php.ini default output buffering for php-fpm is 4096 bytes and is (hard-coded) disabled for CLI
+mode. ([See documentation](http://php.net/manual/en/outcontrol.configuration.php#ini.output-buffering))
+Calling `ob_implicit_flush()` causes every call to `echo` or `print` to immediately be flushed.
 
 The callee script could look like this:
+
 ```php
 <?php declare(strict_types=1);
 
@@ -479,6 +487,7 @@ echo 'End';
 ```
 
 The caller than could look like this:
+
 ```php
 <?php declare(strict_types=1);
 
@@ -565,8 +574,8 @@ interface ProvidesRequestData
 }
 ```
 
-Alongside with this interface, this package provides an abstract request class, containing default values to make the API more handy for you 
-and 5 request method implementations of this abstract class:
+Alongside with this interface, this package provides an abstract request class, containing default values to make the
+API more handy for you and 5 request method implementations of this abstract class:
 
 * `hollodotme\FastCGI\Requests\GetRequest`
 * `hollodotme\FastCGI\Requests\PostRequest`
@@ -575,11 +584,11 @@ and 5 request method implementations of this abstract class:
 * `hollodotme\FastCGI\Requests\DeleteRequest`
 
 So you can either implement the interface, inherit from the abstract class or simply use one of the 5 implementations.
- 
+
 #### Default values
 
 The abstract request class defines several default values which you can optionally overwrite:
- 
+
 | Key               | Default value                     | Comment                                                                                 |
 |-------------------|-----------------------------------|-----------------------------------------------------------------------------------------|
 | GATEWAY_INTERFACE | FastCGI/1.0                       | Cannot be overwritten, because this is the only supported version of the client.        |
@@ -596,8 +605,8 @@ The abstract request class defines several default values which you can optional
 
 #### Request contents
 
-In order to make the composition of different request content types easier there are classes covering the
-typical content types:
+In order to make the composition of different request content types easier there are classes covering the typical
+content types:
 
 * [UrlEncodedFormData](./src/RequestContents/UrlEncodedFormData.php)
 * [MultipartFormData](./src/RequestContents/MultipartFormData.php)
@@ -606,6 +615,7 @@ typical content types:
 You can create your own request content type composer by implementing the following interface:
 
 [**ComposesRequestContent**](./src/Interfaces/ComposesRequestContent.php)
+
 ```php
 interface ComposesRequestContent
 {
@@ -665,7 +675,8 @@ Array
 
 ##### Request content example: multipart form data (multipart/form-data)
 
-Multipart form-data can be used to transfer any binary data as files to the target script just like a file upload in a browser does. 
+Multipart form-data can be used to transfer any binary data as files to the target script just like a file upload in a
+browser does.
 
 **PLEASE NOTE:** Multipart form-data content type works with POST requests only.
 
@@ -803,7 +814,15 @@ $response = $client->sendRequest( $connection, $postRequest );
 This example produces the following content for `php://input` at the target script:
 
 ```json
-{"nested":{"0":"one","two":"value2","three":["value3"]}}
+{
+  "nested": {
+    "0": "one",
+    "two": "value2",
+    "three": [
+      "value3"
+    ]
+  }
+}
 ```
 
 ### Responses
@@ -834,7 +853,7 @@ interface ProvidesResponseData
 ```
 
 Assuming `/path/to/target/script.php` has the following content:
- 
+
 ```php
 <?php declare(strict_types=1);
 
@@ -851,8 +870,9 @@ Hello World
 ```
 
 **Please note:**
- * All headers sent by your script will precede the response body
- * There won't be any HTTP specific headers like `HTTP/1.1 200 OK`, because there is no webserver involved.
+
+* All headers sent by your script will precede the response body
+* There won't be any HTTP specific headers like `HTTP/1.1 200 OK`, because there is no webserver involved.
 
 Custom headers will also be part of the response:
 
@@ -932,11 +952,11 @@ $response->getDuration();
 
 ### "File not found." response (php-fpm)
 
-This response is generated by php-fpm for the preceding error `Primary script unknown` in case the requested script 
-does not exists or there are path traversals in its path like `/var/www/../run/script.php`.
+This response is generated by php-fpm for the preceding error `Primary script unknown` in case the requested script does
+not exists or there are path traversals in its path like `/var/www/../run/script.php`.
 
-Although the given path may exist and would resolve to an absolute path in the file system,
-php-fpm does not do any path resolution and accepts only **absolute paths** to the script you want to execute.
+Although the given path may exist and would resolve to an absolute path in the file system, php-fpm does not do any path
+resolution and accepts only **absolute paths** to the script you want to execute.
 
 Programatically you can handle this error like this:
 
@@ -977,7 +997,8 @@ if ('File not found.' === trim($response->getBody()))
 
 ## Command line tool (for local debugging only)
 
-**Please note:** `bin/fcgiget` is not included and linked to `vendor/bin` via composer anymore since version `v3.1.2` for security reasons. [Read more.](https://github.com/hollodotme/fast-cgi-client/pull/58)
+**Please note:** `bin/fcgiget` is not included and linked to `vendor/bin` via composer anymore since version `v3.1.2`for
+security reasons. [Read more.](https://github.com/hollodotme/fast-cgi-client/pull/58)
 
 Run a call through a network socket:
 
@@ -990,31 +1011,62 @@ Run a call through a Unix Domain Socket
 This shows the response of the php-fpm status page.
 
 
+[v3.1.3]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.3/README.md
+
+[v3.1.2]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.2/README.md
+
 [v3.1.1]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.1/README.md
+
 [v3.1.0]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.0/README.md
+
 [v3.0.1]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.1/README.md
+
 [v3.0.0]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.0/README.md
+
 [v3.0.0-beta]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.0-beta/README.md
+
 [v3.0.0-alpha]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.0-alpha/README.md
+
 [v2.7.2]: https://github.com/hollodotme/fast-cgi-client/blob/v2.7.2/README.md
+
 [v2.7.1]: https://github.com/hollodotme/fast-cgi-client/blob/v2.7.1/README.md
+
 [v2.7.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.7.0/README.md
+
 [v2.6.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.6.0/README.md
+
 [v2.5.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.5.0/README.md
+
 [v2.4.3]: https://github.com/hollodotme/fast-cgi-client/blob/v2.4.3/README.md
+
 [v2.4.2]: https://github.com/hollodotme/fast-cgi-client/blob/v2.4.2/README.md
+
 [v2.4.1]: https://github.com/hollodotme/fast-cgi-client/blob/v2.4.1/README.md
+
 [v2.4.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.4.0/README.md
+
 [v2.3.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.3.0/README.md
+
 [v2.2.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.2.0/README.md
+
 [v2.1.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.1.0/README.md
+
 [v2.0.1]: https://github.com/hollodotme/fast-cgi-client/blob/v2.0.1/README.md
+
 [v2.0.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.0.0/README.md
+
 [v1.4.2]: https://github.com/hollodotme/fast-cgi-client/blob/v1.4.2/README.md
+
 [v1.4.1]: https://github.com/hollodotme/fast-cgi-client/blob/v1.4.1/README.md
+
 [v1.4.0]: https://github.com/hollodotme/fast-cgi-client/blob/v1.4.0/README.md
+
 [v1.3.0]: https://github.com/hollodotme/fast-cgi-client/blob/v1.3.0/README.md
+
 [v1.2.0]: https://github.com/hollodotme/fast-cgi-client/blob/v1.2.0/README.md
+
 [v1.1.0]: https://github.com/hollodotme/fast-cgi-client/blob/v1.1.0/README.md
+
 [v1.0.1]: https://github.com/hollodotme/fast-cgi-client/blob/v1.0.1/README.md
+
 [v1.0.0]: https://github.com/hollodotme/fast-cgi-client/blob/v1.0.0/README.md
