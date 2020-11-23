@@ -1,7 +1,28 @@
 # CHANGELOG
 
-All notable changes to this project will be documented in this file.
-This project adheres to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
+All notable changes to this project will be documented in this file. This project adheres
+to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
+
+## [3.1.4] - 2020-11-23
+
+### Added
+
+* PHP 8 compatibility
+* Makefile to run all tests based on docker-compose config
+
+### Fixed
+
+* TypeError on PHP 8 for a resource that is neither `null` nor a `resource`
+* Added ext-xdebug as dev-requirement in composer.json
+* Xdebug 3 coverage filter constant name for PHP 8
+
+### Replaced
+
+* Local shell script to run tests with Makefile
+
+### Removed
+
+* CI Builds on Circle-CI
 
 ## [3.1.3] - 2020-08-13
 
@@ -345,6 +366,8 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Unused class constants from `Client`
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
+
+[3.1.4]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.3...v3.1.4
 
 [3.1.3]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.2...v3.1.3
 [3.1.2]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.1...v3.1.2
