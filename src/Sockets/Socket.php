@@ -235,8 +235,13 @@ final class Socket
 			return true;
 		}
 
+		if ( !is_resource( $this->resource ) )
+		{
+			return false;
+		}
+
 		/** @var false|array<string, mixed> $metaData */
-		$metaData = @stream_get_meta_data( $this->resource );
+		$metaData = stream_get_meta_data( $this->resource );
 
 		if ( false === $metaData )
 		{
