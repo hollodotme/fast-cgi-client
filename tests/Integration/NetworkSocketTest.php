@@ -45,6 +45,7 @@ use RuntimeException;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 use function http_build_query;
+use function preg_match;
 
 final class NetworkSocketTest extends TestCase
 {
@@ -573,12 +574,31 @@ final class NetworkSocketTest extends TestCase
 		$request  = new GetRequest( $scriptPath, '' );
 		$response = $this->client->sendRequest( $this->connection, $request );
 
-		self::assertSame( '403 Forbidden', $response->getHeaderLine( 'Status' ) );
-		$this->assertMatchesRegExp(
+		$expectedStatus = [
+			'403 Forbidden',
+			'404 Not Found',
+		];
+
+		$expectedErrors = [
 			'#^Unable to open primary script\: .+ \(Permission denied\)$#',
-			$response->getError()
-		);
-		self::assertSame( "Access denied.\n", $response->getBody() );
+			'#^Unable to open primary script\: .+ \(Operation not permitted\)$#',
+		];
+
+		$expectedBodies = [
+			"Access denied.\n",
+			"No input file specified.\n",
+		];
+
+		self::assertContains( $response->getHeaderLine( 'Status' ), $expectedStatus );
+
+		$errorMatched = false;
+		foreach ( $expectedErrors as $errorPattern )
+		{
+			$errorMatched = $errorMatched || (bool)preg_match( $errorPattern, $response->getError() );
+		}
+
+		self::assertTrue( $errorMatched );
+		self::assertContains( $response->getBody(), $expectedBodies );
 
 		$this->makeFileAccessible( $scriptPath );
 	}
