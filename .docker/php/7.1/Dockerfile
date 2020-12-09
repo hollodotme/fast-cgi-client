@@ -1,5 +1,5 @@
 FROM php:7.1-fpm-alpine
-ENV XDEBUG_VERSION='2.9.6'
+ENV XDEBUG_VERSION='2.9.8'
 ENV PHP_CONF_DIR=/usr/local/etc
 RUN apk update && apk upgrade && apk add --no-cache ${PHPIZE_DEPS} \
     && pecl install xdebug-${XDEBUG_VERSION} \
