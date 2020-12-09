@@ -3,6 +3,16 @@
 All notable changes to this project will be documented in this file. This project adheres
 to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [3.1.5] - 2020-12-09
+
+### Fixed
+
+* Transfer of multipart/form-data blocks - [#64]
+  * Removes base64 encoding for contents of files to transfer
+  * Removes `Content-Transfer-Encoding: base64` header from multipart block for files
+  * Improves determination of file's MIME type via `mime_content_type()`, if available
+  * Adds tests for multipart transfer of files with binary content (images)
+
 ## [3.1.4] - 2020-11-23
 
 ### Added
@@ -367,6 +377,8 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
  * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the socket connection)
  * Method `Client->getValues()`
 
+[3.1.5]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.4...v3.1.5
+
 [3.1.4]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.3...v3.1.4
 
 [3.1.3]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.2...v3.1.3
@@ -417,4 +429,7 @@ Based on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](http
 [#55]: https://github.com/hollodotme/fast-cgi-client/pull/55
 [#56]: https://github.com/hollodotme/fast-cgi-client/issues/56
 [#58]: https://github.com/hollodotme/fast-cgi-client/pull/58
+
 [#61]: https://github.com/hollodotme/fast-cgi-client/issues/61
+
+[#64]: https://github.com/hollodotme/fast-cgi-client/issues/64
