@@ -14,6 +14,10 @@ use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
+use function basename;
+use function filesize;
+use function sys_get_temp_dir;
+use function unlink;
 
 final class FileUploadTest extends TestCase
 {
@@ -33,37 +37,33 @@ final class FileUploadTest extends TestCase
 
 	protected function tearDown() : void
 	{
-		$this->connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
-		$this->client     = new Client();
 	}
 
 	/**
-	 * @throws \InvalidArgumentException
+	 * @param array<string, string> $files
+	 *
+	 * @throws ConnectException
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
 	 * @throws Throwable
-	 * @throws ConnectException
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
+	 * @throws \InvalidArgumentException
+	 *
+	 * @dataProvider filesProvider
 	 */
-	public function testCanUploadFile() : void
+	public function testCanUploadFiles( array $files ) : void
 	{
 		$formData = [
 			'testKey1' => 'value1',
 			'testKey2' => 'value2',
 		];
 
-		$files = [
-			'testFile1' => __DIR__ . '/_files/TestFile.txt',
-			'testFile2' => __DIR__ . '/_files/TestFile.txt',
-		];
-
 		$multipartFormData = new MultipartFormData( $formData, $files );
-		$postRequest       = new PostRequest(
+		$postRequest       = PostRequest::newWithRequestContent(
 			__DIR__ . '/Workers/fileUploadWorker.php',
-			$multipartFormData->getContent()
+			$multipartFormData
 		);
-		$postRequest->setContentType( $multipartFormData->getContentType() );
 
 		$response = $this->client->sendRequest( $this->connection, $postRequest );
 
@@ -72,14 +72,49 @@ final class FileUploadTest extends TestCase
 		                . "VALUE: value1\n\n"
 		                . "KEY: testKey2\n"
 		                . "VALUE: value2\n\n"
-		                . "Uploaded files:\n"
-		                . "KEY: testFile1\n"
-		                . "FILENAME: TestFile.txt\n"
-		                . "SIZE: 24\n\n"
-		                . "KEY: testFile2\n"
-		                . "FILENAME: TestFile.txt\n"
-		                . "SIZE: 24\n\n";
+		                . "Uploaded files:\n";
+
+		foreach ( $files as $key => $filePath )
+		{
+			$fileName   = basename( $filePath );
+			$fileSize   = filesize( $filePath );
+			$targetPath = sys_get_temp_dir() . '/' . $fileName;
+
+			$expectedBody .= "KEY: {$key}\n"
+			                 . "FILENAME: {$fileName}\n"
+			                 . "SIZE: {$fileSize}\n"
+			                 . "Moved to {$targetPath}\n\n";
+
+			self::assertFileEquals( $targetPath, $filePath );
+
+			@unlink( $targetPath );
+		}
 
 		self::assertSame( $expectedBody, $response->getBody() );
+	}
+
+	/**
+	 * @return array<array<string,array<string, string>>>
+	 */
+	public function filesProvider() : array
+	{
+		return [
+			[
+				'files' => [
+					'textFile' => __DIR__ . '/_files/TestFile.txt',
+				],
+			],
+			[
+				'files' => [
+					'image' => __DIR__ . '/_files/php-logo.png',
+				],
+			],
+			[
+				'files' => [
+					'textFile' => __DIR__ . '/_files/TestFile.txt',
+					'image'    => __DIR__ . '/_files/php-logo.png',
+				],
+			],
+		];
 	}
 }

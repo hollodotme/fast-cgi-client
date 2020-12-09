@@ -6,6 +6,7 @@ use hollodotme\FastCGI\RequestContents\MultipartFormData;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
+use function file_get_contents;
 
 final class MultipartFormDataTest extends TestCase
 {
@@ -19,16 +20,20 @@ final class MultipartFormDataTest extends TestCase
 		$formData = ['unit' => 'test'];
 
 		$multipartFormData = new MultipartFormData( $formData, [] );
-		$multipartFormData->addFile( 'testFile', __DIR__ . '/_files/TestFile.txt' );
+		$multipartFormData->addFile( 'textFile', __DIR__ . '/_files/TestFile.txt' );
+		$multipartFormData->addFile( 'image', __DIR__ . '/_files/php-logo.png' );
 
 		$expectedContent = "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
 		                   . "Content-Disposition: form-data; name=\"unit\"\r\n\r\n"
 		                   . "test\r\n"
 		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
-		                   . "Content-Disposition: form-data; name=\"testFile\"; filename=\"TestFile.txt\"\r\n"
-		                   . "Content-Type: application/octet-stream\r\n"
-		                   . "Content-Transfer-Encoding: base64\r\n\r\n"
-		                   . "VGhpcyBpcyBhIHRlc3RmaWxl\r\n"
+		                   . "Content-Disposition: form-data; name=\"textFile\"; filename=\"TestFile.txt\"\r\n"
+		                   . "Content-Type: text/plain\r\n\r\n"
+		                   . "This is a testfile\r\n"
+		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
+		                   . "Content-Disposition: form-data; name=\"image\"; filename=\"php-logo.png\"\r\n"
+		                   . "Content-Type: image/png\r\n\r\n"
+		                   . file_get_contents( __DIR__ . '/_files/php-logo.png' ) . "\r\n"
 		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__--\r\n\r\n";
 
 		self::assertSame( $expectedContent, $multipartFormData->getContent() );
@@ -42,7 +47,10 @@ final class MultipartFormDataTest extends TestCase
 	public function testGetContent() : void
 	{
 		$formData = ['unit' => 'test'];
-		$files    = ['testFile' => __DIR__ . '/_files/TestFile.txt'];
+		$files    = [
+			'textFile' => __DIR__ . '/_files/TestFile.txt',
+			'image'    => __DIR__ . '/_files/php-logo.png',
+		];
 
 		$multipartFormData = new MultipartFormData( $formData, $files );
 
@@ -50,10 +58,13 @@ final class MultipartFormDataTest extends TestCase
 		                   . "Content-Disposition: form-data; name=\"unit\"\r\n\r\n"
 		                   . "test\r\n"
 		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
-		                   . "Content-Disposition: form-data; name=\"testFile\"; filename=\"TestFile.txt\"\r\n"
-		                   . "Content-Type: application/octet-stream\r\n"
-		                   . "Content-Transfer-Encoding: base64\r\n\r\n"
-		                   . "VGhpcyBpcyBhIHRlc3RmaWxl\r\n"
+		                   . "Content-Disposition: form-data; name=\"textFile\"; filename=\"TestFile.txt\"\r\n"
+		                   . "Content-Type: text/plain\r\n\r\n"
+		                   . "This is a testfile\r\n"
+		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
+		                   . "Content-Disposition: form-data; name=\"image\"; filename=\"php-logo.png\"\r\n"
+		                   . "Content-Type: image/png\r\n\r\n"
+		                   . file_get_contents( __DIR__ . '/_files/php-logo.png' ) . "\r\n"
 		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__--\r\n\r\n";
 
 		self::assertSame( $expectedContent, $multipartFormData->getContent() );

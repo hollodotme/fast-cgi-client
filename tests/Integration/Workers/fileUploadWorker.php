@@ -12,5 +12,11 @@ foreach ( $_FILES as $key => $data )
 {
 	echo "KEY: {$key}\n";
 	echo 'FILENAME: ' . $data['name'] . "\n";
-	echo 'SIZE: ' . $data['size'] . "\n\n";
+	echo 'SIZE: ' . $data['size'] . "\n";
+
+	$targetPath = sys_get_temp_dir() . '/' . $data['name'];
+	if ( move_uploaded_file( $data['tmp_name'], $targetPath ) )
+	{
+		echo "Moved to {$targetPath}\n\n";
+	}
 }

@@ -4,17 +4,20 @@ namespace hollodotme\FastCGI\RequestContents;
 
 use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
 use InvalidArgumentException;
-use function base64_encode;
 use function basename;
-use function chunk_split;
 use function file_exists;
 use function file_get_contents;
+use function function_exists;
 use function implode;
 use function sprintf;
 
 final class MultipartFormData implements ComposesRequestContent
 {
-	private const BOUNDARY_ID = '__X_FASTCGI_CLIENT_BOUNDARY__';
+	private const BOUNDARY_ID               = '__X_FASTCGI_CLIENT_BOUNDARY__';
+
+	private const EOL                       = "\r\n";
+
+	private const FILE_CONTENT_TYPE_DEFAULT = 'application/octet-stream';
 
 	/** @var array<string, string> */
 	private $formData;
@@ -74,18 +77,18 @@ final class MultipartFormData implements ComposesRequestContent
 			$data[] = $this->getFileDataContent( $name, $filePath );
 		}
 
-		$data[] = '--' . self::BOUNDARY_ID . "--\r\n\r\n";
+		$data[] = '--' . self::BOUNDARY_ID . '--' . self::EOL . self::EOL;
 
-		return implode( "\r\n", $data );
+		return implode( self::EOL, $data );
 	}
 
 	private function getFormDataContent( string $key, string $value ) : string
 	{
 		$data   = ['--' . self::BOUNDARY_ID];
-		$data[] = sprintf( "Content-Disposition: form-data; name=\"%s\"\r\n", $key );
+		$data[] = sprintf( 'Content-Disposition: form-data; name="%s"%s', $key, self::EOL );
 		$data[] = $value;
 
-		return implode( "\r\n", $data );
+		return implode( self::EOL, $data );
 	}
 
 	private function getFileDataContent( string $name, string $filePath ) : string
@@ -96,10 +99,21 @@ final class MultipartFormData implements ComposesRequestContent
 			$name,
 			basename( $filePath )
 		);
-		$data[] = 'Content-Type: application/octet-stream';
-		$data[] = "Content-Transfer-Encoding: base64\r\n";
-		$data[] = trim( chunk_split( base64_encode( (string)file_get_contents( $filePath ) ) ) );
 
-		return implode( "\r\n", $data );
+		$data[] = sprintf( 'Content-Type: %s%s', $this->getContentTypeOfFile( $filePath ), self::EOL );
+		$data[] = (string)file_get_contents( $filePath );
+
+		return implode( self::EOL, $data );
+	}
+
+	private function getContentTypeOfFile( string $filePath ) : string
+	{
+		if ( function_exists( 'mime_content_type' ) )
+		{
+			/** @noinspection PhpComposerExtensionStubsInspection */
+			return (string)mime_content_type( $filePath ) ?: self::FILE_CONTENT_TYPE_DEFAULT;
+		}
+
+		return self::FILE_CONTENT_TYPE_DEFAULT;
 	}
 }
