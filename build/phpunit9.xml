@@ -17,9 +17,6 @@
     <testsuite name="Unit">
       <directory>../tests/Unit</directory>
     </testsuite>
-    <testsuite name="Integration">
-      <directory>../tests/Integration</directory>
-    </testsuite>
     <testsuite name="Async-Integration">
       <directory>../tests/Integration/Async</directory>
     </testsuite>
@@ -31,6 +28,9 @@
     </testsuite>
     <testsuite name="UnixDomainSocket-Integration">
       <directory>../tests/Integration/UnixDomainSocket</directory>
+    </testsuite>
+    <testsuite name="Signals-Integration">
+      <directory>../tests/Integration/Signals</directory>
     </testsuite>
   </testsuites>
   <coverage processUncoveredFiles="true">

@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace hollodotme\FastCGI\Tests\Integration;
+namespace hollodotme\FastCGI\Tests\Integration\Signals;
 
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Exceptions\ConnectException;
@@ -29,6 +29,11 @@ final class SignaledWorkersTest extends TestCase
 {
 	use SocketDataProviding;
 
+	private function getWorkerPath( string $workerFile ) : string
+	{
+		return sprintf( '%s/Workers/%s', dirname( __DIR__ ), $workerFile );
+	}
+
 	/**
 	 * @param int $signal
 	 *
@@ -45,7 +50,7 @@ final class SignaledWorkersTest extends TestCase
 	public function testFailureCallbackGetsCalledIfOneProcessGetsInterruptedOnNetworkSocket( int $signal ) : void
 	{
 		$client   = new Client();
-		$request  = new PostRequest( __DIR__ . '/Workers/worker.php', '' );
+		$request  = new PostRequest( $this->getWorkerPath( 'worker.php' ), '' );
 		$success  = [];
 		$failures = [];
 
@@ -161,7 +166,7 @@ final class SignaledWorkersTest extends TestCase
 	public function testFailureCallbackGetsCalledIfOneProcessGetsInterruptedOnUnixDomainSocket( int $signal ) : void
 	{
 		$client   = new Client();
-		$request  = new PostRequest( __DIR__ . '/Workers/worker.php', '' );
+		$request  = new PostRequest( $this->getWorkerPath( 'worker.php' ), '' );
 		$success  = [];
 		$failures = [];
 
@@ -220,7 +225,7 @@ final class SignaledWorkersTest extends TestCase
 	public function testFailureCallbackGetsCalledIfAllProcessesGetInterruptedOnNetworkSocket( int $signal ) : void
 	{
 		$client   = new Client();
-		$request  = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', '' );
+		$request  = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ), '' );
 		$success  = [];
 		$failures = [];
 
@@ -297,7 +302,7 @@ final class SignaledWorkersTest extends TestCase
 	public function testFailureCallbackGetsCalledIfAllProcessesGetInterruptedOnUnixDomainSocket( int $signal ) : void
 	{
 		$client   = new Client();
-		$request  = new PostRequest( __DIR__ . '/Workers/sleepWorker.php', '' );
+		$request  = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ), '' );
 		$success  = [];
 		$failures = [];
 
@@ -344,7 +349,7 @@ final class SignaledWorkersTest extends TestCase
 	public function testBrokenSocketGetsRemovedIfWritingRequestFailed() : void
 	{
 		$client     = new Client();
-		$request    = new PostRequest( __DIR__ . '/Workers/pidWorker.php', '' );
+		$request    = new PostRequest( $this->getWorkerPath( 'pidWorker.php' ), '' );
 		$connection = $this->getUnixDomainSocketConnection();
 
 		$socketId1 = $client->sendAsyncRequest( $connection, $request );

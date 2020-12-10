@@ -19,9 +19,6 @@
     <testsuite name="Unit">
       <directory suffix="Test.php">../tests/Unit</directory>
     </testsuite>
-    <testsuite name="Integration">
-      <directory suffix="Test.php">../tests/Integration</directory>
-    </testsuite>
     <testsuite name="Async-Integration">
       <directory suffix="Test.php">../tests/Integration/Async</directory>
     </testsuite>
@@ -33,6 +30,9 @@
     </testsuite>
     <testsuite name="UnixDomainSocket-Integration">
       <directory suffix="Test.php">../tests/Integration/UnixDomainSocket</directory>
+    </testsuite>
+    <testsuite name="Signals-Integration">
+      <directory suffix="Test.php">../tests/Integration/Signals</directory>
     </testsuite>
   </testsuites>
   <filter>
