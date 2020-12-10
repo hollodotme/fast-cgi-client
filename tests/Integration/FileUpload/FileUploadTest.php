@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace hollodotme\FastCGI\Tests\Integration;
+namespace hollodotme\FastCGI\Tests\Integration\FileUpload;
 
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Exceptions\ConnectException;
@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 use function basename;
+use function dirname;
 use function filesize;
 use function sys_get_temp_dir;
 use function unlink;
@@ -61,7 +62,7 @@ final class FileUploadTest extends TestCase
 
 		$multipartFormData = new MultipartFormData( $formData, $files );
 		$postRequest       = PostRequest::newWithRequestContent(
-			__DIR__ . '/Workers/fileUploadWorker.php',
+			dirname( __DIR__ ) . '/Workers/fileUploadWorker.php',
 			$multipartFormData
 		);
 
@@ -101,18 +102,18 @@ final class FileUploadTest extends TestCase
 		return [
 			[
 				'files' => [
-					'textFile' => __DIR__ . '/_files/TestFile.txt',
+					'textFile' => dirname( __DIR__ ) . '/_files/TestFile.txt',
 				],
 			],
 			[
 				'files' => [
-					'image' => __DIR__ . '/_files/php-logo.png',
+					'image' => dirname( __DIR__ ) . '/_files/php-logo.png',
 				],
 			],
 			[
 				'files' => [
-					'textFile' => __DIR__ . '/_files/TestFile.txt',
-					'image'    => __DIR__ . '/_files/php-logo.png',
+					'textFile' => dirname( __DIR__ ) . '/_files/TestFile.txt',
+					'image'    => dirname( __DIR__ ) . '/_files/php-logo.png',
 				],
 			],
 		];

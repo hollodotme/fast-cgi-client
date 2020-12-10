@@ -25,6 +25,9 @@
     <testsuite name="Async-Integration">
       <directory suffix="Test.php">../tests/Integration/Async</directory>
     </testsuite>
+    <testsuite name="FileUpload-Integration">
+      <directory suffix="Test.php">../tests/Integration/FileUpload</directory>
+    </testsuite>
   </testsuites>
   <filter>
     <whitelist processUncoveredFilesFromWhitelist="true">

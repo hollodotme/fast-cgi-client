@@ -23,6 +23,9 @@
     <testsuite name="Async-Integration">
       <directory>../tests/Integration/Async</directory>
     </testsuite>
+    <testsuite name="FileUpload-Integration">
+      <directory>../tests/Integration/FileUpload</directory>
+    </testsuite>
   </testsuites>
   <coverage processUncoveredFiles="true">
     <include>
