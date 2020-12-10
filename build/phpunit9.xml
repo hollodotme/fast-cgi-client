@@ -26,6 +26,9 @@
     <testsuite name="FileUpload-Integration">
       <directory>../tests/Integration/FileUpload</directory>
     </testsuite>
+    <testsuite name="NetworkSocket-Integration">
+      <directory>../tests/Integration/NetworkSocket</directory>
+    </testsuite>
   </testsuites>
   <coverage processUncoveredFiles="true">
     <include>
