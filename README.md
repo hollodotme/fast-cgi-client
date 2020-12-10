@@ -983,17 +983,19 @@ if ('File not found.' === trim($response->getBody()))
 
 ---
 
-## Bring up local environment
+## Prepare local development environment
 
-    docker-compose up -d
+This requires `docker` and `docker-compose` installed on your machine.
+
+    make update
 
 ## Run examples
 
-	docker-compose exec php74 php bin/examples.php
+	make examples
 
 ## Run all tests
 
-    sh tests/runTestsOnAllLocalPhpVersions.sh
+    make tests
 
 ## Command line tool (for local debugging only)
 
