@@ -15,39 +15,36 @@ on:
     - cron: "7 7 * * *"
 
 jobs:
-  static-analyzers:
+  static-analysis:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Check for PHP parse errors
-        run: docker run --rm -v $(pwd):/app php:7.4-cli -c 'find /app/src -type f -name "*.php" -print0 | xargs -0 -n1 -P8 php -l -n | (! grep -v "No syntax errors detected" )'
-
       - name: Composer validate
-        run: docker run --rm -v $(pwd):/app composer validate
+        run: make composer-validate
 
       - name: Composer update
-        run: make dccomposer
+        run: make composer-update
 
       - name: Run PHPStan
-        run: make dcphpstan
+        run: make phpstan
 
-  unit-tests:
+  tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         php:
-          - 71
-          - 72
-          - 73
-          - 74
-          - 80
+          - 7.1
+          - 7.2
+          - 7.3
+          - 7.4
+          - 8.0
     steps:
       - uses: actions/checkout@v2
 
       - name: Build environment
-        run: make dccomposer
+        run: make composer-update
 
       - name: Configure PHPUnit matchers
         uses: mheap/phpunit-matcher-action@v1
@@ -60,8 +57,8 @@ jobs:
 
   release:
     needs:
-      - static-analyzers
-      - unit-tests
+      - static-analysis
+      - tests
 
     runs-on: ubuntu-latest
     if: github.event_name == 'push'
