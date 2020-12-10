@@ -65,8 +65,12 @@ final class NetworkSocketTest extends TestCase
 
 	protected function tearDown() : void
 	{
-		$this->connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
-		$this->client     = new Client();
+		unset( $this->connection, $this->client );
+	}
+
+	private function getWorkerPath( string $workerFile ) : string
+	{
+		return sprintf( '%s/Workers/%s', dirname( __DIR__ ), $workerFile );
 	}
 
 	/**
@@ -78,7 +82,7 @@ final class NetworkSocketTest extends TestCase
 	public function testCanSendAsyncRequestAndReceiveSocketId() : void
 	{
 		$content = http_build_query( ['test-key' => 'unit'] );
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', $content );
+		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
 
@@ -96,7 +100,7 @@ final class NetworkSocketTest extends TestCase
 	public function testCanSendAsyncRequestAndReadResponse() : void
 	{
 		$content          = http_build_query( ['test-key' => 'unit'] );
-		$request          = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', $content );
+		$request          = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
 
@@ -118,7 +122,7 @@ final class NetworkSocketTest extends TestCase
 	public function testCanSendSyncRequestAndReceiveResponse() : void
 	{
 		$content          = http_build_query( ['test-key' => 'unit'] );
-		$request          = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', $content );
+		$request          = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
 
@@ -140,7 +144,7 @@ final class NetworkSocketTest extends TestCase
 	public function testCanReceiveResponseInCallback() : void
 	{
 		$content = http_build_query( ['test-key' => 'unit'] );
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', $content );
+		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$unitTest = $this;
 
@@ -166,7 +170,7 @@ final class NetworkSocketTest extends TestCase
 	public function testCanHandleExceptionsInFailureCallback() : void
 	{
 		$content = http_build_query( ['test-key' => 'unit'] );
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', $content );
+		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$unitTest = $this;
 
@@ -200,7 +204,7 @@ final class NetworkSocketTest extends TestCase
 	public function testCanCheckForSocketIdsHavingResponses() : void
 	{
 		$content = http_build_query( ['test-key' => 'unit'] );
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', $content );
+		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
 
@@ -219,7 +223,7 @@ final class NetworkSocketTest extends TestCase
 	public function testCanReadResponses() : void
 	{
 		$content = http_build_query( ['test-key' => 'unit'] );
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', $content );
+		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$socketIdOne = $this->client->sendAsyncRequest( $this->connection, $request );
 
@@ -258,14 +262,14 @@ final class NetworkSocketTest extends TestCase
 			100
 		);
 		$content    = http_build_query( ['test-key' => 'unit'] );
-		$request    = new PostRequest( dirname( __DIR__ ) . '/Workers/sleepWorker.php', $content );
+		$request    = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ), $content );
 
 		$response = $this->client->sendRequest( $connection, $request );
 
 		self::assertSame( 'unit - 0', $response->getBody() );
 
 		$content = http_build_query( ['sleep' => 1, 'test-key' => 'unit'] );
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/sleepWorker.php', $content );
+		$request = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ), $content );
 
 		$this->expectException( TimedoutException::class );
 
@@ -283,7 +287,7 @@ final class NetworkSocketTest extends TestCase
 	public function testCanHandleReadyResponses() : void
 	{
 		$content = http_build_query( ['test-key' => 'unit'] );
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', $content );
+		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$unitTest = $this;
 
@@ -311,7 +315,7 @@ final class NetworkSocketTest extends TestCase
 	public function testCanReadReadyResponses() : void
 	{
 		$content = http_build_query( ['test-key' => 'unit'] );
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', $content );
+		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$this->client->sendAsyncRequest( $this->connection, $request );
 
@@ -336,7 +340,7 @@ final class NetworkSocketTest extends TestCase
 	public function testCanWaitForResponse() : void
 	{
 		$content = http_build_query( ['test-key' => 'unit'] );
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', $content );
+		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$unitTest = $this;
 
@@ -363,7 +367,7 @@ final class NetworkSocketTest extends TestCase
 	public function testReadResponsesSkipsUnknownSocketIds() : void
 	{
 		$content = http_build_query( ['test-key' => 'unit'] );
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', $content );
+		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$socketIds   = [];
 		$socketIds[] = $this->client->sendAsyncRequest( $this->connection, $request );
@@ -397,7 +401,7 @@ final class NetworkSocketTest extends TestCase
 			'test-third-key'  => str_repeat( 'test-third-key', 5000 ),
 		];
 		$content = http_build_query( $data );
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', $content );
+		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$unitTest    = $this;
 		$passCounter = 0;
@@ -436,7 +440,7 @@ final class NetworkSocketTest extends TestCase
 	public function testCanGetLengthOfSentContent( int $length ) : void
 	{
 		$content = str_repeat( 'a', $length );
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/lengthWorker.php', $content );
+		$request = new PostRequest( $this->getWorkerPath( 'lengthWorker.php' ), $content );
 		$request->setContentType( '*/*' );
 		$result = $this->client->sendRequest( $this->connection, $request );
 
@@ -516,7 +520,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	private function assertMatchesRegExp( string $pattern, string $string, string $message = '' ) : void
 	{
-		static::assertThat( $string, new RegularExpression( $pattern ), $message );
+		self::assertThat( $string, new RegularExpression( $pattern ), $message );
 	}
 
 	/**
@@ -567,7 +571,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testUnaccessibleScriptRespondsWithAccessDeniedHeader() : void
 	{
-		$scriptPath = dirname( __DIR__ ) . '/Workers/inaccessibleWorker.php';
+		$scriptPath = $this->getWorkerPath( 'inaccessibleWorker.php' );
 
 		$this->makeFileUnaccessible( $scriptPath );
 
@@ -676,7 +680,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanGetErrorOutputFromWorkerUsingErrorLog() : void
 	{
-		$request  = new GetRequest( dirname( __DIR__ ) . '/Workers/errorLogWorker.php', '' );
+		$request  = new GetRequest( $this->getWorkerPath( 'errorLogWorker.php' ), '' );
 		$response = $this->client->sendRequest( $this->connection, $request );
 
 		$expectedError = "#^PHP message: ERROR1\n\n?"
@@ -698,7 +702,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testSuccessiveRequestsShouldUseSameSocket() : void
 	{
-		$request = new GetRequest( dirname( __DIR__ ) . '/Workers/sleepWorker.php', '' );
+		$request = new GetRequest( $this->getWorkerPath( 'sleepWorker.php' ), '' );
 
 		$sockets = (new ReflectionClass( $this->client ))->getProperty( 'sockets' );
 		$sockets->setAccessible( true );
