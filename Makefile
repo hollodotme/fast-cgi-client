@@ -22,7 +22,7 @@ composer-update:
 .PHONY: composer-update
 
 tests: composer-validate test-php-7.1 test-php-7.2 test-php-7.3 test-php-7.4 test-php-8.0 phpstan
-.PHONY: test
+.PHONY: tests
 
 INTEGRATION_WORKER_DIR = ./tests/Integration/Workers
 
@@ -96,3 +96,9 @@ test-php-8.0: dcdown make-integration-workers-accessible
 phpstan:
 	docker-compose run --rm phpstan
 .PHONY: phpstan
+
+examples: dcdown
+	docker-compose up -d --force-recreate php80
+	docker-compose exec -T php80 php $(PHP_OPTIONS) bin/examples.php
+.PHONY: examples
+
