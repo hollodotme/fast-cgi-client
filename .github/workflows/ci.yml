@@ -28,61 +28,35 @@ jobs:
         run: docker run --rm -v $(pwd):/app composer validate
 
       - name: Composer update
-        run: docker run --rm -v $(pwd):/app composer update -o -v --ignore-platform-reqs
+        run: make dccomposer
 
       - name: Run PHPStan
-        run: docker run --rm -v $(pwd):/app phpstan/phpstan analyze
+        run: make dcphpstan
 
   unit-tests:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        php:
+          - 71
+          - 72
+          - 73
+          - 74
+          - 80
     steps:
       - uses: actions/checkout@v2
 
       - name: Build environment
-        run: make update
+        run: make dccomposer
 
-      - name: Run unit tests on PHP 7.1
-        run: make test-php-71 -s
+      - name: Configure PHPUnit matchers
+        uses: mheap/phpunit-matcher-action@v1
+
+      - name: Run unit tests on PHP ${{ matrix.php }}
+        run: make test-php-${{ matrix.php }} -s
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHPUNIT_OPTIONS: "--coverage-clover=/repo/coverage.xml --testdox"
-
-      - name: Upload code coverage to codecov.io
-        run: bash <(curl -s https://codecov.io/bash)
-
-      - name: Run unit tests on PHP 7.2
-        run: make test-php-72 -s
-        env:
-          COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHPUNIT_OPTIONS: "--coverage-clover=/repo/coverage.xml --testdox"
-
-      - name: Upload code coverage to codecov.io
-        run: bash <(curl -s https://codecov.io/bash)
-
-      - name: Run unit tests on PHP 7.3
-        run: make test-php-73 -s
-        env:
-          COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHPUNIT_OPTIONS: "--coverage-clover=/repo/coverage.xml --testdox"
-
-      - name: Upload code coverage to codecov.io
-        run: bash <(curl -s https://codecov.io/bash)
-
-      - name: Run unit tests on PHP 7.4
-        run: make test-php-74 -s
-        env:
-          COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHPUNIT_OPTIONS: "--coverage-clover=/repo/coverage.xml --testdox"
-
-      - name: Upload code coverage to codecov.io
-        run: bash <(curl -s https://codecov.io/bash)
-
-      - name: Run unit tests on PHP 8.0
-        run: make test-php-80 -s
-        env:
-          COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHPUNIT_OPTIONS: "--testdox"
+          PHPUNIT_OPTIONS: "--teamcity"
 
   release:
     needs:
