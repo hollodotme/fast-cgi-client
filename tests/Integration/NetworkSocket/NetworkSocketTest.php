@@ -549,7 +549,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testNotAllowedFileNameExtensionRespondsWithAccessDeniedHeader() : void
 	{
-		$request = new GetRequest( dirname( __DIR__ ) . '/Workers/worker.php7', '' );
+		$request = new GetRequest( $this->getWorkerPath( 'worker.php7' ), '' );
 
 		$response = $this->client->sendRequest( $this->connection, $request );
 
