@@ -35,11 +35,11 @@ jobs:
     strategy:
       matrix:
         php:
-          - 7.1
-          - 7.2
-          - 7.3
-          - 7.4
-          - 8.0
+          - "7.1"
+          - "7.2"
+          - "7.3"
+          - "7.4"
+          - "8.0"
     steps:
       - uses: actions/checkout@v2
 
@@ -50,7 +50,7 @@ jobs:
         uses: mheap/phpunit-matcher-action@v1
 
       - name: Run unit tests on PHP ${{ matrix.php }}
-        run: make test-php-${{ matrix.php }} -s
+        run: make -s "test-php-${{ matrix.php }}"
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
           PHPUNIT_OPTIONS: "--teamcity"
