@@ -29,6 +29,9 @@
     <testsuite name="NetworkSocket-Integration">
       <directory>../tests/Integration/NetworkSocket</directory>
     </testsuite>
+    <testsuite name="UnixDomainSocket-Integration">
+      <directory>../tests/Integration/UnixDomainSocket</directory>
+    </testsuite>
   </testsuites>
   <coverage processUncoveredFiles="true">
     <include>

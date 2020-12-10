@@ -31,6 +31,9 @@
     <testsuite name="NetworkSocket-Integration">
       <directory suffix="Test.php">../tests/Integration/NetworkSocket</directory>
     </testsuite>
+    <testsuite name="UnixDomainSocket-Integration">
+      <directory suffix="Test.php">../tests/Integration/UnixDomainSocket</directory>
+    </testsuite>
   </testsuites>
   <filter>
     <whitelist processUncoveredFilesFromWhitelist="true">
