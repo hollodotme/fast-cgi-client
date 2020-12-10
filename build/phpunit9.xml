@@ -4,12 +4,7 @@
          verbose="true"
          beStrictAboutOutputDuringTests="true"
          colors="true"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
-  <coverage processUncoveredFiles="true">
-    <include>
-      <directory suffix=".php">../src</directory>
-    </include>
-  </coverage>
+         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.5/phpunit.xsd">
   <php>
     <env name="network-socket-host" value="127.0.0.1"/>
     <env name="network-socket-port" value="9001"/>
@@ -25,5 +20,13 @@
     <testsuite name="Integration">
       <directory>../tests/Integration</directory>
     </testsuite>
+    <testsuite name="Async-Integration">
+      <directory>../tests/Integration/Async</directory>
+    </testsuite>
   </testsuites>
+  <coverage processUncoveredFiles="true">
+    <include>
+      <directory suffix=".php">../src</directory>
+    </include>
+  </coverage>
 </phpunit>

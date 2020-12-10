@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace hollodotme\FastCGI\Tests\Integration;
+namespace hollodotme\FastCGI\Tests\Integration\Async;
 
 use hollodotme\FastCGI\Client;
 use hollodotme\FastCGI\Exceptions\ConnectException;
@@ -45,7 +45,7 @@ final class AsyncRequestsTest extends TestCase
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
-		$request = new PostRequest( __DIR__ . '/Workers/worker.php', '' );
+		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', '' );
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response ) use ( &$results )
 			{
@@ -70,7 +70,7 @@ final class AsyncRequestsTest extends TestCase
 	private function getMaxChildrenSettingFromNetworkSocket() : int
 	{
 		$iniSettings = (array)parse_ini_file(
-			__DIR__ . '/../../.docker/php/network-socket.pool.conf',
+			dirname( __DIR__, 3 ) . '/.docker/php/network-socket.pool.conf',
 			true
 		);
 
@@ -105,7 +105,7 @@ final class AsyncRequestsTest extends TestCase
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
-		$request = new PostRequest( __DIR__ . '/Workers/worker.php', '' );
+		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', '' );
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response ) use ( &$results )
 			{
@@ -130,7 +130,7 @@ final class AsyncRequestsTest extends TestCase
 	private function getMaxChildrenSettingFromUnixDomainSocket() : int
 	{
 		$iniSettings = (array)parse_ini_file(
-			__DIR__ . '/../../.docker/php/unix-domain-socket.pool.conf',
+			dirname( __DIR__, 3 ) . '/.docker/php/unix-domain-socket.pool.conf',
 			true
 		);
 
@@ -161,7 +161,7 @@ final class AsyncRequestsTest extends TestCase
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
-		$request = new PostRequest( __DIR__ . '/Workers/worker.php', '' );
+		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', '' );
 
 		for ( $i = 0; $i < $limit; $i++ )
 		{
@@ -203,7 +203,7 @@ final class AsyncRequestsTest extends TestCase
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
-		$request = new PostRequest( __DIR__ . '/Workers/worker.php', '' );
+		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', '' );
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response ) use ( &$results )
 			{
