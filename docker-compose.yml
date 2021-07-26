@@ -1,4 +1,4 @@
-version: '3'
+version: "3.8"
 
 services:
   php71:
@@ -56,10 +56,11 @@ services:
     volumes:
       - ./:/repo
 
-  composer:
-    image: library/composer:2
-    container_name: fcc_composer
-    working_dir: /repo
+  php81:
+    build:
+      dockerfile: 8.1/Dockerfile
+      context: .docker/php
+    container_name: fcc_php81
     restart: "no"
     command: "update -o -v --ignore-platform-reqs"
     networks:
