@@ -1,8 +1,9 @@
 # Do not export those files in the Composer archive (lighter dependency)
 .docker/ export-ignore
 .github/ export-ignore
+.phive/ export-ignore
+.tools/ export-ignore
 bin/ export-ignore
-build/ export-ignore
 tests/ export-ignore
 Makefile export-ignore
 CHANGELOG.md export-ignore
