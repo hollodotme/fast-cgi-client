@@ -1,4 +1,4 @@
-name: FastCGI Client CI PHP 7.1 - 8.0
+name: FastCGI Client CI PHP 7.1 - 8.1
 
 on:
   push:
