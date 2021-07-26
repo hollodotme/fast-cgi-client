@@ -4,4 +4,4 @@ parameters:
         - tests
     level: max
     bootstrapFiles:
-        - ./vendor/bin/phpunit7.phar
+        - /repo/.tools/phpunit-7.phar
