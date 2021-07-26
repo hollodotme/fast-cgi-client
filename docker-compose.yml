@@ -62,22 +62,23 @@ services:
       context: .docker/php
     container_name: fcc_php81
     restart: "no"
-    command: "update -o -v --ignore-platform-reqs"
     networks:
       - fcc_network
     volumes:
       - ./:/repo
 
-  phpstan:
-    image: phpstan/phpstan:latest
-    container_name: fcc_phpstan
-    working_dir: /repo
-    restart: "no"
-    command: "analyze"
-    networks:
-      - fcc_network
+  phive:
+    image: hyperized/phive:latest
+    restart: 'no'
     volumes:
       - ./:/repo
+      - phive:/root/.phive
+    working_dir: /repo
+    networks:
+      - fcc_network
 
 networks:
   fcc_network:
+
+volumes:
+  phive:

@@ -31,30 +31,6 @@
         "ext-json": "*"
     },
     "require-dev": {
-        "ext-xdebug": ">=2.6.0",
-        "tm/tooly-composer-script": "^1.4.1"
-    },
-    "scripts": {
-        "post-install-cmd": "Tooly\\ScriptHandler::installPharTools",
-        "post-update-cmd": "Tooly\\ScriptHandler::installPharTools"
-    },
-    "extra": {
-        "tools": {
-            "phpunit7": {
-                "url": "https://phar.phpunit.de/phpunit-7.phar",
-                "replace": true,
-                "only-dev": true
-            },
-            "phpunit8": {
-                "url": "https://phar.phpunit.de/phpunit-8.phar",
-                "replace": true,
-                "only-dev": true
-            },
-            "phpunit9": {
-                "url": "https://phar.phpunit.de/phpunit-9.phar",
-                "replace": true,
-                "only-dev": true
-            }
-        }
+        "ext-xdebug": ">=2.6.0"
     }
 }
