@@ -27,6 +27,9 @@ jobs:
       - name: Composer update
         run: make composer-update
 
+      - name: PHP linting
+        run: make phplint
+
       - name: Run PHPStan
         run: make phpstan
 
@@ -40,6 +43,7 @@ jobs:
           - "7.3"
           - "7.4"
           - "8.0"
+          - "8.1"
     steps:
       - uses: actions/checkout@v2
 
