@@ -33,10 +33,13 @@ update: dcbuild dcpull update-tools composer-update
 .PHONY: update
 
 ## Build all custom docker images
-dcbuild:
-	docker pull mlocati/php-extension-installer
+dcbuild: pull-extension-installer
 	$(DOCKER_COMPOSE_BASE_COMMAND) build --pull --parallel
 .PHONY: dcbuild
+
+pull-extension-installer:
+	docker pull mlocati/php-extension-installer
+.PHONY: pull-extension-installer
 
 ## Pull docker images
 dcpull:

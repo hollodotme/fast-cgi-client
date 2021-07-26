@@ -21,6 +21,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Pull docker services
+        run: make dcpull
+
+      - name: Install tools
+        run: make install-tools
+
       - name: Composer validate
         run: make composer-validate
 
@@ -47,8 +53,17 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Pull docker services
+        run: make dcpull
+
+      - name: Install tools
+        run: make install-tools
+
       - name: Build environment
         run: make composer-update
+
+      - name: Pull extension installer
+        run: make pull-extension-installer
 
       - name: Configure PHPUnit matchers
         uses: mheap/phpunit-matcher-action@v1
