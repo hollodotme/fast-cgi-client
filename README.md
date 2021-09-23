@@ -1,7 +1,6 @@
-![FastCGI Client CI PHP 7.1 - 8.0](https://github.com/hollodotme/fast-cgi-client/workflows/FastCGI%20Client%20CI%20PHP%207.1%20-%208.0/badge.svg)
+![FastCGI Client CI PHP 7.1 - 8.1](https://github.com/hollodotme/fast-cgi-client/workflows/FastCGI%20Client%20CI%20PHP%207.1%20-%208.0/badge.svg)
 [![Latest Stable Version](https://poser.pugx.org/hollodotme/fast-cgi-client/v/stable)](https://packagist.org/packages/hollodotme/fast-cgi-client)
 [![Total Downloads](https://poser.pugx.org/hollodotme/fast-cgi-client/downloads)](https://packagist.org/packages/hollodotme/fast-cgi-client)
-[![codecov](https://codecov.io/gh/hollodotme/fast-cgi-client/branch/master/graph/badge.svg)](https://codecov.io/gh/hollodotme/fast-cgi-client)
 
 # Fast CGI Client
 
@@ -24,7 +23,7 @@ Please see the following links for earlier releases:
 * PHP >= 7.0 (EOL) [v1.0.0], [v1.0.1], [v1.1.0], [v1.2.0], [v1.3.0], [v1.4.0], [v1.4.1], [v1.4.2]
 * PHP >= 7.1 [v2.0.0], [v2.0.1], [v2.1.0], [v2.2.0], [v2.3.0], [v2.4.0], [v2.4.1], [v2.4.2], [v2.4.3], [v2.5.0],
   [v2.6.0], [v2.7.0], [v2.7.1], [v2.7.2], [v3.0.0-alpha], [v3.0.0-beta], [v3.0.0], [v3.0.1], [v3.1.0], [v3.1.1],
-  [v3.1.2], [v3.1.3], [v3.1.4]
+  [v3.1.2], [v3.1.3], [v3.1.4], [v3.1.5]
 
 Read more about the journey to and changes in `v2.6.0`
 in [this blog post](https://github.com/hollodotme/fast-cgi-client/wiki/Background-Info-FastCgiClient-Version-2.6.0).
@@ -43,7 +42,7 @@ You can also find slides of my talks about this project on [speakerdeck.com](htt
 ## Installation
 
 ```bash
-composer require hollodotme/fast-cgi-client:3.1.*
+composer require hollodotme/fast-cgi-client
 ```
 
 ---
@@ -1012,6 +1011,8 @@ Run a call through a Unix Domain Socket
 
 This shows the response of the php-fpm status page.
 
+
+[v3.1.5]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.5/README.md
 
 [v3.1.4]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.4/README.md
 
