@@ -1,4 +1,4 @@
-![FastCGI Client CI PHP 7.1 - 8.1](https://github.com/hollodotme/fast-cgi-client/workflows/FastCGI%20Client%20CI%20PHP%207.1%20-%208.0/badge.svg)
+![FastCGI Client CI PHP 7.1 - 8.1](https://github.com/hollodotme/fast-cgi-client/workflows/FastCGI%20Client%20CI%20PHP%207.1%20-%208.1/badge.svg)
 [![Latest Stable Version](https://poser.pugx.org/hollodotme/fast-cgi-client/v/stable)](https://packagist.org/packages/hollodotme/fast-cgi-client)
 [![Total Downloads](https://poser.pugx.org/hollodotme/fast-cgi-client/downloads)](https://packagist.org/packages/hollodotme/fast-cgi-client)
 
