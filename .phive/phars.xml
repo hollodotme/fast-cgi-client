@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phive xmlns="https://phar.io/phive">
-  <phar name="phpunit" version="7.5.19" installed="7.5.19" location="./.tools/phpunit-7.phar" copy="true"/>
-  <phar name="phpunit" version="8.5.19" installed="8.5.19" location="./.tools/phpunit-8.phar" copy="true"/>
-  <phar name="phpunit" version="9.5.8" installed="9.5.8" location="./.tools/phpunit-9.phar" copy="true"/>
+  <phar name="phpunit" version="7.5.20" installed="7.5.20" location="./.tools/phpunit-7.phar" copy="true"/>
+  <phar name="phpunit" version="8.5.21" installed="8.5.21" location="./.tools/phpunit-8.phar" copy="true"/>
+  <phar name="phpunit" version="9.5.10" installed="9.5.10" location="./.tools/phpunit-9.phar" copy="true"/>
   <phar name="phpstan" version="^0.12.94" installed="0.12.99" location="./.tools/phpstan.phar" copy="true"/>
-  <phar name="composer" version="^2.1.5" installed="2.1.8" location="./.tools/composer.phar" copy="true"/>
+  <phar name="composer" version="^2.1.5" installed="2.1.9" location="./.tools/composer.phar" copy="true"/>
 </phive>
