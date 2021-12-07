@@ -1,4 +1,4 @@
-<?php declare(strict_types = 1);
+<?php declare(strict_types=1);
 /*
  * Copyright (c) 2010-2014 Pierrick Charron
  * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
@@ -35,7 +35,7 @@ use function strlen;
 final class NameValuePairEncoder implements EncodesNameValuePair
 {
 	/**
-	 * @param array<string, string> $pairs
+	 * @param array<mixed, mixed> $pairs
 	 *
 	 * @return string
 	 */
@@ -105,25 +105,25 @@ final class NameValuePairEncoder implements EncodesNameValuePair
 
 		while ( $p !== $length )
 		{
-			$nameLength = ord( $data[$p++] );
+			$nameLength = ord( $data[ $p++ ] );
 			if ( $nameLength >= 128 )
 			{
 				$nameLength &= (0x7F << 24);
-				$nameLength |= (ord( $data[$p++] ) << 16);
-				$nameLength |= (ord( $data[$p++] ) << 8);
-				$nameLength |= ord( $data[$p++] );
+				$nameLength |= (ord( $data[ $p++ ] ) << 16);
+				$nameLength |= (ord( $data[ $p++ ] ) << 8);
+				$nameLength |= ord( $data[ $p++ ] );
 			}
 
-			$valueLength = ord( $data[$p++] );
+			$valueLength = ord( $data[ $p++ ] );
 			if ( $valueLength >= 128 )
 			{
 				$valueLength = ($nameLength & 0x7F << 24);
-				$valueLength |= (ord( $data[$p++] ) << 16);
-				$valueLength |= (ord( $data[$p++] ) << 8);
-				$valueLength |= ord( $data[$p++] );
+				$valueLength |= (ord( $data[ $p++ ] ) << 16);
+				$valueLength |= (ord( $data[ $p++ ] ) << 8);
+				$valueLength |= ord( $data[ $p++ ] );
 			}
 			$array[ substr( $data, $p, $nameLength ) ] = substr( $data, $p + $nameLength, $valueLength );
-			$p += ($nameLength + $valueLength);
+			$p                                         += ($nameLength + $valueLength);
 		}
 
 		return $array;
