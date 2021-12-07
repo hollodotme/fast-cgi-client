@@ -1,4 +1,4 @@
-FROM php:8.1.0RC4-fpm-alpine
+FROM php:8.1-fpm-alpine
 ENV PHP_CONF_DIR=/usr/local/etc/php-fpm.d
 
 COPY --from=mlocati/php-extension-installer /usr/bin/install-php-extensions /usr/local/bin/
