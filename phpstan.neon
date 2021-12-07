@@ -2,6 +2,6 @@ parameters:
     paths:
         - src
         - tests
-    level: max
+    level: 8
     bootstrapFiles:
         - /repo/.tools/phpunit-7.phar

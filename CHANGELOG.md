@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. This project adheres
 to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [3.1.7] - 2021-12-07
+
+* Make sure length values are within valid bounds
+
 ## [3.1.6] - 2021-09-23
 
 ### Added
@@ -409,6 +413,8 @@ on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](https://gi
 * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the
   socket connection)
 * Method `Client->getValues()`
+
+[3.1.7]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.6...v3.1.7
 
 [3.1.6]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.5...v3.1.6
 

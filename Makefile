@@ -80,7 +80,7 @@ composer-update:
 .PHONY: composer-update
 
 ## Run all tests on all PHP versions
-tests: composer-validate phplint test-php-7.1 test-php-7.2 test-php-7.3 test-php-7.4 test-php-8.0 test-php-8.1 phpstan
+tests: composer-validate phplint test-php-7.1 test-php-7.2 test-php-7.3 test-php-7.4 test-php-8.0 test-php-8.1 dcdown phpstan
 .PHONY: tests
 
 INTEGRATION_WORKER_DIR = ./tests/Integration/Workers
@@ -91,6 +91,7 @@ make-integration-workers-accessible:
 .PHONY: make-integration-workers-accessible
 
 PHP_OPTIONS = -d error_reporting=-1 -dmemory_limit=-1 -d xdebug.mode=coverage -d auto_prepend_file=tests/xdebug-filter.php
+PHPUNIT_OPTIONS = --testdox
 
 ## Run PHP linting
 phplint:

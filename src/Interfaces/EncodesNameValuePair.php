@@ -30,7 +30,7 @@ namespace hollodotme\FastCGI\Interfaces;
 interface EncodesNameValuePair
 {
 	/**
-	 * @param array<string, string> $pairs
+	 * @param array<mixed, mixed> $pairs
 	 *
 	 * @return string
 	 */
