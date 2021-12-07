@@ -44,7 +44,9 @@ use function floor;
 use function fread;
 use function fwrite;
 use function is_resource;
+use function max;
 use function microtime;
+use function min;
 use function ord;
 use function str_repeat;
 use function stream_get_meta_data;
@@ -54,13 +56,12 @@ use function stream_socket_client;
 use function stream_socket_shutdown;
 use function strlen;
 use function substr;
+use const PHP_INT_MAX;
 use const STREAM_SHUT_RDWR;
 
 final class Socket
 {
 	private const BEGIN_REQUEST        = 1;
-
-	private const ABORT_REQUEST        = 2;
 
 	private const END_REQUEST          = 3;
 
@@ -314,11 +315,11 @@ final class Socket
 		if ( null !== $lastError )
 		{
 			$lastErrorException = new ErrorException(
-				$lastError['message'] ?? '[No message available]',
+				$lastError['message'],
 				0,
-				$lastError['type'] ?? E_ERROR,
-				$lastError['file'] ?? '[No file available]',
-				$lastError['line'] ?? '[No line available]'
+				$lastError['type'],
+				$lastError['file'],
+				$lastError['line']
 			);
 		}
 
@@ -502,11 +503,11 @@ final class Socket
 
 			if ( $packet['contentLength'] )
 			{
-				$length = $packet['contentLength'];
+				$length = $this->getValidLength( (int)$packet['contentLength'] );
 
 				while ( $length && ($buffer = fread( $this->resource, $length )) !== false )
 				{
-					$length            -= strlen( (string)$buffer );
+					$length            = $this->getValidLength( $length - strlen( (string)$buffer ) );
 					$packet['content'] .= $buffer;
 				}
 			}
@@ -514,13 +515,23 @@ final class Socket
 			if ( $packet['paddingLength'] )
 			{
 				/** @noinspection UnusedFunctionResultInspection */
-				fread( $this->resource, (int)$packet['paddingLength'] );
+				fread( $this->resource, $this->getValidLength( (int)$packet['paddingLength'] ) );
 			}
 
 			return $packet;
 		}
 
 		return null;
+	}
+
+	/**
+	 * @param int $value
+	 *
+	 * @return int<0, max>
+	 */
+	private function getValidLength( int $value ) : int
+	{
+		return (int)max( 0, min( $value, PHP_INT_MAX ) );
 	}
 
 	private function notifyPassThroughCallbacks( string $outputBuffer, string $errorBuffer ) : void
