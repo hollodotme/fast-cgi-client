@@ -91,6 +91,7 @@ make-integration-workers-accessible:
 .PHONY: make-integration-workers-accessible
 
 PHP_OPTIONS = -d error_reporting=-1 -dmemory_limit=-1 -d xdebug.mode=coverage -d auto_prepend_file=tests/xdebug-filter.php
+PHPUNIT_OPTIONS = --testdox
 
 ## Run PHP linting
 phplint:
