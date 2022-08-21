@@ -203,7 +203,7 @@ $connection = new NetworkSocket('127.0.0.1', 9000);
 $content    = http_build_query(['key' => 'value']);
 $request    = new PostRequest('/path/to/target/script.php', $content);
 
-# Register a response callback, expects a `ProvidesResponseData` instance as the only paramter
+# Register a response callback, expects a `ProvidesResponseData` instance as the only parameter
 $request->addResponseCallbacks(
 	static function( ProvidesResponseData $response )
 	{
