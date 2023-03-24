@@ -10,14 +10,11 @@ use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
  */
 class UnixDomainSocket implements ConfiguresSocketConnection
 {
-	/** @var string */
-	private $socketPath;
+	private string $socketPath;
 
-	/** @var int */
-	private $connectTimeout;
+	private int $connectTimeout;
 
-	/** @var int */
-	private $readWriteTimeout;
+	private int $readWriteTimeout;
 
 	public function __construct(
 		string $socketPath,

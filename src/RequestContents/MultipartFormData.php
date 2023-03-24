@@ -20,10 +20,10 @@ final class MultipartFormData implements ComposesRequestContent
 	private const FILE_CONTENT_TYPE_DEFAULT = 'application/octet-stream';
 
 	/** @var array<string, string> */
-	private $formData;
+	private array $formData;
 
 	/** @var array<string, string> */
-	private $files;
+	private array $files;
 
 	/**
 	 * @param array<string, string> $formData

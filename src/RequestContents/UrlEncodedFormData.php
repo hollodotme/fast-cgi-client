@@ -8,7 +8,7 @@ use function http_build_query;
 final class UrlEncodedFormData implements ComposesRequestContent
 {
 	/** @var array<string, mixed> */
-	private $formData;
+	private array $formData;
 
 	/**
 	 * @param array<string, mixed> $formData

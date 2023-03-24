@@ -9,14 +9,11 @@ use const PHP_INT_MAX;
 
 final class JsonData implements ComposesRequestContent
 {
-	/** @var mixed */
-	private $data;
+	private mixed $data;
 
-	/** @var int */
-	private $encodingOptions;
+	private int $encodingOptions;
 
-	/** @var int<1, max> */
-	private $encodingDepth;
+	private int $encodingDepth;
 
 	/**
 	 * @param mixed $data
