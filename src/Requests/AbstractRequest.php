@@ -3,6 +3,7 @@
 namespace hollodotme\FastCGI\Requests;
 
 use hollodotme\FastCGI\Constants\ServerProtocol;
+use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
 use function strlen;
 
@@ -34,7 +35,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 
 	private int $contentLength = 0;
 
-	private string $content;
+	private ?ComposesRequestContent $content;
 
 	/** @var array<string, mixed> */
 	private array $customVars = [];
@@ -50,10 +51,14 @@ abstract class AbstractRequest implements ProvidesRequestData
 	/** @var array<callable> */
 	private array $passThroughCallbacks = [];
 
-	public function __construct( string $scriptFilename, string $content )
+	public function __construct( string $scriptFilename, ?ComposesRequestContent $content = null )
 	{
 		$this->scriptFilename = $scriptFilename;
-		$this->setContent( $content );
+
+        if (null !== $content) {
+            $this->setContent( $content );
+            $this->setContentType( $content->getContentType() );
+        }
 	}
 
 	public function getServerSoftware() : string
@@ -136,15 +141,15 @@ abstract class AbstractRequest implements ProvidesRequestData
 		$this->contentType = $contentType;
 	}
 
-	public function getContent() : string
+	public function getContent() : ?ComposesRequestContent
 	{
 		return $this->content;
 	}
 
-	public function setContent( string $content ) : void
+	public function setContent( ComposesRequestContent $content ) : void
 	{
 		$this->content       = $content;
-		$this->contentLength = strlen( $content );
+		$this->contentLength = strlen( $content->getContent() );
 	}
 
 	/**
