@@ -9,7 +9,7 @@ use const PHP_INT_MAX;
 
 final class JsonData implements ComposesRequestContent
 {
-	private mixed $data;
+	private $data;
 
 	private int $encodingOptions;
 
