@@ -31,7 +31,7 @@ final class ClientTest extends TestCase
 	{
 		$connection = new UnixDomainSocket( $this->getNonExistingUnixDomainSocket() );
 		$client     = new Client();
-		$request    = new PostRequest( '/path/to/script.php', '' );
+		$request    = new PostRequest( '/path/to/script.php' );
 
 		$this->expectException( ConnectException::class );
 		$this->expectExceptionMessage( 'Unable to connect to FastCGI application: No such file or directory' );
@@ -53,7 +53,7 @@ final class ClientTest extends TestCase
 
 		$connection = new UnixDomainSocket( '' . $testSocket );
 		$client     = new Client();
-		$request    = new PostRequest( '/path/to/script.php', '' );
+		$request    = new PostRequest( '/path/to/script.php' );
 
 		$this->expectException( ConnectException::class );
 		$this->expectExceptionMessage( 'Unable to connect to FastCGI application: Connection refused' );
@@ -125,7 +125,7 @@ final class ClientTest extends TestCase
 	{
 		$connection = new UnixDomainSocket( $this->getRestrictedUnixDomainSocket() );
 		$client     = new Client();
-		$request    = new PostRequest( '/path/to/script.php', '' );
+		$request    = new PostRequest( '/path/to/script.php' );
 
 		$this->expectException( ConnectException::class );
 		$this->expectExceptionMessage( 'Unable to connect to FastCGI application: No such file or directory' );
