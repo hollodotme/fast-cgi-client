@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace hollodotme\FastCGI\Tests\Unit\RequestContents;
 
@@ -10,67 +12,67 @@ use SebastianBergmann\RecursionContext\InvalidArgumentException;
 
 final class JsonDataTest extends TestCase
 {
-	/**
-	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
-	 */
-	public function testGetContent() : void
-	{
-		self::assertSame( 'application/json', (new JsonData( '' ))->getContentType() );
-	}
+    /**
+     * @throws ExpectationFailedException
+     * @throws InvalidArgumentException
+     */
+    public function testGetContent(): void
+    {
+        self::assertSame('application/json', (new JsonData(''))->getContentType());
+    }
 
-	/**
-	 * @param mixed  $data
-	 * @param string $expectedContent
-	 *
-	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
-	 * @throws RuntimeException
-	 *
-	 * @dataProvider jsonDataProvider
-	 */
-	public function testGetContentType( $data, string $expectedContent ) : void
-	{
-		self::assertSame( $expectedContent, (new JsonData( $data ))->getContent() );
-	}
+    /**
+     * @param mixed  $data
+     * @param string $expectedContent
+     *
+     * @throws ExpectationFailedException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     *
+     * @dataProvider jsonDataProvider
+     */
+    public function testGetContentType($data, string $expectedContent): void
+    {
+        self::assertSame($expectedContent, (new JsonData($data))->getContent());
+    }
 
-	/**
-	 * @return array<array<string, mixed>>
-	 */
-	public function jsonDataProvider() : array
-	{
-		return [
-			[
-				'data'            => 1,
-				'expectecContent' => '1',
-			],
-			[
-				'data'            => ['value' => 1],
-				'expectedContent' => '{"value":1}',
-			],
-			[
-				'data'            => true,
-				'expectedContent' => 'true',
-			],
-			[
-				'data'            => 'Lorem ipsum',
-				'expectedContent' => '"Lorem ipsum"',
-			],
-		];
-	}
+    /**
+     * @return array<array<string, mixed>>
+     */
+    public function jsonDataProvider(): array
+    {
+        return [
+            [
+                'data'            => 1,
+                'expectecContent' => '1',
+            ],
+            [
+                'data'            => ['value' => 1],
+                'expectedContent' => '{"value":1}',
+            ],
+            [
+                'data'            => true,
+                'expectedContent' => 'true',
+            ],
+            [
+                'data'            => 'Lorem ipsum',
+                'expectedContent' => '"Lorem ipsum"',
+            ],
+        ];
+    }
 
-	/**
-	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
-	 * @throws RuntimeException
-	 */
-	public function testGetContentThrowsExceptionIfDataCannotBeEncodedAsJson() : void
-	{
-		$this->expectException( RuntimeException::class );
-		$this->expectExceptionMessage( 'Could not encode data to JSON.' );
+    /**
+     * @throws ExpectationFailedException
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
+    public function testGetContentThrowsExceptionIfDataCannotBeEncodedAsJson(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Could not encode data to JSON.');
 
-		$data = ['unit' => ['test' => ['level' => ['three' => ['and' => ['more']]]]]];
+        $data = ['unit' => ['test' => ['level' => ['three' => ['and' => ['more']]]]]];
 
-		self::assertSame( '', (new JsonData( $data, 0, 3 ))->getContent() );
-	}
+        self::assertSame('', (new JsonData($data, 0, 3))->getContent());
+    }
 }

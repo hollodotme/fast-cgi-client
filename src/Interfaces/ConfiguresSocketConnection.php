@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace hollodotme\FastCGI\Interfaces;
 
@@ -8,11 +10,11 @@ namespace hollodotme\FastCGI\Interfaces;
  */
 interface ConfiguresSocketConnection
 {
-	public function getSocketAddress() : string;
+    public function getSocketAddress(): string;
 
-	public function getConnectTimeout() : int;
+    public function getConnectTimeout(): int;
 
-	public function getReadWriteTimeout() : int;
+    public function getReadWriteTimeout(): int;
 
-	public function equals( ConfiguresSocketConnection $other ) : bool;
+    public function equals(ConfiguresSocketConnection $other): bool;
 }

@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace hollodotme\FastCGI\Interfaces;
 
@@ -8,20 +10,20 @@ namespace hollodotme\FastCGI\Interfaces;
  */
 interface EncodesNameValuePair
 {
-	/**
-	 * @param array<mixed, mixed> $pairs
-	 *
-	 * @return string
-	 */
-	public function encodePairs( array $pairs ) : string;
+    /**
+     * @param array<mixed, mixed> $pairs
+     *
+     * @return string
+     */
+    public function encodePairs(array $pairs): string;
 
-	public function encodePair( string $name, string $value ) : string;
+    public function encodePair(string $name, string $value): string;
 
-	/**
-	 * @param string $data
-	 * @param int    $length
-	 *
-	 * @return array<string, string>
-	 */
-	public function decodePairs( string $data, int $length = -1 ) : array;
+    /**
+     * @param string $data
+     * @param int    $length
+     *
+     * @return array<string, string>
+     */
+    public function decodePairs(string $data, int $length = -1): array;
 }

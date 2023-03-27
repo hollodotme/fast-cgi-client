@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace hollodotme\FastCGI\Tests\Unit\RequestContents;
 
@@ -9,24 +11,24 @@ use SebastianBergmann\RecursionContext\InvalidArgumentException;
 
 final class UrlEncodedFormDataTest extends TestCase
 {
-	/**
-	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
-	 */
-	public function testGetContentType() : void
-	{
-		self::assertSame( 'application/x-www-form-urlencoded', (new UrlEncodedFormData( [] ))->getContentType() );
-	}
+    /**
+     * @throws ExpectationFailedException
+     * @throws InvalidArgumentException
+     */
+    public function testGetContentType(): void
+    {
+        self::assertSame('application/x-www-form-urlencoded', (new UrlEncodedFormData([]))->getContentType());
+    }
 
-	/**
-	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
-	 */
-	public function testGetContent() : void
-	{
-		$formData        = ['unit' => 'test', 'test' => 'unit'];
-		$expectedContent = 'unit=test&test=unit';
+    /**
+     * @throws ExpectationFailedException
+     * @throws InvalidArgumentException
+     */
+    public function testGetContent(): void
+    {
+        $formData        = ['unit' => 'test', 'test' => 'unit'];
+        $expectedContent = 'unit=test&test=unit';
 
-		self::assertSame( $expectedContent, (new UrlEncodedFormData( $formData ))->getContent() );
-	}
+        self::assertSame($expectedContent, (new UrlEncodedFormData($formData))->getContent());
+    }
 }

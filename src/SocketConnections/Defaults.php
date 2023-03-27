@@ -1,4 +1,6 @@
-<?php declare(strict_types = 1);
+<?php
+
+declare(strict_types=1);
 
 namespace hollodotme\FastCGI\SocketConnections;
 
@@ -8,7 +10,7 @@ namespace hollodotme\FastCGI\SocketConnections;
  */
 abstract class Defaults
 {
-	public const CONNECT_TIMEOUT    = 5000;
+    public const CONNECT_TIMEOUT    = 5000;
 
-	public const READ_WRITE_TIMEOUT = 5000;
+    public const READ_WRITE_TIMEOUT = 5000;
 }

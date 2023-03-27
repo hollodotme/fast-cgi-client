@@ -4,3 +4,4 @@
 /composer.lock
 /.tools/*
 !.gitkeep
+.phpcs-cache

@@ -1,11 +1,12 @@
-<?php declare(strict_types=1);
+<?php
 
-sleep( (int)($_REQUEST['sleep'] ?? 0) );
+declare(strict_types=1);
+
+sleep((int)($_REQUEST['sleep'] ?? 0));
 
 $lines = [];
-foreach ( $_REQUEST as $key => $value )
-{
-	$lines[] = " * {$key}: {$value}";
+foreach ($_REQUEST as $key => $value) {
+    $lines[] = " * {$key}: {$value}";
 }
 
-echo implode( "\n", $lines );
+echo implode("\n", $lines);
