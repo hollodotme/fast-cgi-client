@@ -39,8 +39,6 @@ $connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
 
 $workerPath = __DIR__ . '/exampleWorker.php';
 
-$request = new PostRequest( $workerPath );
-
 printLine( "\n" );
 printLine( 'hollodotme/fast-cgi-client examples', 'blue', true );
 printLine( 'Worker script: ' . $workerPath, 'blue' );
@@ -60,7 +58,7 @@ printLine( '# Sending one synchronous request... (worker sleeps 1 second)' );
 printLine( 'CODE: $client->sendRequest( $request );', 'red' );
 printLine( "\n" );
 
-$request->setContent( new UrlEncodedFormData( ['sleep' => 1, 'key' => 'single synchronous request'] ) );
+$request = new PostRequest( $workerPath, new UrlEncodedFormData( ['sleep' => 1, 'key' => 'single synchronous request'] ) );
 
 sleep( 2 );
 
@@ -76,7 +74,7 @@ printLine( '# Sending one asynchronous request... (worker sleeps 1 second)' );
 printLine( 'CODE: $client->sendAsyncRequest( $request );', 'red' );
 printLine( "\n" );
 
-$request->setContent( new UrlEncodedFormData( ['sleep' => 1, 'key' => 'single asynchronous request'] ) );
+$request = new PostRequest( $workerPath, new UrlEncodedFormData( ['sleep' => 1, 'key' => 'single asynchronous request'] ) );
 
 sleep( 2 );
 
@@ -110,7 +108,7 @@ printLine( '        }', 'red' );
 printLine( '      );', 'red' );
 printLine( "\n" );
 
-$request->setContent( new UrlEncodedFormData( ['sleep' => 1, 'key' => 'single asynchronous request with callback'] ) );
+$request = new PostRequest( $workerPath, new UrlEncodedFormData( ['sleep' => 1, 'key' => 'single asynchronous request with callback'] ) );
 $request->addResponseCallbacks(
 	static function ( ProvidesResponseData $response )
 	{

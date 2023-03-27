@@ -6,5 +6,5 @@ interface ComposesRequestContent
 {
 	public function getContentType() : string;
 
-	public function getContent() : string;
+	public function toString() : string;
 }

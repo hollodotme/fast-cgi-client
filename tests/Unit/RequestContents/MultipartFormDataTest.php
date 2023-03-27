@@ -36,7 +36,7 @@ final class MultipartFormDataTest extends TestCase
 		                   . file_get_contents( __DIR__ . '/_files/php-logo.png' ) . "\r\n"
 		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__--\r\n\r\n";
 
-		self::assertSame( $expectedContent, $multipartFormData->getContent() );
+		self::assertSame( $expectedContent, $multipartFormData->toString() );
 	}
 
 	/**
@@ -67,7 +67,7 @@ final class MultipartFormDataTest extends TestCase
 		                   . file_get_contents( __DIR__ . '/_files/php-logo.png' ) . "\r\n"
 		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__--\r\n\r\n";
 
-		self::assertSame( $expectedContent, $multipartFormData->getContent() );
+		self::assertSame( $expectedContent, $multipartFormData->toString() );
 	}
 
 	public function testConstructorThrowsExceptionIfFileDoesNotExist() : void

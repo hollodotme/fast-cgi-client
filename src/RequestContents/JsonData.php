@@ -37,7 +37,7 @@ final class JsonData implements ComposesRequestContent
 	 * @return string
 	 * @throws RuntimeException
 	 */
-	public function getContent() : string
+	public function toString() : string
 	{
 		$json = json_encode( $this->data, $this->encodingOptions, $this->encodingDepth );
 

@@ -206,7 +206,7 @@ final class NetworkSocketTest extends TestCase
 
 		$socketIdOne = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		$request->setContent( new UrlEncodedFormData( ['test-key' => 'test'] ) );
+        $request = new PostRequest( $this->getWorkerPath( 'worker.php' ), new UrlEncodedFormData( ['test-key' => 'test'] ) );
 
 		$socketIdTwo = $this->client->sendAsyncRequest( $this->connection, $request );
 
@@ -418,12 +418,12 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanGetLengthOfSentContent( int $length ) : void
 	{
-		$content = str_repeat( 'a', $length );
+        $content = new UrlEncodedFormData(['test' => str_repeat( 'a', $length )]);
 		$request = new PostRequest( $this->getWorkerPath( 'lengthWorker.php' ), $content );
 		$request->setContentType( '*/*' );
 		$result = $this->client->sendRequest( $this->connection, $request );
 
-		self::assertEquals( $length, $result->getBody() );
+		self::assertEquals( $length + 5, $result->getBody() );
 	}
 
 	/**

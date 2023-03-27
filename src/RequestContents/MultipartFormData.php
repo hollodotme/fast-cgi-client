@@ -63,7 +63,7 @@ final class MultipartFormData implements ComposesRequestContent
 		return 'multipart/form-data; boundary=' . self::BOUNDARY_ID;
 	}
 
-	public function getContent() : string
+	public function toString() : string
 	{
 		$data = [];
 

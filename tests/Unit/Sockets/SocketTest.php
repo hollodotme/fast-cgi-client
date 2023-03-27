@@ -10,6 +10,7 @@ use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
@@ -79,7 +80,7 @@ final class SocketTest extends TestCase
 		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
 			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
+			new UrlEncodedFormData( $data )
 		);
 
 		$socket->sendRequest( $request );
@@ -108,7 +109,7 @@ final class SocketTest extends TestCase
 		$data      = ['test-key' => 'unit'];
 		$request   = new PostRequest(
 			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
+			new UrlEncodedFormData( $data )
 		);
 
 		$socket->collectResource( $resources );
@@ -135,7 +136,7 @@ final class SocketTest extends TestCase
 		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
 			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
+			new UrlEncodedFormData( $data )
 		);
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response )
@@ -163,7 +164,7 @@ final class SocketTest extends TestCase
 		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
 			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
+			new UrlEncodedFormData( $data )
 		);
 		$request->addFailureCallbacks(
 			static function ( Throwable $throwable )
@@ -284,7 +285,7 @@ final class SocketTest extends TestCase
 	public function testIsNotUsableWhenTimedOut() : void
 	{
 		$socket  = $this->getSocket();
-		$content = http_build_query( ['sleep' => 1, 'test-key' => 'unit'] );
+		$content = new UrlEncodedFormData( ['sleep' => 1, 'test-key' => 'unit'] );
 		$request = new PostRequest( dirname( __DIR__, 2 ) . '/Integration/Workers/sleepWorker.php', $content );
 		$socket->sendRequest( $request );
 

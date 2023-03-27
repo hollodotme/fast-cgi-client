@@ -27,6 +27,6 @@ final class UrlEncodedFormDataTest extends TestCase
 		$formData        = ['unit' => 'test', 'test' => 'unit'];
 		$expectedContent = 'unit=test&test=unit';
 
-		self::assertSame( $expectedContent, (new UrlEncodedFormData( $formData ))->getContent() );
+		self::assertSame( $expectedContent, (new UrlEncodedFormData( $formData ))->toString() );
 	}
 }

@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file. This project adheres
 to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [4.0.0] - t.b.d
+
+* `AbstractRequest::content` now takes an instance of ComposesRequestContent. Strings can no longer be passed directly as content. Select one of the implementations: JsonData, MultipartFormData or UrlEncodedFormData, or create your own by implementing the interface.
+* `AbstractRequest::content` is now nullable. You can create a request with just a scriptFileName and no content.
+* `AbstractRequest->setContent()` is removed. Making the request content immutable once set in the constructor.
+
+
 ## [3.1.7] - 2021-12-07
 
 * Make sure length values are within valid bounds

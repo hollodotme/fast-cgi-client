@@ -45,17 +45,17 @@ final class AsyncRequestsTest extends TestCase
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php' );
-		$request->addResponseCallbacks(
-			static function ( ProvidesResponseData $response ) use ( &$results )
-			{
-				$results[] = (int)$response->getBody();
-			}
-		);
+
 
 		for ( $i = 0; $i < $limit; $i++ )
 		{
-			$request->setContent( new UrlEncodedFormData( ['test-key' => $i] ) );
+            $request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', new UrlEncodedFormData( ['test-key' => $i] ) );
+            $request->addResponseCallbacks(
+                static function ( ProvidesResponseData $response ) use ( &$results )
+                {
+                    $results[] = (int)$response->getBody();
+                }
+            );
 
 			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
@@ -105,17 +105,15 @@ final class AsyncRequestsTest extends TestCase
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php' );
-		$request->addResponseCallbacks(
-			static function ( ProvidesResponseData $response ) use ( &$results )
-			{
-				$results[] = (int)$response->getBody();
-			}
-		);
-
 		for ( $i = 0; $i < $limit; $i++ )
 		{
-			$request->setContent( new UrlEncodedFormData( ['test-key' => $i] ) );
+            $request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', new UrlEncodedFormData( ['test-key' => $i] ) );
+            $request->addResponseCallbacks(
+                static function ( ProvidesResponseData $response ) use ( &$results )
+                {
+                    $results[] = (int)$response->getBody();
+                }
+            );
 
 			$client->sendAsyncRequest( $this->getUnixDomainSocketConnection(), $request );
 		}
@@ -161,11 +159,10 @@ final class AsyncRequestsTest extends TestCase
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php' );
 
 		for ( $i = 0; $i < $limit; $i++ )
 		{
-			$request->setContent( new UrlEncodedFormData( ['test-key' => $i] ) );
+            $request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', new UrlEncodedFormData( ['test-key' => $i] ) );
 
 			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
@@ -203,17 +200,17 @@ final class AsyncRequestsTest extends TestCase
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php' );
-		$request->addResponseCallbacks(
-			static function ( ProvidesResponseData $response ) use ( &$results )
-			{
-				$results[] = (int)$response->getBody();
-			}
-		);
+
 
 		for ( $i = 0; $i < $limit; $i++ )
 		{
-			$request->setContent( new UrlEncodedFormData( ['test-key' => $i] ) );
+            $request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', new UrlEncodedFormData( ['test-key' => $i] ) );
+            $request->addResponseCallbacks(
+                static function ( ProvidesResponseData $response ) use ( &$results )
+                {
+                    $results[] = (int)$response->getBody();
+                }
+            );
 
 			$client->sendAsyncRequest( $this->getUnixDomainSocketConnection(), $request );
 		}

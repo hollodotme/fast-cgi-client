@@ -50,27 +50,25 @@ final class SignaledWorkersTest extends TestCase
 	public function testFailureCallbackGetsCalledIfOneProcessGetsInterruptedOnNetworkSocket( int $signal ) : void
 	{
 		$client   = new Client();
-		$request  = new PostRequest( $this->getWorkerPath( 'worker.php' ) );
 		$success  = [];
 		$failures = [];
 
-		$request->addResponseCallbacks(
-			static function ( ProvidesResponseData $response ) use ( &$success )
-			{
-				$success[] = (int)$response->getBody();
-			}
-		);
-
-		$request->addFailureCallbacks(
-			static function ( Throwable $e ) use ( &$failures )
-			{
-				$failures[] = $e;
-			}
-		);
-
 		for ( $i = 0; $i < 3; $i++ )
 		{
-			$request->setContent( new UrlEncodedFormData( ['test-key' => $i] ) );
+            $request  = new PostRequest( $this->getWorkerPath( 'worker.php'), new UrlEncodedFormData( ['test-key' => $i] ) );
+            $request->addResponseCallbacks(
+                static function ( ProvidesResponseData $response ) use ( &$success )
+                {
+                    $success[] = (int)$response->getBody();
+                }
+            );
+
+            $request->addFailureCallbacks(
+                static function ( Throwable $e ) use ( &$failures )
+                {
+                    $failures[] = $e;
+                }
+            );
 
 			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
@@ -166,27 +164,25 @@ final class SignaledWorkersTest extends TestCase
 	public function testFailureCallbackGetsCalledIfOneProcessGetsInterruptedOnUnixDomainSocket( int $signal ) : void
 	{
 		$client   = new Client();
-		$request  = new PostRequest( $this->getWorkerPath( 'worker.php' ) );
 		$success  = [];
 		$failures = [];
 
-		$request->addResponseCallbacks(
-			static function ( ProvidesResponseData $response ) use ( &$success )
-			{
-				$success[] = (int)$response->getBody();
-			}
-		);
-
-		$request->addFailureCallbacks(
-			static function ( Throwable $e ) use ( &$failures )
-			{
-				$failures[] = $e;
-			}
-		);
-
 		for ( $i = 0; $i < 3; $i++ )
 		{
-			$request->setContent( new UrlEncodedFormData( ['test-key' => $i] ) );
+            $request  = new PostRequest( $this->getWorkerPath( 'worker.php' ), new UrlEncodedFormData( ['test-key' => $i] ) );
+            $request->addResponseCallbacks(
+                static function ( ProvidesResponseData $response ) use ( &$success )
+                {
+                    $success[] = (int)$response->getBody();
+                }
+            );
+
+            $request->addFailureCallbacks(
+                static function ( Throwable $e ) use ( &$failures )
+                {
+                    $failures[] = $e;
+                }
+            );
 
 			$client->sendAsyncRequest( $this->getUnixDomainSocketConnection(), $request );
 		}
@@ -225,27 +221,25 @@ final class SignaledWorkersTest extends TestCase
 	public function testFailureCallbackGetsCalledIfAllProcessesGetInterruptedOnNetworkSocket( int $signal ) : void
 	{
 		$client   = new Client();
-		$request  = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ) );
 		$success  = [];
 		$failures = [];
 
-		$request->addResponseCallbacks(
-			static function ( ProvidesResponseData $response ) use ( &$success )
-			{
-				$success[] = (int)$response->getBody();
-			}
-		);
-
-		$request->addFailureCallbacks(
-			static function ( Throwable $e ) use ( &$failures )
-			{
-				$failures[] = $e;
-			}
-		);
-
 		for ( $i = 0; $i < 3; $i++ )
 		{
-			$request->setContent( new UrlEncodedFormData( ['test-key' => $i, 'sleep' => 2] ) );
+            $request  = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ), new UrlEncodedFormData( ['test-key' => $i, 'sleep' => 2]) );
+            $request->addResponseCallbacks(
+                static function ( ProvidesResponseData $response ) use ( &$success )
+                {
+                    $success[] = (int)$response->getBody();
+                }
+            );
+
+            $request->addFailureCallbacks(
+                static function ( Throwable $e ) use ( &$failures )
+                {
+                    $failures[] = $e;
+                }
+            );
 
 			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
@@ -302,27 +296,25 @@ final class SignaledWorkersTest extends TestCase
 	public function testFailureCallbackGetsCalledIfAllProcessesGetInterruptedOnUnixDomainSocket( int $signal ) : void
 	{
 		$client   = new Client();
-		$request  = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ) );
 		$success  = [];
 		$failures = [];
 
-		$request->addResponseCallbacks(
-			static function ( ProvidesResponseData $response ) use ( &$success )
-			{
-				$success[] = (int)$response->getBody();
-			}
-		);
-
-		$request->addFailureCallbacks(
-			static function ( Throwable $e ) use ( &$failures )
-			{
-				$failures[] = $e;
-			}
-		);
-
 		for ( $i = 0; $i < 3; $i++ )
 		{
-			$request->setContent( new UrlEncodedFormData( ['test-key' => $i, 'sleep' => 1] ) );
+            $request  = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ),  new UrlEncodedFormData( ['test-key' => $i, 'sleep' => 1] ) );
+            $request->addResponseCallbacks(
+                static function ( ProvidesResponseData $response ) use ( &$success )
+                {
+                    $success[] = (int)$response->getBody();
+                }
+            );
+
+            $request->addFailureCallbacks(
+                static function ( Throwable $e ) use ( &$failures )
+                {
+                    $failures[] = $e;
+                }
+            );
 
 			$client->sendAsyncRequest( $this->getUnixDomainSocketConnection(), $request );
 		}
