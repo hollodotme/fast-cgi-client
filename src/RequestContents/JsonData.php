@@ -13,6 +13,7 @@ final class JsonData implements ComposesRequestContent
 
 	private int $encodingOptions;
 
+    /** @var int<1, max> */
 	private int $encodingDepth;
 
 	/**
@@ -20,7 +21,7 @@ final class JsonData implements ComposesRequestContent
 	 * @param int   $options
 	 * @param int<1, max>   $depth
 	 */
-	public function __construct( $data, int $options = 0, int $depth = 512 )
+	public function __construct( mixed $data, int $options = 0, int $depth = 512 )
 	{
 		$this->data            = $data;
 		$this->encodingOptions = $options;
