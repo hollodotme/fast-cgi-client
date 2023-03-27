@@ -61,7 +61,7 @@ final class FileUploadTest extends TestCase
 		];
 
 		$multipartFormData = new MultipartFormData( $formData, $files );
-		$postRequest       = PostRequest::newWithRequestContent(
+		$postRequest       = new PostRequest(
 			dirname( __DIR__ ) . '/Workers/fileUploadWorker.php',
 			$multipartFormData
 		);
