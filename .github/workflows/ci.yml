@@ -36,6 +36,9 @@ jobs:
       - name: Run PHPStan
         run: vendor/bin/phpstan
 
+      - name: Run PHP-CodeSniffer
+        run: vendor/bin/phpcs
+
   tests:
     runs-on: ubuntu-latest
     strategy:
