@@ -34,7 +34,7 @@ final class GetRequestTest extends TestCase
 			]
 		);
 
-		$request = GetRequest::newWithRequestContent( '/path/to/script.php', $urlEncodedContent );
+		$request = new GetRequest( '/path/to/script.php', $urlEncodedContent );
 
 		self::assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
 		self::assertSame( 'unit=test&test=unit', $request->getContent() );

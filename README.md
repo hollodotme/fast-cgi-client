@@ -656,7 +656,7 @@ $urlEncodedContent = new UrlEncodedFormData(
 	]
 );
 
-$postRequest = PostRequest::newWithRequestContent( '/path/to/target/script.php', $urlEncodedContent );
+$postRequest = new PostRequest( '/path/to/target/script.php', $urlEncodedContent );
 
 $response = $client->sendRequest( $connection, $postRequest );
 ```
@@ -713,7 +713,7 @@ $multipartContent = new MultipartFormData(
 	]
 );
 
-$postRequest = PostRequest::newWithRequestContent( '/path/to/target/script.php', $multipartContent );
+$postRequest = new PostRequest( '/path/to/target/script.php', $multipartContent );
 
 $response = $client->sendRequest( $connection, $postRequest );
 ```
@@ -812,7 +812,7 @@ $jsonContent = new JsonData(
 	]
 );
 
-$postRequest = PostRequest::newWithRequestContent( '/path/to/target/script.php', $jsonContent );
+$postRequest = new PostRequest( '/path/to/target/script.php', $jsonContent );
 
 $response = $client->sendRequest( $connection, $postRequest );
 ```

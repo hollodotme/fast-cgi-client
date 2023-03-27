@@ -34,7 +34,7 @@ final class DeleteRequestTest extends TestCase
 			]
 		);
 
-		$request = DeleteRequest::newWithRequestContent( '/path/to/script.php', $urlEncodedContent );
+		$request = new DeleteRequest( '/path/to/script.php', $urlEncodedContent );
 
 		self::assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
 		self::assertSame( 'unit=test&test=unit', $request->getContent() );
