@@ -419,7 +419,7 @@ final class UnixDomainSocketTest extends TestCase
 	 */
 	public function testCanGetLengthOfSentContent( int $length ) : void
 	{
-		$content = str_repeat( 'a', $length );
+		$content = new UrlEncodedFormData(['test' => str_repeat( 'a', $length )]);
 		$request = new PostRequest( $this->getWorkerPath( 'lengthWorker.php' ), $content );
 
 		$response = $this->client->sendRequest( $this->connection, $request );

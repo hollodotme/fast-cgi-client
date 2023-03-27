@@ -16,7 +16,7 @@ final class GetRequestTest extends TestCase
 	 */
 	public function testRequestMethodIsGet() : void
 	{
-		$request = new GetRequest( '/path/to/script.php', 'Unit-Test' );
+		$request = new GetRequest( '/path/to/script.php' );
 
 		self::assertSame( 'GET', $request->getRequestMethod() );
 	}

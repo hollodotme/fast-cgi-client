@@ -16,7 +16,7 @@ final class PutRequestTest extends TestCase
 	 */
 	public function testRequestMethodIsPut() : void
 	{
-		$request = new PutRequest( '/path/to/script.php', 'Unit-Test' );
+		$request = new PutRequest( '/path/to/script.php' );
 
 		self::assertSame( 'PUT', $request->getRequestMethod() );
 	}

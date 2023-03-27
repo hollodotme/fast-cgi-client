@@ -16,7 +16,7 @@ final class PatchRequestTest extends TestCase
 	 */
 	public function testRequestMethodIsGet() : void
 	{
-		$request = new PatchRequest( '/path/to/script.php', 'Unit-Test' );
+		$request = new PatchRequest( '/path/to/script.php' );
 
 		self::assertSame( 'PATCH', $request->getRequestMethod() );
 	}

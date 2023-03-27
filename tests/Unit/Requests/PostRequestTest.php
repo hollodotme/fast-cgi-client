@@ -16,7 +16,7 @@ final class PostRequestTest extends TestCase
 	 */
 	public function testRequestMethodIsPost() : void
 	{
-		$request = new PostRequest( '/path/to/script.php', 'Unit-Test' );
+		$request = new PostRequest( '/path/to/script.php' );
 
 		self::assertSame( 'POST', $request->getRequestMethod() );
 	}

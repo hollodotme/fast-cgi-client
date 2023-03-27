@@ -16,7 +16,7 @@ final class DeleteRequestTest extends TestCase
 	 */
 	public function testRequestMethodIsGet() : void
 	{
-		$request = new DeleteRequest( '/path/to/script.php', 'Unit-Test' );
+		$request = new DeleteRequest( '/path/to/script.php' );
 
 		self::assertSame( 'DELETE', $request->getRequestMethod() );
 	}
