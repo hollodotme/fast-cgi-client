@@ -1,10 +1,9 @@
 <?xml version="1.0"?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         bootstrap="../vendor/autoload.php"
+
+<phpunit bootstrap="vendor/autoload.php"
          verbose="true"
          beStrictAboutOutputDuringTests="true"
-         colors="true"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.5/phpunit.xsd">
+         colors="true">
   <php>
     <env name="network-socket-host" value="127.0.0.1"/>
     <env name="network-socket-port" value="9001"/>
@@ -13,24 +12,25 @@
     <env name="non-existing-unix-domain-socket" value="/tmp/not/existing.sock"/>
     <env name="invalid-unix-domain-socket" value="/Fixtures/test.sock"/>
   </php>
+
   <testsuites>
     <testsuite name="Unit">
-      <directory>Unit</directory>
+      <directory>tests/Unit</directory>
     </testsuite>
     <testsuite name="Async-Integration">
-      <directory>Integration/Async</directory>
+      <directory>tests/Integration/Async</directory>
     </testsuite>
     <testsuite name="FileUpload-Integration">
-      <directory>Integration/FileUpload</directory>
+      <directory>tests/Integration/FileUpload</directory>
     </testsuite>
     <testsuite name="NetworkSocket-Integration">
-      <directory>Integration/NetworkSocket</directory>
+      <directory>tests/Integration/NetworkSocket</directory>
     </testsuite>
     <testsuite name="UnixDomainSocket-Integration">
-      <directory>Integration/UnixDomainSocket</directory>
+      <directory>tests/Integration/UnixDomainSocket</directory>
     </testsuite>
     <testsuite name="Signals-Integration">
-      <directory>Integration/Signals</directory>
+      <directory>tests/Integration/Signals</directory>
     </testsuite>
   </testsuites>
   <coverage processUncoveredFiles="true">

@@ -31,6 +31,8 @@
         "ext-json": "*"
     },
     "require-dev": {
-        "ext-xdebug": ">=2.6.0"
+        "ext-xdebug": ">=2.6.0",
+        "phpunit/phpunit": "^9",
+        "phpstan/phpstan": "^1.10"
     }
 }

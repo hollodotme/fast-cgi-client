@@ -3,5 +3,3 @@ parameters:
         - src
         - tests
     level: 8
-    bootstrapFiles:
-        - /repo/.tools/phpunit-7.phar
