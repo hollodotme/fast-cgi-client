@@ -33,8 +33,6 @@ abstract class AbstractRequest implements ProvidesRequestData
 
 	private string $contentType = 'application/x-www-form-urlencoded';
 
-	private int $contentLength = 0;
-
 	private ?ComposesRequestContent $content;
 
 	/** @var array<string, mixed> */
@@ -57,8 +55,7 @@ abstract class AbstractRequest implements ProvidesRequestData
         $this->content = $content;
 
         if (null !== $content) {
-            $this->contentLength = strlen( $content->getContent() );
-            $this->setContentType( $content->getContentType() );
+            $this->contentType = $content->getContentType();
         }
 	}
 
@@ -132,11 +129,6 @@ abstract class AbstractRequest implements ProvidesRequestData
 		$this->serverProtocol = $serverProtocol;
 	}
 
-	public function getContentType() : string
-	{
-		return $this->contentType;
-	}
-
 	public function setContentType( string $contentType ) : void
 	{
 		$this->contentType = $contentType;
@@ -147,17 +139,17 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->content;
 	}
 
-	public function setContent( ComposesRequestContent $content ) : void
-	{
-        $this->content = $content;
-		$this->contentLength = strlen( $content->getContent() );
-	}
+    public function getContentLength() : int
+    {
+        return $this->content ? strlen($this->content->toString()) : 0;
+    }
 
-	/**
-	 * @param string $key
-	 * @param mixed  $value
-	 */
-	public function setCustomVar( string $key, $value ) : void
+    public function getContentType() : string
+    {
+        return $this->contentType;
+    }
+
+	public function setCustomVar( string $key, mixed $value ) : void
 	{
 		$this->customVars[ $key ] = $value;
 	}
@@ -191,11 +183,6 @@ abstract class AbstractRequest implements ProvidesRequestData
 	public function getScriptFilename() : string
 	{
 		return $this->scriptFilename;
-	}
-
-	public function getContentLength() : int
-	{
-		return $this->contentLength;
 	}
 
 	/**

@@ -208,7 +208,7 @@ final class UnixDomainSocketTest extends TestCase
 
 		$socketIdOne = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		$request->setContent( new UrlEncodedFormData( ['test-key' => 'test'] ) );
+        $request = new PostRequest( $this->getWorkerPath( 'worker.php' ), new UrlEncodedFormData( ['test-key' => 'test'] ) );
 
 		$socketIdTwo = $this->client->sendAsyncRequest( $this->connection, $request );
 

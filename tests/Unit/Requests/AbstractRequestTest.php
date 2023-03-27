@@ -124,21 +124,6 @@ final class AbstractRequestTest extends TestCase
 	 * @throws ExpectationFailedException
 	 * @throws InvalidArgumentException
 	 */
-	public function testContentLengthChangesWithContent() : void
-	{
-		$request = $this->getRequest( 'GET', '/path/to/script.php', new UrlEncodedFormData( ['test' => 'some content'] ) );
-
-		self::assertSame( 12, $request->getContentLength() );
-
-		$request->setContent( new UrlEncodedFormData( ['test' => 'some new content'] ) );
-
-		self::assertSame( 16, $request->getContentLength() );
-	}
-
-	/**
-	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
-	 */
 	public function testCanOverwriteVars() : void
 	{
 		$request = $this->getRequest( 'POST', '/path/to/script.php', new UrlEncodedFormData(['test' => 'unit']) );
