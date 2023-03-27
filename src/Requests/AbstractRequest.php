@@ -54,9 +54,10 @@ abstract class AbstractRequest implements ProvidesRequestData
 	public function __construct( string $scriptFilename, ?ComposesRequestContent $content = null )
 	{
 		$this->scriptFilename = $scriptFilename;
+        $this->content = $content;
 
         if (null !== $content) {
-            $this->setContent( $content );
+            $this->contentLength = strlen( $content->getContent() );
             $this->setContentType( $content->getContentType() );
         }
 	}
@@ -148,7 +149,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 
 	public function setContent( ComposesRequestContent $content ) : void
 	{
-		$this->content       = $content;
+        $this->content = $content;
 		$this->contentLength = strlen( $content->getContent() );
 	}
 
