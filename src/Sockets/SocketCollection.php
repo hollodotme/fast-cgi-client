@@ -15,7 +15,7 @@ use function count;
 final class SocketCollection implements Countable
 {
 	/** @var Socket[] */
-	private $sockets = [];
+	private array $sockets = [];
 
 	/**
 	 * @param ConfiguresSocketConnection $connection

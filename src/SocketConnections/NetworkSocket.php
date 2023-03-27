@@ -6,17 +6,13 @@ use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 
 class NetworkSocket implements ConfiguresSocketConnection
 {
-	/** @var string */
-	private $host;
+	private string $host;
 
-	/** @var int */
-	private $port;
+	private int $port;
 
-	/** @var int */
-	private $connectTimeout;
+	private int $connectTimeout;
 
-	/** @var int */
-	private $readWriteTimeout;
+	private int $readWriteTimeout;
 
 	public function __construct(
 		string $host,

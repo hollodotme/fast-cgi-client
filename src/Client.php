@@ -22,14 +22,11 @@ use function stream_select;
 
 class Client
 {
-	/** @var SocketCollection */
-	private $sockets;
+	private SocketCollection $sockets;
 
-	/** @var EncodesPacket */
-	private $packetEncoder;
+	private EncodesPacket $packetEncoder;
 
-	/** @var EncodesNameValuePair */
-	private $nameValuePairEncoder;
+	private EncodesNameValuePair $nameValuePairEncoder;
 
 	public function __construct()
 	{

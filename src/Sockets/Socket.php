@@ -74,38 +74,31 @@ final class Socket
 
 	public const  STREAM_SELECT_USEC   = 200000;
 
-	/** @var SocketId */
-	private $id;
+	private SocketId $id;
 
-	/** @var ConfiguresSocketConnection */
-	private $connection;
+	private ConfiguresSocketConnection $connection;
 
 	/** @var null|resource */
 	private $resource;
 
-	/** @var EncodesPacket */
-	private $packetEncoder;
+	private EncodesPacket $packetEncoder;
 
-	/** @var EncodesNameValuePair */
-	private $nameValuePairEncoder;
+	private EncodesNameValuePair $nameValuePairEncoder;
 
 	/** @var callable[] */
-	private $responseCallbacks;
+	private array $responseCallbacks;
 
 	/** @var callable[] */
-	private $failureCallbacks;
+	private array $failureCallbacks;
 
 	/** @var callable[] */
-	private $passThroughCallbacks;
+	private array $passThroughCallbacks;
 
-	/** @var float */
-	private $startTime;
+	private float $startTime;
 
-	/** @var null|ProvidesResponseData */
-	private $response;
+	private ?ProvidesResponseData $response;
 
-	/** @var int */
-	private $status;
+	private int $status;
 
 	/**
 	 * @param SocketId                   $socketId

@@ -8,8 +8,7 @@ use function random_int;
 
 final class SocketId
 {
-	/** @var int */
-	private $id;
+	private int $id;
 
 	/**
 	 * @param int $id

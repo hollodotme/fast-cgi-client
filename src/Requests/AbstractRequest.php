@@ -12,56 +12,43 @@ use function strlen;
  */
 abstract class AbstractRequest implements ProvidesRequestData
 {
-	/** @var string */
-	private $gatewayInterface = 'FastCGI/1.0';
+	private string $gatewayInterface = 'FastCGI/1.0';
 
-	/** @var string */
-	private $scriptFilename;
+	private string $scriptFilename;
 
-	/** @var string */
-	private $serverSoftware = 'hollodotme/fast-cgi-client';
+	private string $serverSoftware = 'hollodotme/fast-cgi-client';
 
-	/** @var string */
-	private $remoteAddress = '192.168.0.1';
+	private string $remoteAddress = '192.168.0.1';
 
-	/** @var int */
-	private $remotePort = 9985;
+	private int $remotePort = 9985;
 
-	/** @var string */
-	private $serverAddress = '127.0.0.1';
+	private string $serverAddress = '127.0.0.1';
 
-	/** @var int */
-	private $serverPort = 80;
+	private int $serverPort = 80;
 
-	/** @var string */
-	private $serverName = 'localhost';
+	private string $serverName = 'localhost';
 
-	/** @var string */
-	private $serverProtocol = ServerProtocol::HTTP_1_1;
+	private string $serverProtocol = ServerProtocol::HTTP_1_1;
 
-	/** @var string */
-	private $contentType = 'application/x-www-form-urlencoded';
+	private string $contentType = 'application/x-www-form-urlencoded';
 
-	/** @var int */
-	private $contentLength = 0;
+	private int $contentLength = 0;
 
-	/** @var string */
-	private $content;
+	private string $content;
 
 	/** @var array<string, mixed> */
-	private $customVars = [];
+	private array $customVars = [];
 
-	/** @var string */
-	private $requestUri = '';
-
-	/** @var array<callable> */
-	private $responseCallbacks = [];
+	private string $requestUri = '';
 
 	/** @var array<callable> */
-	private $failureCallbacks = [];
+	private array $responseCallbacks = [];
 
 	/** @var array<callable> */
-	private $passThroughCallbacks = [];
+	private array $failureCallbacks = [];
+
+	/** @var array<callable> */
+	private array $passThroughCallbacks = [];
 
 	public function __construct( string $scriptFilename, string $content )
 	{
