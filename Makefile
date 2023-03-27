@@ -50,7 +50,6 @@ dcdown:
 install-composer:
 	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
 	curl -L -o "./.tools/composer.phar" "https://getcomposer.org/download/latest-stable/composer.phar"
-	chmod +x "./.tools/composer.phar"
 .PHONY: install-composer
 
 ## Validate composer config
