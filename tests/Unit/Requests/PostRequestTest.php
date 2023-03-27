@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace hollodotme\FastCGI\Tests\Unit\Requests;
 
@@ -10,33 +12,33 @@ use SebastianBergmann\RecursionContext\InvalidArgumentException;
 
 final class PostRequestTest extends TestCase
 {
-	/**
-	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
-	 */
-	public function testRequestMethodIsPost() : void
-	{
-		$request = new PostRequest( '/path/to/script.php', 'Unit-Test' );
+    /**
+     * @throws ExpectationFailedException
+     * @throws InvalidArgumentException
+     */
+    public function testRequestMethodIsPost(): void
+    {
+        $request = new PostRequest('/path/to/script.php', 'Unit-Test');
 
-		self::assertSame( 'POST', $request->getRequestMethod() );
-	}
+        self::assertSame('POST', $request->getRequestMethod());
+    }
 
-	/**
-	 * @throws ExpectationFailedException
-	 * @throws InvalidArgumentException
-	 */
-	public function testCanCreateInstanceWithRequestContent() : void
-	{
-		$urlEncodedContent = new UrlEncodedFormData(
-			[
-				'unit' => 'test',
-				'test' => 'unit',
-			]
-		);
+    /**
+     * @throws ExpectationFailedException
+     * @throws InvalidArgumentException
+     */
+    public function testCanCreateInstanceWithRequestContent(): void
+    {
+        $urlEncodedContent = new UrlEncodedFormData(
+            [
+                'unit' => 'test',
+                'test' => 'unit',
+            ]
+        );
 
-		$request = PostRequest::newWithRequestContent( '/path/to/script.php', $urlEncodedContent );
+        $request = PostRequest::newWithRequestContent('/path/to/script.php', $urlEncodedContent);
 
-		self::assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
-		self::assertSame( 'unit=test&test=unit', $request->getContent() );
-	}
+        self::assertSame('application/x-www-form-urlencoded', $request->getContentType());
+        self::assertSame('unit=test&test=unit', $request->getContent());
+    }
 }

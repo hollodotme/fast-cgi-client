@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace hollodotme\FastCGI\Interfaces;
 
@@ -8,25 +10,25 @@ namespace hollodotme\FastCGI\Interfaces;
  */
 interface ProvidesResponseData
 {
-	/**
-	 * @return array<string, array<int,string>>
-	 */
-	public function getHeaders() : array;
+    /**
+     * @return array<string, array<int,string>>
+     */
+    public function getHeaders(): array;
 
-	/**
-	 * @param string $headerKey
-	 *
-	 * @return array<int, string>
-	 */
-	public function getHeader( string $headerKey ) : array;
+    /**
+     * @param string $headerKey
+     *
+     * @return array<int, string>
+     */
+    public function getHeader(string $headerKey): array;
 
-	public function getHeaderLine( string $headerKey ) : string;
+    public function getHeaderLine(string $headerKey): string;
 
-	public function getBody() : string;
+    public function getBody(): string;
 
-	public function getOutput() : string;
+    public function getOutput(): string;
 
-	public function getError() : string;
+    public function getError(): string;
 
-	public function getDuration() : float;
+    public function getDuration(): float;
 }

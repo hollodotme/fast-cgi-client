@@ -1,3 +1,5 @@
-<?php declare(strict_types=1);
+<?php
 
-echo strlen( (string)file_get_contents( 'php://input' ) );
+declare(strict_types=1);
+
+echo strlen((string)file_get_contents('php://input'));

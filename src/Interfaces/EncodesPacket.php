@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace hollodotme\FastCGI\Interfaces;
 
@@ -8,12 +10,12 @@ namespace hollodotme\FastCGI\Interfaces;
  */
 interface EncodesPacket
 {
-	public function encodePacket( int $type, string $content, int $requestId ) : string;
+    public function encodePacket(int $type, string $content, int $requestId): string;
 
-	/**
-	 * @param string $data
-	 *
-	 * @return array<string, int>
-	 */
-	public function decodeHeader( string $data ) : array;
+    /**
+     * @param string $data
+     *
+     * @return array<string, int>
+     */
+    public function decodeHeader(string $data): array;
 }

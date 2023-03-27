@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace hollodotme\FastCGI;
 
@@ -17,276 +19,251 @@ use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Sockets\Socket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
 use Throwable;
+
 use function count;
 use function stream_select;
 
 class Client
 {
-	private SocketCollection $sockets;
+    private SocketCollection $sockets;
 
-	private EncodesPacket $packetEncoder;
+    private EncodesPacket $packetEncoder;
 
-	private EncodesNameValuePair $nameValuePairEncoder;
+    private EncodesNameValuePair $nameValuePairEncoder;
 
-	public function __construct()
-	{
-		$this->packetEncoder        = new PacketEncoder();
-		$this->nameValuePairEncoder = new NameValuePairEncoder();
-		$this->sockets              = new SocketCollection();
-	}
+    public function __construct()
+    {
+        $this->packetEncoder        = new PacketEncoder();
+        $this->nameValuePairEncoder = new NameValuePairEncoder();
+        $this->sockets              = new SocketCollection();
+    }
 
-	/**
-	 * @param ConfiguresSocketConnection $connection
-	 * @param ProvidesRequestData        $request
-	 *
-	 * @return ProvidesResponseData
-	 * @throws Throwable
-	 * @throws TimedoutException
-	 * @throws WriteFailedException
-	 * @throws ConnectException
-	 */
-	public function sendRequest(
-		ConfiguresSocketConnection $connection,
-		ProvidesRequestData $request
-	) : ProvidesResponseData
-	{
-		$socketId = $this->sendAsyncRequest( $connection, $request );
+    /**
+     * @param ConfiguresSocketConnection $connection
+     * @param ProvidesRequestData        $request
+     *
+     * @return ProvidesResponseData
+     * @throws Throwable
+     * @throws TimedoutException
+     * @throws WriteFailedException
+     * @throws ConnectException
+     */
+    public function sendRequest(
+        ConfiguresSocketConnection $connection,
+        ProvidesRequestData $request
+    ): ProvidesResponseData {
+        $socketId = $this->sendAsyncRequest($connection, $request);
 
-		return $this->readResponse( $socketId );
-	}
+        return $this->readResponse($socketId);
+    }
 
-	/**
-	 * @param ConfiguresSocketConnection $connection
-	 * @param ProvidesRequestData        $request
-	 *
-	 * @return int SocketId
-	 *
-	 * @throws TimedoutException
-	 * @throws WriteFailedException
-	 * @throws ConnectException
-	 */
-	public function sendAsyncRequest( ConfiguresSocketConnection $connection, ProvidesRequestData $request ) : int
-	{
-		$socket = $this->sockets->getIdleSocket( $connection )
-		          ?? $this->sockets->new( $connection, $this->packetEncoder, $this->nameValuePairEncoder );
+    /**
+     * @param ConfiguresSocketConnection $connection
+     * @param ProvidesRequestData        $request
+     *
+     * @return int SocketId
+     *
+     * @throws TimedoutException
+     * @throws WriteFailedException
+     * @throws ConnectException
+     */
+    public function sendAsyncRequest(ConfiguresSocketConnection $connection, ProvidesRequestData $request): int
+    {
+        $socket = $this->sockets->getIdleSocket($connection)
+                  ?? $this->sockets->new($connection, $this->packetEncoder, $this->nameValuePairEncoder);
 
-		try
-		{
-			$socket->sendRequest( $request );
+        try {
+            $socket->sendRequest($request);
 
-			return $socket->getId();
-		}
-		catch ( TimedoutException | WriteFailedException $e )
-		{
-			$this->sockets->remove( $socket->getId() );
+            return $socket->getId();
+        } catch (TimedoutException | WriteFailedException $e) {
+            $this->sockets->remove($socket->getId());
 
-			throw $e;
-		}
-	}
+            throw $e;
+        }
+    }
 
-	/**
-	 * @param int      $socketId
-	 * @param int|null $timeoutMs
-	 *
-	 * @return ProvidesResponseData
-	 * @throws Throwable
-	 */
-	public function readResponse( int $socketId, ?int $timeoutMs = null ) : ProvidesResponseData
-	{
-		try
-		{
-			return $this->sockets->getById( $socketId )->fetchResponse( $timeoutMs );
-		}
-		catch ( Throwable $e )
-		{
-			$this->sockets->remove( $socketId );
+    /**
+     * @param int      $socketId
+     * @param int|null $timeoutMs
+     *
+     * @return ProvidesResponseData
+     * @throws Throwable
+     */
+    public function readResponse(int $socketId, ?int $timeoutMs = null): ProvidesResponseData
+    {
+        try {
+            return $this->sockets->getById($socketId)->fetchResponse($timeoutMs);
+        } catch (Throwable $e) {
+            $this->sockets->remove($socketId);
 
-			throw $e;
-		}
-	}
+            throw $e;
+        }
+    }
 
-	/**
-	 * @param int      $socketId
-	 * @param int|null $timeoutMs
-	 *
-	 * @throws ReadFailedException
-	 */
-	public function waitForResponse( int $socketId, ?int $timeoutMs = null ) : void
-	{
-		$socket = $this->sockets->getById( $socketId );
+    /**
+     * @param int      $socketId
+     * @param int|null $timeoutMs
+     *
+     * @throws ReadFailedException
+     */
+    public function waitForResponse(int $socketId, ?int $timeoutMs = null): void
+    {
+        $socket = $this->sockets->getById($socketId);
 
-		while ( true )
-		{
-			if ( $socket->hasResponse() )
-			{
-				$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
-				break;
-			}
-		}
-	}
+        while (true) {
+            if ($socket->hasResponse()) {
+                $this->fetchResponseAndNotifyCallback($socket, $timeoutMs);
+                break;
+            }
+        }
+    }
 
-	/**
-	 * @param int|null $timeoutMs
-	 *
-	 * @throws ReadFailedException
-	 * @throws Throwable
-	 */
-	public function waitForResponses( ?int $timeoutMs = null ) : void
-	{
-		if ( $this->sockets->isEmpty() )
-		{
-			throw new ReadFailedException( 'No pending requests found.' );
-		}
+    /**
+     * @param int|null $timeoutMs
+     *
+     * @throws ReadFailedException
+     * @throws Throwable
+     */
+    public function waitForResponses(?int $timeoutMs = null): void
+    {
+        if ($this->sockets->isEmpty()) {
+            throw new ReadFailedException('No pending requests found.');
+        }
 
-		while ( $this->hasUnhandledResponses() )
-		{
-			$this->handleReadyResponses( $timeoutMs );
-		}
-	}
+        while ($this->hasUnhandledResponses()) {
+            $this->handleReadyResponses($timeoutMs);
+        }
+    }
 
-	/**
-	 * @param Socket   $socket
-	 * @param int|null $timeoutMs
-	 */
-	private function fetchResponseAndNotifyCallback( Socket $socket, ?int $timeoutMs = null ) : void
-	{
-		try
-		{
-			$response = $socket->fetchResponse( $timeoutMs );
+    /**
+     * @param Socket   $socket
+     * @param int|null $timeoutMs
+     */
+    private function fetchResponseAndNotifyCallback(Socket $socket, ?int $timeoutMs = null): void
+    {
+        try {
+            $response = $socket->fetchResponse($timeoutMs);
 
-			$socket->notifyResponseCallbacks( $response );
-		}
-		catch ( Throwable $e )
-		{
-			$socket->notifyFailureCallbacks( $e );
-		}
-		finally
-		{
-			$this->sockets->remove( $socket->getId() );
-		}
-	}
+            $socket->notifyResponseCallbacks($response);
+        } catch (Throwable $e) {
+            $socket->notifyFailureCallbacks($e);
+        } finally {
+            $this->sockets->remove($socket->getId());
+        }
+    }
 
-	/**
-	 * @return bool
-	 */
-	public function hasUnhandledResponses() : bool
-	{
-		return $this->sockets->hasBusySockets();
-	}
+    /**
+     * @return bool
+     */
+    public function hasUnhandledResponses(): bool
+    {
+        return $this->sockets->hasBusySockets();
+    }
 
-	/**
-	 * @param int $socketId
-	 *
-	 * @return bool
-	 * @throws ReadFailedException
-	 */
-	public function hasResponse( int $socketId ) : bool
-	{
-		return $this->sockets->getById( $socketId )->hasResponse();
-	}
+    /**
+     * @param int $socketId
+     *
+     * @return bool
+     * @throws ReadFailedException
+     */
+    public function hasResponse(int $socketId): bool
+    {
+        return $this->sockets->getById($socketId)->hasResponse();
+    }
 
-	/**
-	 * @return array<int>
-	 * @throws ReadFailedException
-	 */
-	public function getSocketIdsHavingResponse() : array
-	{
-		if ( $this->sockets->isEmpty() )
-		{
-			return [];
-		}
+    /**
+     * @return array<int>
+     * @throws ReadFailedException
+     */
+    public function getSocketIdsHavingResponse(): array
+    {
+        if ($this->sockets->isEmpty()) {
+            return [];
+        }
 
-		$reads  = $this->sockets->collectResources();
-		$writes = $excepts = null;
+        $reads  = $this->sockets->collectResources();
+        $writes = $excepts = null;
 
-		$result = @stream_select( $reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
+        $result = @stream_select($reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC);
 
-		if ( false === $result || 0 === count( $reads ) )
-		{
-			return [];
-		}
+        if (false === $result || 0 === count($reads)) {
+            return [];
+        }
 
-		return $this->sockets->getSocketIdsByResources( $reads );
-	}
+        return $this->sockets->getSocketIdsByResources($reads);
+    }
 
-	/**
-	 * @param int|null $timeoutMs
-	 * @param int      ...$socketIds
-	 *
-	 * @return Generator|ProvidesResponseData[]
-	 */
-	public function readResponses( ?int $timeoutMs = null, int ...$socketIds ) : Generator
-	{
-		foreach ( $socketIds as $socketId )
-		{
-			try
-			{
-				yield $this->sockets->getById( $socketId )->fetchResponse( $timeoutMs );
-			}
-			catch ( Throwable $e )
-			{
-				# Skip unknown socket ids
-			}
-			finally
-			{
-				$this->sockets->remove( $socketId );
-			}
-		}
-	}
+    /**
+     * @param int|null $timeoutMs
+     * @param int      ...$socketIds
+     *
+     * @return Generator|ProvidesResponseData[]
+     */
+    public function readResponses(?int $timeoutMs = null, int ...$socketIds): Generator
+    {
+        foreach ($socketIds as $socketId) {
+            try {
+                yield $this->sockets->getById($socketId)->fetchResponse($timeoutMs);
+            } catch (Throwable $e) {
+                # Skip unknown socket ids
+            } finally {
+                $this->sockets->remove($socketId);
+            }
+        }
+    }
 
-	/**
-	 * @param int|null $timeoutMs
-	 *
-	 * @return Generator|ProvidesResponseData[]
-	 * @throws ReadFailedException
-	 */
-	public function readReadyResponses( ?int $timeoutMs = null ) : Generator
-	{
-		$socketIds = $this->getSocketIdsHavingResponse();
+    /**
+     * @param int|null $timeoutMs
+     *
+     * @return Generator|ProvidesResponseData[]
+     * @throws ReadFailedException
+     */
+    public function readReadyResponses(?int $timeoutMs = null): Generator
+    {
+        $socketIds = $this->getSocketIdsHavingResponse();
 
-		if ( [] !== $socketIds )
-		{
-			yield from $this->readResponses( $timeoutMs, ...$socketIds );
-		}
-	}
+        if ([] !== $socketIds) {
+            yield from $this->readResponses($timeoutMs, ...$socketIds);
+        }
+    }
 
-	/**
-	 * @param int      $socketId
-	 * @param int|null $timeoutMs
-	 *
-	 * @throws ReadFailedException
-	 */
-	public function handleResponse( int $socketId, ?int $timeoutMs = null ) : void
-	{
-		$this->fetchResponseAndNotifyCallback(
-			$this->sockets->getById( $socketId ),
-			$timeoutMs
-		);
-	}
+    /**
+     * @param int      $socketId
+     * @param int|null $timeoutMs
+     *
+     * @throws ReadFailedException
+     */
+    public function handleResponse(int $socketId, ?int $timeoutMs = null): void
+    {
+        $this->fetchResponseAndNotifyCallback(
+            $this->sockets->getById($socketId),
+            $timeoutMs
+        );
+    }
 
-	/**
-	 * @param int|null $timeoutMs
-	 * @param int      ...$socketIds
-	 *
-	 * @throws ReadFailedException
-	 */
-	public function handleResponses( ?int $timeoutMs = null, int ...$socketIds ) : void
-	{
-		foreach ( $socketIds as $socketId )
-		{
-			$this->handleResponse( $socketId, $timeoutMs );
-		}
-	}
+    /**
+     * @param int|null $timeoutMs
+     * @param int      ...$socketIds
+     *
+     * @throws ReadFailedException
+     */
+    public function handleResponses(?int $timeoutMs = null, int ...$socketIds): void
+    {
+        foreach ($socketIds as $socketId) {
+            $this->handleResponse($socketId, $timeoutMs);
+        }
+    }
 
-	/**
-	 * @param int|null $timeoutMs
-	 *
-	 * @throws ReadFailedException
-	 */
-	public function handleReadyResponses( ?int $timeoutMs = null ) : void
-	{
-		$socketIds = $this->getSocketIdsHavingResponse();
+    /**
+     * @param int|null $timeoutMs
+     *
+     * @throws ReadFailedException
+     */
+    public function handleReadyResponses(?int $timeoutMs = null): void
+    {
+        $socketIds = $this->getSocketIdsHavingResponse();
 
-		$this->handleResponses( $timeoutMs, ...$socketIds );
-	}
+        $this->handleResponses($timeoutMs, ...$socketIds);
+    }
 }
