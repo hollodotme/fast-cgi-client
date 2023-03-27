@@ -8,6 +8,7 @@ use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
@@ -18,7 +19,6 @@ use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 use function escapeshellarg;
 use function exec;
-use function http_build_query;
 use function preg_match;
 use function shell_exec;
 use function sleep;
@@ -50,7 +50,7 @@ final class SignaledWorkersTest extends TestCase
 	public function testFailureCallbackGetsCalledIfOneProcessGetsInterruptedOnNetworkSocket( int $signal ) : void
 	{
 		$client   = new Client();
-		$request  = new PostRequest( $this->getWorkerPath( 'worker.php' ), '' );
+		$request  = new PostRequest( $this->getWorkerPath( 'worker.php' ) );
 		$success  = [];
 		$failures = [];
 
@@ -70,7 +70,7 @@ final class SignaledWorkersTest extends TestCase
 
 		for ( $i = 0; $i < 3; $i++ )
 		{
-			$request->setContent( http_build_query( ['test-key' => $i] ) );
+			$request->setContent( new UrlEncodedFormData( ['test-key' => $i] ) );
 
 			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
@@ -166,7 +166,7 @@ final class SignaledWorkersTest extends TestCase
 	public function testFailureCallbackGetsCalledIfOneProcessGetsInterruptedOnUnixDomainSocket( int $signal ) : void
 	{
 		$client   = new Client();
-		$request  = new PostRequest( $this->getWorkerPath( 'worker.php' ), '' );
+		$request  = new PostRequest( $this->getWorkerPath( 'worker.php' ) );
 		$success  = [];
 		$failures = [];
 
@@ -186,7 +186,7 @@ final class SignaledWorkersTest extends TestCase
 
 		for ( $i = 0; $i < 3; $i++ )
 		{
-			$request->setContent( http_build_query( ['test-key' => $i] ) );
+			$request->setContent( new UrlEncodedFormData( ['test-key' => $i] ) );
 
 			$client->sendAsyncRequest( $this->getUnixDomainSocketConnection(), $request );
 		}
@@ -225,7 +225,7 @@ final class SignaledWorkersTest extends TestCase
 	public function testFailureCallbackGetsCalledIfAllProcessesGetInterruptedOnNetworkSocket( int $signal ) : void
 	{
 		$client   = new Client();
-		$request  = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ), '' );
+		$request  = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ) );
 		$success  = [];
 		$failures = [];
 
@@ -245,7 +245,7 @@ final class SignaledWorkersTest extends TestCase
 
 		for ( $i = 0; $i < 3; $i++ )
 		{
-			$request->setContent( http_build_query( ['test-key' => $i, 'sleep' => 2] ) );
+			$request->setContent( new UrlEncodedFormData( ['test-key' => $i, 'sleep' => 2] ) );
 
 			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
@@ -302,7 +302,7 @@ final class SignaledWorkersTest extends TestCase
 	public function testFailureCallbackGetsCalledIfAllProcessesGetInterruptedOnUnixDomainSocket( int $signal ) : void
 	{
 		$client   = new Client();
-		$request  = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ), '' );
+		$request  = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ) );
 		$success  = [];
 		$failures = [];
 
@@ -322,7 +322,7 @@ final class SignaledWorkersTest extends TestCase
 
 		for ( $i = 0; $i < 3; $i++ )
 		{
-			$request->setContent( http_build_query( ['test-key' => $i, 'sleep' => 1] ) );
+			$request->setContent( new UrlEncodedFormData( ['test-key' => $i, 'sleep' => 1] ) );
 
 			$client->sendAsyncRequest( $this->getUnixDomainSocketConnection(), $request );
 		}
@@ -349,7 +349,7 @@ final class SignaledWorkersTest extends TestCase
 	public function testBrokenSocketGetsRemovedIfWritingRequestFailed() : void
 	{
 		$client     = new Client();
-		$request    = new PostRequest( $this->getWorkerPath( 'pidWorker.php' ), '' );
+		$request    = new PostRequest( $this->getWorkerPath( 'pidWorker.php' ) );
 		$connection = $this->getUnixDomainSocketConnection();
 
 		$socketId1 = $client->sendAsyncRequest( $connection, $request );

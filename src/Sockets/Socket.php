@@ -338,7 +338,7 @@ final class Socket
 
 		$requestPackets .= $this->packetEncoder->encodePacket( self::PARAMS, '', $this->id->getValue() );
 
-		if ( $request->getContent() )
+		if ( $request->getContent() !== null )
 		{
 			$offset = 0;
 			do
@@ -346,7 +346,7 @@ final class Socket
 				$requestPackets .= $this->packetEncoder->encodePacket(
 					self::STDIN,
 					substr(
-						$request->getContent(),
+						$request->getContent()->getContent(),
 						$offset,
 						self::REQ_MAX_CONTENT_SIZE
 					),

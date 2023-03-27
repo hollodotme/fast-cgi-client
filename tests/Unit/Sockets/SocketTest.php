@@ -189,7 +189,7 @@ final class SocketTest extends TestCase
 	public function testThrowsExceptionIfRequestIsSentToSocketThatIsNotIdle() : void
 	{
 		$socket  = $this->getSocket();
-		$request = new PostRequest( '/some/script.php', '' );
+		$request = new PostRequest( '/some/script.php' );
 
 		$socket->sendRequest( $request );
 

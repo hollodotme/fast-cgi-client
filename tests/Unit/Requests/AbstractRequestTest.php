@@ -2,6 +2,7 @@
 
 namespace hollodotme\FastCGI\Tests\Unit\Requests;
 
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\AbstractRequest;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
@@ -18,11 +19,11 @@ final class AbstractRequestTest extends TestCase
 	 */
 	public function testCanGetDefaultValues( string $requestMethod ) : void
 	{
-		$request = $this->getRequest( $requestMethod, '/path/to/script.php', 'Unit-Test' );
+		$request = $this->getRequest( $requestMethod, '/path/to/script.php');
 
 		self::assertSame( 'FastCGI/1.0', $request->getGatewayInterface() );
 		self::assertSame( '/path/to/script.php', $request->getScriptFilename() );
-		self::assertSame( 'Unit-Test', $request->getContent() );
+		self::assertSame( null, $request->getContent() );
 		self::assertSame( 9, $request->getContentLength() );
 		self::assertSame( '127.0.0.1', $request->getServerAddress() );
 		self::assertSame( 'localhost', $request->getServerName() );
@@ -44,15 +45,15 @@ final class AbstractRequestTest extends TestCase
 	 *
 	 * @return AbstractRequest
 	 */
-	private function getRequest( string $requestMethod, string $scriptFilename, string $content ) : AbstractRequest
+	private function getRequest( string $requestMethod, string $scriptFilename ) : AbstractRequest
 	{
-		return new class($requestMethod, $scriptFilename, $content) extends AbstractRequest {
+		return new class($requestMethod, $scriptFilename) extends AbstractRequest {
 			/** @var string */
 			private $requestMethod;
 
-			public function __construct( string $requestMethod, string $scriptFilename, string $content )
+			public function __construct( string $requestMethod, string $scriptFilename )
 			{
-				parent::__construct( $scriptFilename, $content );
+				parent::__construct( $scriptFilename );
 				$this->requestMethod = $requestMethod;
 			}
 
@@ -126,11 +127,11 @@ final class AbstractRequestTest extends TestCase
 	 */
 	public function testContentLengthChangesWithContent() : void
 	{
-		$request = $this->getRequest( 'GET', '/path/to/script.php', 'Some content' );
+		$request = $this->getRequest( 'GET', '/path/to/script.php', new UrlEncodedFormData( ['test' => 'some content'] ) );
 
 		self::assertSame( 12, $request->getContentLength() );
 
-		$request->setContent( 'Some new content' );
+		$request->setContent( new UrlEncodedFormData( ['test' => 'some new content'] ) );
 
 		self::assertSame( 16, $request->getContentLength() );
 	}

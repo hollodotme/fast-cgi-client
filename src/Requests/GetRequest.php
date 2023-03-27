@@ -3,7 +3,6 @@
 namespace hollodotme\FastCGI\Requests;
 
 use hollodotme\FastCGI\Constants\RequestMethod;
-use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
 
 /**
  * Class GetRequest
@@ -11,17 +10,6 @@ use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
  */
 class GetRequest extends AbstractRequest
 {
-	public static function newWithRequestContent(
-		string $scriptFilename,
-		ComposesRequestContent $requestContent
-	) : GetRequest
-	{
-		$instance = new self( $scriptFilename, $requestContent->getContent() );
-		$instance->setContentType( $requestContent->getContentType() );
-
-		return $instance;
-	}
-
 	public function getRequestMethod() : string
 	{
 		return RequestMethod::GET;

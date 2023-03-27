@@ -106,12 +106,13 @@ echo $_REQUEST['key'] ?? '';
 namespace YourVendor\YourProject;
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 $client     = new Client();
 $connection = new NetworkSocket('127.0.0.1', 9000);
-$content    = http_build_query(['key' => 'value']);
+$content    = new UrlEncodedFormData(['key' => 'value']);
 $request    = new PostRequest('/path/to/target/script.php', $content);
 
 $response = $client->sendRequest($connection, $request);
@@ -132,12 +133,13 @@ value
 namespace YourVendor\YourProject;
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 $client     = new Client();
 $connection = new NetworkSocket('127.0.0.1', 9000);
-$content    = http_build_query(['key' => 'value']);
+$content    = new UrlEncodedFormData(['key' => 'value']);
 $request    = new PostRequest('/path/to/target/script.php', $content);
 
 $socketId = $client->sendAsyncRequest($connection, $request);
@@ -153,12 +155,13 @@ echo "Request sent, got ID: {$socketId}";
 namespace YourVendor\YourProject;
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 $client     = new Client();
 $connection = new NetworkSocket('127.0.0.1', 9000);
-$content    = http_build_query(['key' => 'value']);
+$content    = new UrlEncodedFormData(['key' => 'value']);
 $request    = new PostRequest('/path/to/target/script.php', $content);
 
 $socketId = $client->sendAsyncRequest($connection, $request);
@@ -193,6 +196,7 @@ received instead of returning it, you need to use the `waitForResponse(int $sock
 namespace YourVendor\YourProject;
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
@@ -200,7 +204,7 @@ use Throwable;
 
 $client     = new Client();
 $connection = new NetworkSocket('127.0.0.1', 9000);
-$content    = http_build_query(['key' => 'value']);
+$content    = new UrlEncodedFormData(['key' => 'value']);
 $request    = new PostRequest('/path/to/target/script.php', $content);
 
 # Register a response callback, expects a `ProvidesResponseData` instance as the only parameter
@@ -262,15 +266,16 @@ value
 namespace YourVendor\YourProject;
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 $client     = new Client();
 $connection = new NetworkSocket('127.0.0.1', 9000);
 
-$request1 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '1']));
-$request2 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '2']));
-$request3 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '3']));
+$request1 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '1']));
+$request2 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '2']));
+$request3 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '3']));
 
 $socketIds = [];
 
@@ -305,15 +310,16 @@ foreach ($client->readResponses(3000, ...$socketIds) as $response)
 namespace YourVendor\YourProject;
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 
 $client     = new Client();
 $connection = new NetworkSocket('127.0.0.1', 9000);
 
-$request1 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '1', 'sleep' => 3]));
-$request2 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '2', 'sleep' => 2]));
-$request3 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '3', 'sleep' => 1]));
+$request1 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '1', 'sleep' => 3]));
+$request2 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '2', 'sleep' => 2]));
+$request3 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '3', 'sleep' => 1]));
 
 $socketIds = [];
 
@@ -384,6 +390,7 @@ while ( $client->hasUnhandledResponses() )
 namespace YourVendor\YourProject;
 
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
@@ -402,9 +409,9 @@ $failureCallback = static function ( Throwable $throwable )
 	echo $throwable->getMessage();	
 };
 
-$request1 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '1', 'sleep' => 3]));
-$request2 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '2', 'sleep' => 2]));
-$request3 = new PostRequest('/path/to/target/script.php', http_build_query(['key' => '3', 'sleep' => 1]));
+$request1 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '1', 'sleep' => 3]));
+$request2 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '2', 'sleep' => 2]));
+$request3 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '3', 'sleep' => 1]));
 
 $request1->addResponseCallbacks($responseCallback);
 $request1->addFailureCallbacks($failureCallback);
@@ -505,7 +512,7 @@ $passThroughCallback = static function( string $outputBuffer, string $errorBuffe
 	echo 'Error: ' . $errorBuffer;
 };
 
-$request = new GetRequest('/path/to/target/script.php', '');
+$request = new GetRequest('/path/to/target/script.php');
 $request->addPassThroughCallbacks( $passThroughCallback );
 
 $client->sendAsyncRequest($connection, $request);
@@ -629,10 +636,10 @@ interface ComposesRequestContent
 ```php
 <?php declare(strict_types=1);
 
-use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
-use hollodotme\FastCGI\SocketConnections\NetworkSocket;
-use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
+use hollodotme\FastCGI\Requests\PostRequest;
 
 $client = new Client();
 $connection = new NetworkSocket( '127.0.0.1', 9000 );

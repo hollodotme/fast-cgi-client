@@ -32,7 +32,7 @@ interface ProvidesRequestData
 
 	public function getContentLength() : int;
 
-	public function getContent() : string;
+	public function getContent() : ?ComposesRequestContent;
 
 	/**
 	 * @return array<string, mixed>

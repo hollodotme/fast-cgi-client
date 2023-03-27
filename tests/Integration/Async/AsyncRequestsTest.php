@@ -8,6 +8,7 @@ use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
@@ -16,7 +17,6 @@ use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
-use function http_build_query;
 use function parse_ini_file;
 use function range;
 use function sort;
@@ -45,7 +45,7 @@ final class AsyncRequestsTest extends TestCase
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', '' );
+		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php' );
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response ) use ( &$results )
 			{
@@ -55,7 +55,7 @@ final class AsyncRequestsTest extends TestCase
 
 		for ( $i = 0; $i < $limit; $i++ )
 		{
-			$request->setContent( http_build_query( ['test-key' => $i] ) );
+			$request->setContent( new UrlEncodedFormData( ['test-key' => $i] ) );
 
 			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
@@ -105,7 +105,7 @@ final class AsyncRequestsTest extends TestCase
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', '' );
+		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php' );
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response ) use ( &$results )
 			{
@@ -115,7 +115,7 @@ final class AsyncRequestsTest extends TestCase
 
 		for ( $i = 0; $i < $limit; $i++ )
 		{
-			$request->setContent( http_build_query( ['test-key' => $i] ) );
+			$request->setContent( new UrlEncodedFormData( ['test-key' => $i] ) );
 
 			$client->sendAsyncRequest( $this->getUnixDomainSocketConnection(), $request );
 		}
@@ -161,11 +161,11 @@ final class AsyncRequestsTest extends TestCase
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', '' );
+		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php' );
 
 		for ( $i = 0; $i < $limit; $i++ )
 		{
-			$request->setContent( http_build_query( ['test-key' => $i] ) );
+			$request->setContent( new UrlEncodedFormData( ['test-key' => $i] ) );
 
 			$client->sendAsyncRequest( $this->getNetworkSocketConnection(), $request );
 		}
@@ -203,7 +203,7 @@ final class AsyncRequestsTest extends TestCase
 		$results         = [];
 		$expectedResults = range( 0, $limit - 1 );
 
-		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php', '' );
+		$request = new PostRequest( dirname( __DIR__ ) . '/Workers/worker.php' );
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response ) use ( &$results )
 			{
@@ -213,7 +213,7 @@ final class AsyncRequestsTest extends TestCase
 
 		for ( $i = 0; $i < $limit; $i++ )
 		{
-			$request->setContent( http_build_query( ['test-key' => $i] ) );
+			$request->setContent( new UrlEncodedFormData( ['test-key' => $i] ) );
 
 			$client->sendAsyncRequest( $this->getUnixDomainSocketConnection(), $request );
 		}
