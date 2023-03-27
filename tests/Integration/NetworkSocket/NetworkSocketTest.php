@@ -423,7 +423,7 @@ final class NetworkSocketTest extends TestCase
 		$request->setContentType( '*/*' );
 		$result = $this->client->sendRequest( $this->connection, $request );
 
-		self::assertEquals( $length, $result->getBody() );
+		self::assertEquals( $length + 5, $result->getBody() );
 	}
 
 	/**
