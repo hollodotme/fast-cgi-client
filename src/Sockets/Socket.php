@@ -346,7 +346,7 @@ final class Socket
 				$requestPackets .= $this->packetEncoder->encodePacket(
 					self::STDIN,
 					substr(
-						$request->getContent()->getContent(),
+						$request->getContent()->toString(),
 						$offset,
 						self::REQ_MAX_CONTENT_SIZE
 					),

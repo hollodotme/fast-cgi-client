@@ -31,7 +31,7 @@ final class JsonDataTest extends TestCase
 	 */
 	public function testGetContentType( $data, string $expectedContent ) : void
 	{
-		self::assertSame( $expectedContent, (new JsonData( $data ))->getContent() );
+		self::assertSame( $expectedContent, (new JsonData( $data ))->toString() );
 	}
 
 	/**
@@ -71,6 +71,6 @@ final class JsonDataTest extends TestCase
 
 		$data = ['unit' => ['test' => ['level' => ['three' => ['and' => ['more']]]]]];
 
-		self::assertSame( '', (new JsonData( $data, 0, 3 ))->getContent() );
+		self::assertSame( '', (new JsonData( $data, 0, 3 ))->toString() );
 	}
 }

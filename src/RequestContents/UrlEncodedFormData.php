@@ -23,7 +23,7 @@ final class UrlEncodedFormData implements ComposesRequestContent
 		return 'application/x-www-form-urlencoded';
 	}
 
-	public function getContent() : string
+	public function toString() : string
 	{
 		return http_build_query( $this->formData );
 	}
