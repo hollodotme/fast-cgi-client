@@ -1,6 +1,6 @@
 /.idea/
 /vendor/
-/tests/.phpunit.result.cache
+.phpunit.result.cache
 /composer.lock
 /.tools/*
 !.gitkeep

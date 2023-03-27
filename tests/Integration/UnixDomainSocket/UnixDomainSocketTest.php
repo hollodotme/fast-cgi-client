@@ -542,6 +542,8 @@ final class UnixDomainSocketTest extends TestCase
 		$request  = new GetRequest( $scriptPath );
 		$response = $this->client->sendRequest( $this->connection, $request );
 
+        $this->makeFileAccessible( $scriptPath );
+        
 		$expectedStatus = [
 			'403 Forbidden',
 			'404 Not Found',
@@ -567,8 +569,6 @@ final class UnixDomainSocketTest extends TestCase
 
 		self::assertTrue( $errorMatched );
 		self::assertContains( $response->getBody(), $expectedBodies );
-
-		$this->makeFileAccessible( $scriptPath );
 	}
 
 	private function makeFileUnaccessible( string $filepath ) : void

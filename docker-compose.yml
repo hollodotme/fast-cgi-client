@@ -1,50 +1,6 @@
 version: "3.8"
 
 services:
-  php71:
-    build:
-      dockerfile: 7.1/Dockerfile
-      context: .docker/php
-    container_name: fcc_php71
-    restart: "no"
-    networks:
-      - fcc_network
-    volumes:
-      - ./:/repo
-
-  php72:
-    build:
-      dockerfile: 7.2/Dockerfile
-      context: .docker/php
-    container_name: fcc_php72
-    restart: "no"
-    networks:
-      - fcc_network
-    volumes:
-      - ./:/repo
-
-  php73:
-    build:
-      dockerfile: 7.3/Dockerfile
-      context: .docker/php
-    container_name: fcc_php73
-    restart: "no"
-    networks:
-      - fcc_network
-    volumes:
-      - ./:/repo
-
-  php74:
-    build:
-      dockerfile: 7.4/Dockerfile
-      context: .docker/php
-    container_name: fcc_php74
-    restart: "no"
-    networks:
-      - fcc_network
-    volumes:
-      - ./:/repo
-
   php80:
     build:
       dockerfile: 8.0/Dockerfile
@@ -67,18 +23,16 @@ services:
     volumes:
       - ./:/repo
 
-  phive:
-    image: hyperized/phive:latest
-    restart: 'no'
-    volumes:
-      - ./:/repo
-      - phive:/root/.phive
-    working_dir: /repo
+  php82:
+    build:
+      dockerfile: 8.2/Dockerfile
+      context: .docker/php
+    container_name: fcc_php82
+    restart: "no"
     networks:
       - fcc_network
+    volumes:
+      - ./:/repo
 
 networks:
   fcc_network:
-
-volumes:
-  phive:

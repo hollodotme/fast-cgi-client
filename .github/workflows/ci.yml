@@ -1,4 +1,4 @@
-name: FastCGI Client CI PHP 7.1 - 8.1
+name: FastCGI Client CI PHP 8.0 - 8.2
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
         run: make dcpull
 
       - name: Install tools
-        run: make install-tools
+        run: make install-composer
 
       - name: Composer validate
         run: make composer-validate
@@ -33,23 +33,17 @@ jobs:
       - name: Composer update
         run: make composer-update
 
-      - name: PHP linting
-        run: make phplint
-
       - name: Run PHPStan
-        run: make phpstan
+        run: vendor/bin/phpstan
 
   tests:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         php:
-          - "7.1"
-          - "7.2"
-          - "7.3"
-          - "7.4"
           - "8.0"
           - "8.1"
+          - "8.2"
     steps:
       - uses: actions/checkout@v2
 
@@ -57,7 +51,7 @@ jobs:
         run: make dcpull
 
       - name: Install tools
-        run: make install-tools
+        run: make install-composer
 
       - name: Build environment
         run: make composer-update
@@ -69,10 +63,9 @@ jobs:
         uses: mheap/phpunit-matcher-action@v1
 
       - name: Run unit tests on PHP ${{ matrix.php }}
-        run: make -s -e "PHPUNIT_OPTIONS=--teamcity" "test-php-${{ matrix.php }}"
+        run: make -s -e "test-php-${{ matrix.php }}"
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHPUNIT_OPTIONS: "--teamcity"
 
   release:
     needs:

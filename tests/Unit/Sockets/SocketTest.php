@@ -203,7 +203,7 @@ final class SocketTest extends TestCase
 
 	/**
 	 * @param int    $flag
-	 * @param string $expectedException
+	 * @param class-string<Throwable> $expectedException
 	 * @param string $expectedExceptionMessage
 	 *
 	 * @throws AssertionFailedError
