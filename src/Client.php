@@ -191,22 +191,7 @@ class Client
 	 */
 	public function getSocketIdsHavingResponse() : array
 	{
-		if ( $this->sockets->isEmpty() )
-		{
-			return [];
-		}
-
-		$reads  = $this->sockets->collectResources();
-		$writes = $excepts = null;
-
-		$result = @stream_select( $reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
-
-		if ( false === $result || 0 === count( $reads ) )
-		{
-			return [];
-		}
-
-		return $this->sockets->getSocketIdsByResources( $reads );
+        return $this->sockets->hasResponses();
 	}
 
 	/**
