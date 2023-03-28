@@ -16,7 +16,7 @@ final class PutRequestTest extends TestCase
 	 */
 	public function testRequestMethodIsPut() : void
 	{
-		$request = new PutRequest( '/path/to/script.php', 'Unit-Test' );
+		$request = new PutRequest( '/path/to/script.php' );
 
 		self::assertSame( 'PUT', $request->getRequestMethod() );
 	}
@@ -34,7 +34,7 @@ final class PutRequestTest extends TestCase
 			]
 		);
 
-		$request = PutRequest::newWithRequestContent( '/path/to/script.php', $urlEncodedContent );
+		$request = new PutRequest( '/path/to/script.php', $urlEncodedContent );
 
 		self::assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
 		self::assertSame( 'unit=test&test=unit', $request->getContent() );

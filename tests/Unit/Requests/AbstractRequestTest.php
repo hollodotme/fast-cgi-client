@@ -2,6 +2,7 @@
 
 namespace hollodotme\FastCGI\Tests\Unit\Requests;
 
+use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
 use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\AbstractRequest;
 use PHPUnit\Framework\ExpectationFailedException;
@@ -41,19 +42,17 @@ final class AbstractRequestTest extends TestCase
 	/**
 	 * @param string $requestMethod
 	 * @param string $scriptFilename
-	 * @param string $content
 	 *
 	 * @return AbstractRequest
 	 */
-	private function getRequest( string $requestMethod, string $scriptFilename ) : AbstractRequest
+	private function getRequest( string $requestMethod, string $scriptFilename, ?ComposesRequestContent $content = null ) : AbstractRequest
 	{
-		return new class($requestMethod, $scriptFilename) extends AbstractRequest {
-			/** @var string */
-			private $requestMethod;
+		return new class($requestMethod, $scriptFilename, $content) extends AbstractRequest {
+			private string $requestMethod;
 
-			public function __construct( string $requestMethod, string $scriptFilename )
+			public function __construct( string $requestMethod, string $scriptFilename, ?ComposesRequestContent $content = null )
 			{
-				parent::__construct( $scriptFilename );
+				parent::__construct( $scriptFilename, $content );
 				$this->requestMethod = $requestMethod;
 			}
 
@@ -97,7 +96,7 @@ final class AbstractRequestTest extends TestCase
 	 */
 	public function testCanGetParametersArray( string $requestMethod ) : void
 	{
-		$request = $this->getRequest( $requestMethod, '/path/to/script.php', 'Unit-Test' );
+		$request = $this->getRequest( $requestMethod, '/path/to/script.php', new UrlEncodedFormData(['test' => 'unit']) );
 		$request->setCustomVar( 'UNIT', 'Test' );
 		$request->setRequestUri( '/unit/test/' );
 
@@ -142,7 +141,7 @@ final class AbstractRequestTest extends TestCase
 	 */
 	public function testCanOverwriteVars() : void
 	{
-		$request = $this->getRequest( 'POST', '/path/to/script.php', 'Unit-Test' );
+		$request = $this->getRequest( 'POST', '/path/to/script.php', new UrlEncodedFormData(['test' => 'unit']) );
 		$request->setRemoteAddress( '10.100.10.1' );
 		$request->setRemotePort( 8599 );
 		$request->setServerSoftware( 'unit/test' );
@@ -185,7 +184,7 @@ final class AbstractRequestTest extends TestCase
 	 */
 	public function testCanResetCustomVars() : void
 	{
-		$request = $this->getRequest( 'POST', '/path/to/script.php', 'Unit-Test' );
+		$request = $this->getRequest( 'POST', '/path/to/script.php', new UrlEncodedFormData(['test' => 'unit']) );
 		$request->setCustomVar( 'UNIT', 'Test' );
 
 		self::assertSame( ['UNIT' => 'Test'], $request->getCustomVars() );

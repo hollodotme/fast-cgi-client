@@ -35,6 +35,8 @@ abstract class AbstractRequest implements ProvidesRequestData
 
 	private int $contentLength = 0;
 
+    private ?int $pollingTimeout = null;
+
 	private ?ComposesRequestContent $content;
 
 	/** @var array<string, mixed> */
@@ -54,9 +56,10 @@ abstract class AbstractRequest implements ProvidesRequestData
 	public function __construct( string $scriptFilename, ?ComposesRequestContent $content = null )
 	{
 		$this->scriptFilename = $scriptFilename;
+        $this->content = $content;
 
         if (null !== $content) {
-            $this->setContent( $content );
+            $this->contentLength = strlen( $content->getContent() );
             $this->setContentType( $content->getContentType() );
         }
 	}
@@ -148,7 +151,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 
 	public function setContent( ComposesRequestContent $content ) : void
 	{
-		$this->content       = $content;
+        $this->content = $content;
 		$this->contentLength = strlen( $content->getContent() );
 	}
 
@@ -196,6 +199,16 @@ abstract class AbstractRequest implements ProvidesRequestData
 	{
 		return $this->contentLength;
 	}
+
+    public function getPollingTimeout(): ?int
+    {
+        return $this->pollingTimeout;
+    }
+
+    public function setPollingTimeout(int $pollingTimeout): void
+    {
+        $this->pollingTimeout = $pollingTimeout;
+    }
 
 	/**
 	 * @return array<string, mixed>

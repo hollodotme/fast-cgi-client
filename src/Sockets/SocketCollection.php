@@ -199,4 +199,23 @@ final class SocketCollection implements Countable
 	{
 		return [] === $this->sockets;
 	}
+
+    /** @return array<int> */
+    public function hasResponses() : array
+    {
+        if ( $this->isEmpty() )
+        {
+            return [];
+        }
+
+        foreach ( $this->sockets as $socket )
+        {
+            if ( $socket->hasResponse() )
+            {
+                $socketIds[] = $socket->getId();
+            }
+        }
+
+        return $socketIds ?? [];
+    }
 }

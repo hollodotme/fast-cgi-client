@@ -100,6 +100,8 @@ final class Socket
 
 	private int $status;
 
+    private int $pollingTimeout;
+
 	/**
 	 * @param SocketId                   $socketId
 	 * @param ConfiguresSocketConnection $connection
@@ -145,7 +147,7 @@ final class Socket
 		$reads  = [$this->resource];
 		$writes = $excepts = null;
 
-		return (bool)stream_select( $reads, $writes, $excepts, 0, self::STREAM_SELECT_USEC );
+		return (bool)stream_select( $reads, $writes, $excepts, 0, $this->pollingTimeout );
 	}
 
 	/**
@@ -161,6 +163,7 @@ final class Socket
 
 		$this->response = null;
 
+        $this->pollingTimeout       = $request->getPollingTimeout() ?? self::STREAM_SELECT_USEC;
 		$this->responseCallbacks    = $request->getResponseCallbacks();
 		$this->failureCallbacks     = $request->getFailureCallbacks();
 		$this->passThroughCallbacks = $request->getPassThroughCallbacks();
