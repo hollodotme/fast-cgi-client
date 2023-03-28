@@ -34,6 +34,8 @@ interface ProvidesRequestData
 
 	public function getContent() : ?ComposesRequestContent;
 
+    public function getPollingTimeout() : ?int;
+
 	/**
 	 * @return array<string, mixed>
 	 */

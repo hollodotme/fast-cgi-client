@@ -704,4 +704,22 @@ final class UnixDomainSocketTest extends TestCase
 		self::assertSame( $firstSocket, $lastSocket );
 		self::assertCount( 1, $sockets->getValue( $this->client ) );
 	}
+
+    /**
+     * @throws Exception
+     * @throws ConnectException
+     * @throws TimedoutException
+     * @throws WriteFailedException
+     */
+    public function testSetCustomPollingTimeout() : void
+    {
+        $content = new UrlEncodedFormData( ['test-key' => 'unit'] );
+        $request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
+        $request->setPollingTimeout(500000);
+
+        $socketId = $this->client->sendAsyncRequest( $this->connection, $request );
+
+
+        self::assertEquals( $socketId, 500000 );
+    }
 }

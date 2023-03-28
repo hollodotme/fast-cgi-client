@@ -35,6 +35,8 @@ abstract class AbstractRequest implements ProvidesRequestData
 
 	private int $contentLength = 0;
 
+    private ?int $pollingTimeout = null;
+
 	private ?ComposesRequestContent $content;
 
 	/** @var array<string, mixed> */
@@ -197,6 +199,16 @@ abstract class AbstractRequest implements ProvidesRequestData
 	{
 		return $this->contentLength;
 	}
+
+    public function getPollingTimeout(): ?int
+    {
+        return $this->pollingTimeout;
+    }
+
+    public function setPollingTimeout(int $pollingTimeout): void
+    {
+        $this->pollingTimeout = $pollingTimeout;
+    }
 
 	/**
 	 * @return array<string, mixed>
