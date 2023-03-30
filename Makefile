@@ -59,7 +59,7 @@ composer-validate:
 .PHONY: composer-validate
 
 ## Update composer dependencies
-composer-update:
+composer-update: install-composer
 	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
     php /repo/.tools/composer.phar update -o -v
 .PHONY: composer-update
