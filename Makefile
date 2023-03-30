@@ -64,8 +64,14 @@ composer-update: install-composer
     php /repo/.tools/composer.phar update -o -v
 .PHONY: composer-update
 
+## Run PHPStan checks
+phpstan:
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
+	php /repo/vendor/bin/phpstan analyse --xdebug -c /repo/phpstan.neon
+.PHONY: phpstan
+
 ## Run all tests on all PHP versions
-tests: composer-validate test-php-8.0 test-php-8.1 test-php-8.2 dcdown
+tests: composer-validate phpstan test-php-8.0 test-php-8.1 test-php-8.2 dcdown
 .PHONY: tests
 
 INTEGRATION_WORKER_DIR = ./tests/Integration/Workers
