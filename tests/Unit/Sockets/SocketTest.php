@@ -10,6 +10,7 @@ use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
@@ -26,7 +27,6 @@ use RuntimeException;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 use function dirname;
-use function http_build_query;
 
 final class SocketTest extends TestCase
 {
@@ -76,10 +76,9 @@ final class SocketTest extends TestCase
 	public function testCanSendRequestAndFetchResponse() : void
 	{
 		$socket  = $this->getSocket();
-		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
 			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
+			new UrlEncodedFormData( ['test-key' => 'unit'] )
 		);
 
 		$socket->sendRequest( $request );
@@ -105,10 +104,9 @@ final class SocketTest extends TestCase
 	{
 		$resources = [];
 		$socket    = $this->getSocket();
-		$data      = ['test-key' => 'unit'];
 		$request   = new PostRequest(
 			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
+			new UrlEncodedFormData( ['test-key' => 'unit'] )
 		);
 
 		$socket->collectResource( $resources );
@@ -132,10 +130,9 @@ final class SocketTest extends TestCase
 	public function testCanNotifyResponseCallback() : void
 	{
 		$socket  = $this->getSocket();
-		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
 			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
+			new UrlEncodedFormData( ['test-key' => 'unit'] )
 		);
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response )
@@ -160,10 +157,9 @@ final class SocketTest extends TestCase
 	public function testCanNotifyFailureCallback() : void
 	{
 		$socket  = $this->getSocket();
-		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
 			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
+			new UrlEncodedFormData( ['test-key' => 'unit'] )
 		);
 		$request->addFailureCallbacks(
 			static function ( Throwable $throwable )
@@ -202,9 +198,9 @@ final class SocketTest extends TestCase
 	}
 
 	/**
-	 * @param int    $flag
+	 * @param int                     $flag
 	 * @param class-string<Throwable> $expectedException
-	 * @param string $expectedExceptionMessage
+	 * @param string                  $expectedExceptionMessage
 	 *
 	 * @throws AssertionFailedError
 	 * @throws ReflectionException
@@ -284,8 +280,10 @@ final class SocketTest extends TestCase
 	public function testIsNotUsableWhenTimedOut() : void
 	{
 		$socket  = $this->getSocket();
-		$content = http_build_query( ['sleep' => 1, 'test-key' => 'unit'] );
-		$request = new PostRequest( dirname( __DIR__, 2 ) . '/Integration/Workers/sleepWorker.php', $content );
+		$request = new PostRequest(
+			dirname( __DIR__, 2 ) . '/Integration/Workers/sleepWorker.php',
+			new UrlEncodedFormData( ['sleep' => 1, 'test-key' => 'unit'] )
+		);
 		$socket->sendRequest( $request );
 
 		try

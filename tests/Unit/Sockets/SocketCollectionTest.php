@@ -32,8 +32,7 @@ final class SocketCollectionTest extends TestCase
 {
 	use SocketDataProviding;
 
-	/** @var SocketCollection */
-	private $collection;
+	private SocketCollection $collection;
 
 	protected function setUp() : void
 	{
@@ -245,10 +244,7 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$request = new PostRequest(
-			dirname( __DIR__, 2 ) . '/Integration/Workers/sleepWorker.php',
-			''
-		);
+		$request = new PostRequest( dirname( __DIR__, 2 ) . '/Integration/Workers/sleepWorker.php' );
 		$socket->sendRequest( $request );
 
 		/** @noinspection UnusedFunctionResultInspection */
@@ -280,9 +276,7 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$socket->sendRequest(
-			new PostRequest( '/some/script.php', '' )
-		);
+		$socket->sendRequest( new PostRequest( '/some/script.php' ) );
 
 		self::assertNull( $this->collection->getIdleSocket( $connection ) );
 	}
@@ -486,9 +480,7 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$socket->sendRequest(
-			new PostRequest( '/some/sctipt.php', '' )
-		);
+		$socket->sendRequest( new PostRequest( '/some/sctipt.php' ) );
 
 		self::assertTrue( $this->collection->hasBusySockets() );
 	}

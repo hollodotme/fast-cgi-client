@@ -24,11 +24,9 @@ final class FileUploadTest extends TestCase
 {
 	use SocketDataProviding;
 
-	/** @var NetworkSocket */
-	private $connection;
+	private NetworkSocket $connection;
 
-	/** @var Client */
-	private $client;
+	private Client $client;
 
 	protected function setUp() : void
 	{
@@ -61,7 +59,7 @@ final class FileUploadTest extends TestCase
 		];
 
 		$multipartFormData = new MultipartFormData( $formData, $files );
-		$postRequest       = PostRequest::newWithRequestContent(
+		$postRequest = new PostRequest(
 			dirname( __DIR__ ) . '/Workers/fileUploadWorker.php',
 			$multipartFormData
 		);

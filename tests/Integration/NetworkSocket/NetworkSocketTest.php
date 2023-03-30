@@ -9,6 +9,7 @@ use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\RequestContents\PlainText;
 use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\Requests\PostRequest;
@@ -30,11 +31,9 @@ final class NetworkSocketTest extends TestCase
 {
 	use SocketDataProviding;
 
-	/** @var NetworkSocket */
-	private $connection;
+	private NetworkSocket $connection;
 
-	/** @var Client */
-	private $client;
+	private Client $client;
 
 	protected function setUp() : void
 	{
@@ -418,7 +417,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanGetLengthOfSentContent( int $length ) : void
 	{
-		$content = str_repeat( 'a', $length );
+		$content = new PlainText( str_repeat( 'a', $length ) );
 		$request = new PostRequest( $this->getWorkerPath( 'lengthWorker.php' ), $content );
 		$request->setContentType( '*/*' );
 		$result = $this->client->sendRequest( $this->connection, $request );
@@ -557,7 +556,7 @@ final class NetworkSocketTest extends TestCase
 		$request  = new GetRequest( $scriptPath );
 		$response = $this->client->sendRequest( $this->connection, $request );
 
-        $this->makeFileAccessible( $scriptPath );
+		$this->makeFileAccessible( $scriptPath );
 
 		$expectedStatus = [
 			'403 Forbidden',
@@ -609,7 +608,6 @@ final class NetworkSocketTest extends TestCase
 		$request = new GetRequest( '/not/existing.php' );
 		$request->addPassThroughCallbacks(
 			static function (
-				/** @noinspection PhpUnusedParameterInspection */
 				string $outputBuffer,
 				string $errorBuffer
 			)

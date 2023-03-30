@@ -9,6 +9,7 @@ use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\RequestContents\PlainText;
 use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\Requests\PostRequest;
@@ -32,11 +33,9 @@ final class UnixDomainSocketTest extends TestCase
 {
 	use SocketDataProviding;
 
-	/** @var UnixDomainSocket */
-	private $connection;
+	private UnixDomainSocket $connection;
 
-	/** @var Client */
-	private $client;
+	private Client $client;
 
 	protected function setUp() : void
 	{
@@ -419,7 +418,7 @@ final class UnixDomainSocketTest extends TestCase
 	 */
 	public function testCanGetLengthOfSentContent( int $length ) : void
 	{
-		$content = str_repeat( 'a', $length );
+		$content = new PlainText( str_repeat( 'a', $length ) );
 		$request = new PostRequest( $this->getWorkerPath( 'lengthWorker.php' ), $content );
 
 		$response = $this->client->sendRequest( $this->connection, $request );
@@ -542,8 +541,8 @@ final class UnixDomainSocketTest extends TestCase
 		$request  = new GetRequest( $scriptPath );
 		$response = $this->client->sendRequest( $this->connection, $request );
 
-        $this->makeFileAccessible( $scriptPath );
-        
+		$this->makeFileAccessible( $scriptPath );
+
 		$expectedStatus = [
 			'403 Forbidden',
 			'404 Not Found',
@@ -564,7 +563,7 @@ final class UnixDomainSocketTest extends TestCase
 		$errorMatched = false;
 		foreach ( $expectedErrors as $errorPattern )
 		{
-			$errorMatched = $errorMatched || (bool)preg_match( $errorPattern, $response->getError() );
+			$errorMatched = $errorMatched || preg_match( $errorPattern, $response->getError() );
 		}
 
 		self::assertTrue( $errorMatched );
@@ -594,7 +593,6 @@ final class UnixDomainSocketTest extends TestCase
 		$request = new GetRequest( '/not/existing.php' );
 		$request->addPassThroughCallbacks(
 			static function (
-				/** @noinspection PhpUnusedParameterInspection */
 				string $outputBuffer,
 				string $errorBuffer
 			)
@@ -666,7 +664,7 @@ final class UnixDomainSocketTest extends TestCase
 	 */
 	private function assertMatchesRegExp( string $pattern, string $string, string $message = '' ) : void
 	{
-		static::assertThat( $string, new RegularExpression( $pattern ), $message );
+		self::assertThat( $string, new RegularExpression( $pattern ), $message );
 	}
 
 	/**

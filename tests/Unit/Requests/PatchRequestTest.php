@@ -16,7 +16,7 @@ final class PatchRequestTest extends TestCase
 	 */
 	public function testRequestMethodIsGet() : void
 	{
-		$request = new PatchRequest( '/path/to/script.php', 'Unit-Test' );
+		$request = new PatchRequest( '/path/to/script.php' );
 
 		self::assertSame( 'PATCH', $request->getRequestMethod() );
 	}
@@ -34,7 +34,7 @@ final class PatchRequestTest extends TestCase
 			]
 		);
 
-		$request = PatchRequest::newWithRequestContent( '/path/to/script.php', $urlEncodedContent );
+		$request = new PatchRequest( '/path/to/script.php', $urlEncodedContent );
 
 		self::assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
 		self::assertSame( 'unit=test&test=unit', $request->getContent() );
