@@ -35,7 +35,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 
 	private int $contentLength = 0;
 
-	private ?ComposesRequestContent $content;
+	private ?ComposesRequestContent $content = null;
 
 	/** @var array<string, mixed> */
 	private array $customVars = [];
@@ -55,10 +55,10 @@ abstract class AbstractRequest implements ProvidesRequestData
 	{
 		$this->scriptFilename = $scriptFilename;
 
-        if (null !== $content) {
-            $this->setContent( $content );
-            $this->setContentType( $content->getContentType() );
-        }
+		if ( null !== $content )
+		{
+			$this->setContent( $content );
+		}
 	}
 
 	public function getServerSoftware() : string
@@ -149,6 +149,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 	public function setContent( ComposesRequestContent $content ) : void
 	{
 		$this->content       = $content;
+		$this->contentType   = $content->getContentType();
 		$this->contentLength = strlen( $content->getContent() );
 	}
 

@@ -37,6 +37,7 @@ final class PutRequestTest extends TestCase
 		$request = new PutRequest( '/path/to/script.php', $urlEncodedContent );
 
 		self::assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
-		self::assertSame( 'unit=test&test=unit', $request->getContent() );
+		self::assertSame( $urlEncodedContent, $request->getContent() );
+		self::assertSame( 19, $request->getContentLength() );
 	}
 }

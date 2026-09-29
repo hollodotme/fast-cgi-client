@@ -3,6 +3,7 @@
 namespace hollodotme\FastCGI\Tests\Unit\Requests;
 
 use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
+use hollodotme\FastCGI\RequestContents\JsonData;
 use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\AbstractRequest;
 use PHPUnit\Framework\ExpectationFailedException;
@@ -25,7 +26,7 @@ final class AbstractRequestTest extends TestCase
 		self::assertSame( 'FastCGI/1.0', $request->getGatewayInterface() );
 		self::assertSame( '/path/to/script.php', $request->getScriptFilename() );
 		self::assertSame( null, $request->getContent() );
-		self::assertSame( 9, $request->getContentLength() );
+		self::assertSame( 0, $request->getContentLength() );
 		self::assertSame( '127.0.0.1', $request->getServerAddress() );
 		self::assertSame( 'localhost', $request->getServerName() );
 		self::assertSame( 'hollodotme/fast-cgi-client', $request->getServerSoftware() );
@@ -45,7 +46,7 @@ final class AbstractRequestTest extends TestCase
 		?ComposesRequestContent $content = null
 	) : AbstractRequest
 	{
-		return new class($requestMethod, $scriptFilename) extends AbstractRequest
+		return new class($requestMethod, $scriptFilename, $content) extends AbstractRequest
 		{
 			public function __construct(
 				private string $requestMethod,
@@ -114,7 +115,7 @@ final class AbstractRequestTest extends TestCase
 			'SERVER_NAME'       => 'localhost',
 			'SERVER_PROTOCOL'   => 'HTTP/1.1',
 			'CONTENT_TYPE'      => 'application/x-www-form-urlencoded',
-			'CONTENT_LENGTH'    => 9,
+			'CONTENT_LENGTH'    => 0,
 		];
 
 		self::assertSame( $expectedParams, $request->getParams() );
@@ -132,11 +133,41 @@ final class AbstractRequestTest extends TestCase
 			new UrlEncodedFormData( ['test' => 'some content'] )
 		);
 
-		self::assertSame( 12, $request->getContentLength() );
+		self::assertSame( 17, $request->getContentLength() );
 
 		$request->setContent( new UrlEncodedFormData( ['test' => 'some new content'] ) );
 
-		self::assertSame( 16, $request->getContentLength() );
+		self::assertSame( 21, $request->getContentLength() );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testSetContentUpdatesContentType() : void
+	{
+		$request = $this->getRequest( 'POST', '/path/to/script.php' );
+		$content = new JsonData( ['test' => 'some content'] );
+
+		$request->setContent( $content );
+
+		self::assertSame( $content, $request->getContent() );
+		self::assertSame( 'application/json', $request->getContentType() );
+		self::assertSame( 23, $request->getContentLength() );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testCanOverwriteContentTypeAfterSettingContent() : void
+	{
+		$request = $this->getRequest( 'POST', '/path/to/script.php' );
+
+		$request->setContent( new JsonData( ['test' => 'some content'] ) );
+		$request->setContentType( 'application/vnd.test+json' );
+
+		self::assertSame( 'application/vnd.test+json', $request->getContentType() );
 	}
 
 	/**
@@ -176,7 +207,7 @@ final class AbstractRequestTest extends TestCase
 			'SERVER_NAME'       => 'www.fast-cgi-client.de',
 			'SERVER_PROTOCOL'   => 'HTTP/1.0',
 			'CONTENT_TYPE'      => 'text/plain',
-			'CONTENT_LENGTH'    => 9,
+			'CONTENT_LENGTH'    => 0,
 		];
 
 		self::assertSame( $expectedParams, $request->getParams() );
