@@ -67,7 +67,7 @@ composer-update: install-composer
 ## Run PHPStan checks
 phpstan:
 	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
-	php /repo/vendor/bin/phpstan analyse --xdebug -c /repo/phpstan.neon
+	php /repo/vendor/bin/phpstan analyse --xdebug --memory-limit=1G -c /repo/phpstan.neon
 .PHONY: phpstan
 
 ## Run all tests on all PHP versions

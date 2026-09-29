@@ -26,6 +26,7 @@ use RuntimeException;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 use function preg_match;
+use const PHP_VERSION_ID;
 
 final class NetworkSocketTest extends TestCase
 {
@@ -683,7 +684,10 @@ final class NetworkSocketTest extends TestCase
 		$request = new GetRequest( $this->getWorkerPath( 'sleepWorker.php' ) );
 
 		$sockets = (new ReflectionClass( $this->client ))->getProperty( 'sockets' );
-		$sockets->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$sockets->setAccessible( true );
+		}
 
 		self::assertCount( 0, $sockets->getValue( $this->client ) );
 

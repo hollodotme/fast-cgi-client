@@ -27,6 +27,7 @@ use RuntimeException;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 use function dirname;
+use const PHP_VERSION_ID;
 
 final class SocketTest extends TestCase
 {
@@ -217,7 +218,10 @@ final class SocketTest extends TestCase
 		$socket = $this->getSocket();
 
 		$guardMethod = (new ReflectionClass( $socket ))->getMethod( 'guardRequestCompleted' );
-		$guardMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$guardMethod->setAccessible( true );
+		}
 
 		$this->expectException( $expectedException );
 		$this->expectExceptionMessage( $expectedExceptionMessage );
@@ -309,11 +313,17 @@ final class SocketTest extends TestCase
 		$socket = $this->getSocket();
 
 		$connectMethod = (new ReflectionClass( $socket ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socket );
 
 		$disconnectMethod = (new ReflectionClass( $socket ))->getMethod( 'disconnect' );
-		$disconnectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$disconnectMethod->setAccessible( true );
+		}
 		$disconnectMethod->invoke( $socket );
 
 		self::assertFalse( $socket->isUsable() );

@@ -484,10 +484,12 @@ final class Socket
 				}
 			}
 
-			if ( $packet['paddingLength'] )
+			$paddingLength = $this->getValidLength( (int)$packet['paddingLength'] );
+
+			if ( $paddingLength > 0 )
 			{
 				/** @noinspection UnusedFunctionResultInspection */
-				fread( $this->resource, $this->getValidLength( (int)$packet['paddingLength'] ) );
+				fread( $this->resource, $paddingLength );
 			}
 
 			return $packet;

@@ -28,6 +28,7 @@ use Throwable;
 use function chmod;
 use function dirname;
 use function preg_match;
+use const PHP_VERSION_ID;
 
 final class UnixDomainSocketTest extends TestCase
 {
@@ -681,7 +682,10 @@ final class UnixDomainSocketTest extends TestCase
 		$request = new GetRequest( $this->getWorkerPath( 'sleepWorker.php' ) );
 
 		$sockets = (new ReflectionClass( $this->client ))->getProperty( 'sockets' );
-		$sockets->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$sockets->setAccessible( true );
+		}
 
 		self::assertCount( 0, $sockets->getValue( $this->client ) );
 

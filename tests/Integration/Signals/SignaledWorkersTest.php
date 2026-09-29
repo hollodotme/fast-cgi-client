@@ -134,15 +134,17 @@ final class SignaledWorkersTest extends TestCase
 		);
 		$list    = (string)shell_exec( $command );
 
-		return array_map(
-			static function ( string $item )
-			{
-				preg_match( '#^(\d+)\s.+$#', trim( $item ), $matches );
+		$pids = [];
 
-				return (int)$matches[1];
-			},
-			explode( "\n", trim( $list ) )
-		);
+		foreach ( explode( "\n", trim( $list ) ) as $item )
+		{
+			if ( 1 === preg_match( '#^(\d+)\s.+$#', trim( $item ), $matches ) )
+			{
+				$pids[] = (int)$matches[1];
+			}
+		}
+
+		return $pids;
 	}
 
 	private function killPoolWorker( int $PID, int $signal ) : void

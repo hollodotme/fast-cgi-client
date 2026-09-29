@@ -27,6 +27,7 @@ use function feof;
 use function fread;
 use function reset;
 use const STDIN;
+use const PHP_VERSION_ID;
 
 final class SocketCollectionTest extends TestCase
 {
@@ -79,11 +80,17 @@ final class SocketCollectionTest extends TestCase
 		);
 
 		$connectMethod = (new ReflectionClass( $socketOne ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socketOne );
 
 		$connectMethod = (new ReflectionClass( $socketTwo ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socketTwo );
 
 		$resources = [];
@@ -115,7 +122,10 @@ final class SocketCollectionTest extends TestCase
 		);
 
 		$connectMethod = (new ReflectionClass( $socket ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socket );
 
 		$resources = [];
@@ -168,11 +178,17 @@ final class SocketCollectionTest extends TestCase
 		);
 
 		$connectMethod = (new ReflectionClass( $socketOne ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socketOne );
 
 		$connectMethod = (new ReflectionClass( $socketTwo ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socketTwo );
 
 		$resources = [];
@@ -304,7 +320,10 @@ final class SocketCollectionTest extends TestCase
 		);
 
 		$connectMethod = (new ReflectionClass( $socket ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socket );
 
 		foreach ( $this->collection->collectResources() as $resource )
@@ -345,7 +364,10 @@ final class SocketCollectionTest extends TestCase
 		);
 
 		$connectMethod = (new ReflectionClass( $socket ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socket );
 
 		foreach ( $this->collection->collectResources() as $resource )
