@@ -660,11 +660,12 @@ final class NetworkSocketTest extends TestCase
 		$request  = new GetRequest( $this->getWorkerPath( 'errorLogWorker.php' ) );
 		$response = $this->client->sendRequest( $this->connection, $request );
 
+		# Since PHP 8.2 php-fpm joins multiple log messages of one request with "; "
 		$expectedError = "#^PHP message: ERROR1\n\n?"
-		                 . "PHP message: ERROR2\n\n?"
-		                 . "PHP message: ERROR3\n\n?"
-		                 . "PHP message: ERROR4\n\n?"
-		                 . "PHP message: ERROR5\n\n?$#";
+		                 . "(; )?PHP message: ERROR2\n\n?"
+		                 . "(; )?PHP message: ERROR3\n\n?"
+		                 . "(; )?PHP message: ERROR4\n\n?"
+		                 . "(; )?PHP message: ERROR5\n\n?$#";
 
 		$this->assertMatchesRegExp( $expectedError, $response->getError() );
 	}
