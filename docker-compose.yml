@@ -34,5 +34,38 @@ services:
     volumes:
       - ./:/repo
 
+  php83:
+    build:
+      dockerfile: 8.3/Dockerfile
+      context: .docker/php
+    container_name: fcc_php83
+    restart: "no"
+    networks:
+      - fcc_network
+    volumes:
+      - ./:/repo
+
+  php84:
+    build:
+      dockerfile: 8.4/Dockerfile
+      context: .docker/php
+    container_name: fcc_php84
+    restart: "no"
+    networks:
+      - fcc_network
+    volumes:
+      - ./:/repo
+
+  php85:
+    build:
+      dockerfile: 8.5/Dockerfile
+      context: .docker/php
+    container_name: fcc_php85
+    restart: "no"
+    networks:
+      - fcc_network
+    volumes:
+      - ./:/repo
+
 networks:
   fcc_network:

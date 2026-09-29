@@ -71,7 +71,7 @@ phpstan:
 .PHONY: phpstan
 
 ## Run all tests on all PHP versions
-tests: composer-validate phpstan test-php-8.0 test-php-8.1 test-php-8.2 dcdown
+tests: composer-validate phpstan test-php-8.0 test-php-8.1 test-php-8.2 test-php-8.3 test-php-8.4 test-php-8.5 dcdown
 .PHONY: tests
 
 INTEGRATION_WORKER_DIR = ./tests/Integration/Workers
@@ -119,6 +119,42 @@ test-php-8.2: dcdown make-integration-workers-accessible
 	$(DOCKER_COMPOSE_EXEC_COMMAND) php82 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
 	$(DOCKER_COMPOSE_EXEC_COMMAND) php82 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
 .PHONY: test-php-8.2
+
+## Run test on PHP 8.3 with PHPUnit 9
+test-php-8.3: dcdown make-integration-workers-accessible
+	printf "\n\033[33mRun PHPUnit 9 on PHP 8.3\033[0m\n"
+	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php83
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php83 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php83 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php83 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php83 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php83 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php83 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
+.PHONY: test-php-8.3
+
+## Run test on PHP 8.4 with PHPUnit 9
+test-php-8.4: dcdown make-integration-workers-accessible
+	printf "\n\033[33mRun PHPUnit 9 on PHP 8.4\033[0m\n"
+	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php84
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php84 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php84 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php84 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php84 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php84 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php84 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
+.PHONY: test-php-8.4
+
+## Run test on PHP 8.5 with PHPUnit 9
+test-php-8.5: dcdown make-integration-workers-accessible
+	printf "\n\033[33mRun PHPUnit 9 on PHP 8.5\033[0m\n"
+	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php85
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php85 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php85 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php85 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php85 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php85 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php85 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
+.PHONY: test-php-8.5
 
 ## Run examples
 examples: dcdown
