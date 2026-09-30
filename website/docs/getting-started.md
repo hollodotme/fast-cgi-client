@@ -57,8 +57,8 @@ If PHP-FPM listens on a unix domain socket instead, use
 ## 3. Go further
 
 * [Connections](./usage/connections.md) — network vs. unix domain sockets and timeouts
-* [Single requests](./usage/single-requests.md) — sync, fire and forget, callbacks and retries
-* [Multiple requests](./usage/multiple-requests.md) — send in parallel and react to responses as they arrive
+* [Single requests](./usage/single-requests.mdx) — sync, fire and forget, callbacks and retries
+* [Multiple requests](./usage/multiple-requests.mdx) — send in parallel and react to responses as they arrive
 * [Requests](./usage/requests.md) — request methods, custom variables and request contents
 * [Responses](./usage/responses.md) — headers, body, errors and durations
 * [API reference](./api-reference.md) — all classes and methods

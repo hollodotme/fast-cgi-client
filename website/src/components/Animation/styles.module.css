@@ -1,0 +1,468 @@
+.player {
+  --anim-work: var(--ifm-color-primary);
+  --anim-blocked: #e8590c;
+  --anim-poll: #f08c00;
+  --anim-transfer: #868e96;
+  --anim-running: #2f9e44;
+  --anim-ready: #1098ad;
+  --anim-done: #adb5bd;
+  --anim-surface: var(--ifm-background-surface-color);
+  --anim-border: var(--ifm-color-emphasis-300);
+  --anim-muted: var(--ifm-color-emphasis-600);
+
+  margin: 1.5rem 0 2rem;
+  padding: 1rem;
+  border: 1px solid var(--anim-border);
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-background-color);
+}
+
+[data-theme='dark'] .player {
+  --anim-blocked: #ff8787;
+  --anim-poll: #ffc078;
+  --anim-running: #69db7c;
+  --anim-ready: #66d9e8;
+  --anim-done: #495057;
+}
+
+/* Caption */
+
+.caption {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  min-height: 3.2em;
+  margin-bottom: 0.75rem;
+  font-size: 1.05rem;
+}
+
+.stepNumber {
+  flex: none;
+  padding: 0 0.5rem;
+  border-radius: 1rem;
+  background: var(--ifm-color-emphasis-200);
+  color: var(--anim-muted);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Stage */
+
+.stage {
+  display: block;
+  width: 100%;
+  height: auto;
+  font-family: var(--ifm-font-family-base);
+}
+
+.box {
+  fill: var(--anim-surface);
+  stroke: var(--anim-border);
+}
+
+.boxTitle {
+  fill: var(--ifm-font-color-base);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.boxSubtitle {
+  fill: var(--anim-muted);
+  font-size: 12px;
+}
+
+.status {
+  fill: var(--ifm-background-color);
+  stroke: currentColor;
+  stroke-width: 1.5;
+  color: var(--anim-work);
+  transition: color 0.2s;
+}
+
+.statusDot {
+  fill: currentColor;
+  color: var(--anim-work);
+  transition: color 0.2s;
+}
+
+.status[data-activity='blocked'],
+.statusDot[data-activity='blocked'] {
+  color: var(--anim-blocked);
+}
+
+.status[data-activity='poll'],
+.statusDot[data-activity='poll'] {
+  color: var(--anim-poll);
+}
+
+.status[data-activity='done'],
+.statusDot[data-activity='done'] {
+  color: var(--anim-done);
+}
+
+.statusDot[data-activity='blocked'],
+.statusDot[data-activity='poll'] {
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.statusText {
+  fill: var(--ifm-font-color-base);
+  font-size: 13px;
+}
+
+.socket,
+.socketIdle {
+  stroke-width: 2;
+}
+
+.socket {
+  stroke: var(--anim-transfer);
+}
+
+.socketIdle {
+  stroke: var(--anim-border);
+  stroke-dasharray: 4 6;
+}
+
+.socketLabel {
+  fill: var(--anim-muted);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 11px;
+}
+
+.worker,
+.workerBusy {
+  fill: var(--ifm-background-color);
+  stroke: var(--anim-border);
+  transition: stroke 0.2s;
+}
+
+.workerBusy {
+  stroke: var(--anim-running);
+  stroke-width: 2;
+}
+
+.workerTitle {
+  fill: var(--ifm-font-color-base);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.workerText {
+  fill: var(--anim-muted);
+  font-size: 11px;
+}
+
+.progressTrack {
+  fill: var(--ifm-color-emphasis-200);
+}
+
+.progress {
+  fill: var(--anim-running);
+}
+
+.packetRequest {
+  fill: var(--anim-work);
+}
+
+.packetResponse {
+  fill: var(--anim-running);
+}
+
+.packetText {
+  fill: #fff;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+[data-theme='dark'] .packetText {
+  fill: #1b1b1d;
+}
+
+.readyPulse {
+  fill: none;
+  stroke: var(--anim-ready);
+  stroke-width: 2;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.readyText {
+  fill: var(--anim-ready);
+  font-size: 11px;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* Controls */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0.75rem 0;
+}
+
+.button {
+  min-width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--anim-border);
+  border-radius: 1.2rem;
+  background: var(--anim-surface);
+  color: var(--ifm-font-color-base);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.button:hover {
+  border-color: var(--ifm-color-primary);
+}
+
+.play {
+  min-width: 3rem;
+  border-color: var(--ifm-color-primary);
+  background: var(--ifm-color-primary);
+  color: var(--ifm-color-white);
+}
+
+[data-theme='dark'] .play {
+  color: #1b1b1d;
+}
+
+.scrubber {
+  flex: 1 1 8rem;
+  min-width: 6rem;
+  accent-color: var(--ifm-color-primary);
+}
+
+.clock {
+  min-width: 3.5rem;
+  color: var(--anim-muted);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.85rem;
+  text-align: right;
+}
+
+.speed {
+  height: 2.25rem;
+  padding: 0 0.25rem;
+  border: 1px solid var(--anim-border);
+  border-radius: var(--ifm-global-radius);
+  background: var(--anim-surface);
+  color: var(--ifm-font-color-base);
+}
+
+/* Timeline chart */
+
+.gantt {
+  display: block;
+  width: 100%;
+  height: auto;
+  cursor: pointer;
+  font-family: var(--ifm-font-family-base);
+}
+
+.ganttLabel,
+.ganttTick {
+  fill: var(--anim-muted);
+  font-size: 12px;
+}
+
+.ganttTrack {
+  fill: var(--ifm-color-emphasis-100);
+}
+
+.ganttPlanned {
+  opacity: 0.22;
+}
+
+.ganttPlanned,
+.ganttDone {
+  fill: var(--anim-work);
+}
+
+.gantt [data-kind='blocked'] > rect {
+  fill: var(--anim-blocked);
+}
+
+.gantt [data-kind='poll'] > rect {
+  fill: var(--anim-poll);
+}
+
+.gantt [data-kind='transfer'] > rect {
+  fill: var(--anim-transfer);
+}
+
+.gantt [data-kind='running'] > rect {
+  fill: var(--anim-running);
+}
+
+.gantt [data-kind='ready'] > rect {
+  fill: var(--anim-ready);
+}
+
+.gantt [data-kind='done'] > rect {
+  fill: transparent;
+}
+
+.playhead {
+  stroke: var(--ifm-font-color-base);
+  stroke-width: 2;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  color: var(--anim-muted);
+  font-size: 0.8rem;
+  list-style: none;
+}
+
+.legend li::before {
+  content: '';
+  display: inline-block;
+  width: 0.8em;
+  height: 0.8em;
+  margin-right: 0.35em;
+  border-radius: 2px;
+  background: var(--anim-work);
+  vertical-align: -0.05em;
+}
+
+.legend li[data-kind='blocked']::before {
+  background: var(--anim-blocked);
+}
+
+.legend li[data-kind='poll']::before {
+  background: var(--anim-poll);
+}
+
+.legend li[data-kind='transfer']::before {
+  background: var(--anim-transfer);
+}
+
+.legend li[data-kind='running']::before {
+  background: var(--anim-running);
+}
+
+.legend li[data-kind='ready']::before {
+  background: var(--anim-ready);
+}
+
+/* Settings */
+
+.settings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin: 1rem 0;
+  padding: 0.75rem 1rem 1rem;
+  border: 1px dashed var(--anim-border);
+  border-radius: var(--ifm-global-radius);
+}
+
+.settings legend {
+  padding: 0 0.25rem;
+  font-weight: 600;
+}
+
+.slider {
+  display: flex;
+  flex: 1 1 12rem;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.slider input {
+  accent-color: var(--ifm-color-primary);
+}
+
+.choice {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.option {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--anim-border);
+  border-radius: 1rem;
+  background: var(--anim-surface);
+  color: var(--ifm-font-color-base);
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.option[aria-checked='true'] {
+  border-color: var(--ifm-color-primary);
+  background: var(--ifm-color-primary);
+  color: var(--ifm-color-white);
+}
+
+[data-theme='dark'] .option[aria-checked='true'] {
+  color: #1b1b1d;
+}
+
+/* Code and output */
+
+.panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.panels > div:first-child {
+  margin-bottom: 0;
+}
+
+.console {
+  overflow: hidden;
+  border: 1px solid var(--anim-border);
+  border-radius: var(--ifm-code-border-radius);
+  background: #1b1b1d;
+  color: #e9ecef;
+}
+
+.consoleTitle {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #343a40;
+  color: #adb5bd;
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 0.8rem;
+}
+
+.consoleOutput {
+  min-height: 4.5rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  background: transparent;
+  color: inherit;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.cursor {
+  animation: pulse 1s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusDot,
+  .readyPulse,
+  .cursor {
+    animation: none !important;
+  }
+}

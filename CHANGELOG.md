@@ -88,6 +88,8 @@ This file covers the 4.x releases. For previous major versions see:
 * The documentation moved to a website at [fast-cgi-client.hollo.me](https://fast-cgi-client.hollo.me), with the
   documentation of all major versions and their API reference. It is built with Docusaurus and Doctum
   (`make docs-serve`, `make docs-build`) and deployed to GitHub Pages. The README gives a short overview.
+* Interactive animations in the documentation show step by step what happens when sending requests synchronously,
+  asynchronously and in parallel, next to the example code and its output.
 * The development environment uses the `docker compose` plugin instead of the standalone `docker-compose` binary.
 
 ### Fixed

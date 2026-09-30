@@ -8,6 +8,10 @@ The API reference is generated with [Doctum](https://github.com/code-lts/doctum)
 * `src/pages/` — homepage; `license.md` and `contributing.md` are generated from `LICENSE` and
   `.github/CONTRIBUTING.md` by `scripts/generate-pages.mjs`
 * `doctum.php`, `scripts/build-api.sh` — API reference of all major versions
+* `src/components/Animation/` — interactive animations of the use cases, used in MDX docs as
+  `<Animation scene="multipleRequests" />`. A scene in `scenes/` defines the example code and builds a timeline of
+  what the client, the sockets and PHP-FPM do (`timeline.ts`); everything shown is derived from that timeline and the
+  current time. New scenes are registered in `index.tsx`.
 
 Run from the repository root:
 
