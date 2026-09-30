@@ -16,6 +16,7 @@ use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
+use hollodotme\FastCGI\Tests\Traits\Polling;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use InvalidArgumentException;
 use PHPUnit\Framework\AssertionFailedError;
@@ -33,6 +34,7 @@ use const PHP_VERSION_ID;
 final class UnixDomainSocketTest extends TestCase
 {
 	use SocketDataProviding;
+	use Polling;
 
 	private UnixDomainSocket $connection;
 
@@ -189,7 +191,7 @@ final class UnixDomainSocketTest extends TestCase
 
 		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		usleep( 60000 );
+		$this->waitUntil( fn() : bool => $this->client->hasResponse( $socketId ) );
 
 		self::assertTrue( $this->client->hasResponse( $socketId ) );
 		self::assertEquals( [$socketId], $this->client->getSocketIdsHavingResponse() );
@@ -212,7 +214,9 @@ final class UnixDomainSocketTest extends TestCase
 
 		$socketIdTwo = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		usleep( 110000 );
+		$this->waitUntil(
+			fn() : bool => $this->client->hasResponse( $socketIdOne ) && $this->client->hasResponse( $socketIdTwo )
+		);
 
 		$socketIds = [$socketIdOne, $socketIdTwo];
 
@@ -352,8 +356,6 @@ final class UnixDomainSocketTest extends TestCase
 		$socketIds   = [];
 		$socketIds[] = $this->client->sendAsyncRequest( $this->connection, $request );
 		$socketIds[] = 12345;
-
-		sleep( 1 );
 
 		foreach ( $this->client->readResponses( null, ...$socketIds ) as $response )
 		{

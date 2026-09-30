@@ -16,6 +16,7 @@ use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
+use hollodotme\FastCGI\Tests\Traits\Polling;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\Constraint\RegularExpression;
@@ -31,6 +32,7 @@ use const PHP_VERSION_ID;
 final class NetworkSocketTest extends TestCase
 {
 	use SocketDataProviding;
+	use Polling;
 
 	private NetworkSocket $connection;
 
@@ -187,7 +189,7 @@ final class NetworkSocketTest extends TestCase
 
 		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		usleep( 60000 );
+		$this->waitUntil( fn() : bool => $this->client->hasResponse( $socketId ) );
 
 		self::assertTrue( $this->client->hasResponse( $socketId ) );
 		self::assertEquals( [$socketId], $this->client->getSocketIdsHavingResponse() );
@@ -210,7 +212,9 @@ final class NetworkSocketTest extends TestCase
 
 		$socketIdTwo = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		usleep( 110000 );
+		$this->waitUntil(
+			fn() : bool => $this->client->hasResponse( $socketIdOne ) && $this->client->hasResponse( $socketIdTwo )
+		);
 
 		$socketIds = [$socketIdOne, $socketIdTwo];
 
@@ -351,8 +355,6 @@ final class NetworkSocketTest extends TestCase
 		$socketIds   = [];
 		$socketIds[] = $this->client->sendAsyncRequest( $this->connection, $request );
 		$socketIds[] = 12345;
-
-		sleep( 1 );
 
 		foreach ( $this->client->readResponses( null, ...$socketIds ) as $response )
 		{
