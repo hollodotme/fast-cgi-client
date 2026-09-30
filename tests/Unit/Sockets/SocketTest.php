@@ -47,13 +47,15 @@ final class SocketTest extends TestCase
 	/**
 	 * @param int $connectTimeout
 	 * @param int $readWriteTimeout
+	 * @param int $streamSelectTimeout
 	 *
 	 * @return Socket
 	 * @throws Exception
 	 */
 	private function getSocket(
 		int $connectTimeout = Defaults::CONNECT_TIMEOUT,
-		int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT
+		int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT,
+		int $streamSelectTimeout = Defaults::STREAM_SELECT_TIMEOUT
 	) : Socket
 	{
 		$nameValuePairEncoder = new NameValuePairEncoder();
@@ -61,7 +63,8 @@ final class SocketTest extends TestCase
 		$connection           = new UnixDomainSocket(
 			$this->getUnixDomainSocket(),
 			$connectTimeout,
-			$readWriteTimeout
+			$readWriteTimeout,
+			$streamSelectTimeout
 		);
 
 		return new Socket( SocketId::new(), $connection, $packetEncoder, $nameValuePairEncoder );
@@ -327,6 +330,51 @@ final class SocketTest extends TestCase
 		$disconnectMethod->invoke( $socket );
 
 		self::assertFalse( $socket->isUsable() );
+	}
+
+	/**
+	 * @param int $configuredTimeout
+	 * @param int $expectedTimeout
+	 *
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws Exception
+	 * @dataProvider streamSelectTimeoutProvider
+	 */
+	public function testStreamSelectTimeoutIsTakenFromConnection( int $configuredTimeout, int $expectedTimeout ) : void
+	{
+		$socket = $this->getSocket(
+			Defaults::CONNECT_TIMEOUT,
+			Defaults::READ_WRITE_TIMEOUT,
+			$configuredTimeout
+		);
+
+		self::assertSame( $expectedTimeout, $socket->getStreamSelectTimeout() );
+	}
+
+	/**
+	 * @return array<array<string, int>>
+	 */
+	public function streamSelectTimeoutProvider() : array
+	{
+		return [
+			[
+				'configuredTimeout' => Defaults::STREAM_SELECT_TIMEOUT,
+				'expectedTimeout'   => 200,
+			],
+			[
+				'configuredTimeout' => 1500,
+				'expectedTimeout'   => 1500,
+			],
+			[
+				'configuredTimeout' => 0,
+				'expectedTimeout'   => 0,
+			],
+			[
+				'configuredTimeout' => -1,
+				'expectedTimeout'   => 0,
+			],
+		];
 	}
 
 	/**

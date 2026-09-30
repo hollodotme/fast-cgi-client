@@ -42,6 +42,8 @@ final class NetworkSocketTest extends TestCase
 		self::assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
 		self::assertSame( Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout() );
 		self::assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
+		self::assertSame( Defaults::STREAM_SELECT_TIMEOUT, $connection->getStreamSelectTimeout() );
+		self::assertSame( 200, $connection->getStreamSelectTimeout() );
 	}
 
 	/**
@@ -50,13 +52,14 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanGetSetValues() : void
 	{
-		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort(), 2000, 3000 );
+		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort(), 2000, 3000, 500 );
 
 		$expectedSocketAddress = sprintf( 'tcp://%s:%d', $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
 
 		self::assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
 		self::assertSame( 2000, $connection->getConnectTimeout() );
 		self::assertSame( 3000, $connection->getReadWriteTimeout() );
+		self::assertSame( 500, $connection->getStreamSelectTimeout() );
 	}
 
 	/**
@@ -99,6 +102,16 @@ final class NetworkSocketTest extends TestCase
 					$this->getNetworkSocketHost(),
 					$this->getNetworkSocketPort(),
 					Defaults::CONNECT_TIMEOUT,
+					1000
+				),
+				'expectedEqual' => false,
+			],
+			[
+				'connection'    => new NetworkSocket(
+					$this->getNetworkSocketHost(),
+					$this->getNetworkSocketPort(),
+					Defaults::CONNECT_TIMEOUT,
+					Defaults::READ_WRITE_TIMEOUT,
 					1000
 				),
 				'expectedEqual' => false,

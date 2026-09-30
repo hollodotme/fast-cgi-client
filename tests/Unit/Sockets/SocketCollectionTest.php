@@ -10,6 +10,7 @@ use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
@@ -505,6 +506,66 @@ final class SocketCollectionTest extends TestCase
 		$socket->sendRequest( new PostRequest( '/some/sctipt.php' ) );
 
 		self::assertTrue( $this->collection->hasBusySockets() );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws \Exception
+	 */
+	public function testStreamSelectTimeoutIsSmallestOneOfBusySockets() : void
+	{
+		$packetEncoder        = new PacketEncoder();
+		$nameValuePairEncoder = new NameValuePairEncoder();
+		$request              = new PostRequest( '/some/script.php' );
+
+		self::assertSame( Defaults::STREAM_SELECT_TIMEOUT, $this->collection->getStreamSelectTimeout() );
+
+		$this->collection->new(
+			new UnixDomainSocket(
+				$this->getUnixDomainSocket(),
+				Defaults::CONNECT_TIMEOUT,
+				Defaults::READ_WRITE_TIMEOUT,
+				50
+			),
+			$packetEncoder,
+			$nameValuePairEncoder
+		);
+
+		# Sockets that are not waiting for a response are ignored
+		self::assertSame( Defaults::STREAM_SELECT_TIMEOUT, $this->collection->getStreamSelectTimeout() );
+
+		$socketOne = $this->collection->new(
+			new UnixDomainSocket(
+				$this->getUnixDomainSocket(),
+				Defaults::CONNECT_TIMEOUT,
+				Defaults::READ_WRITE_TIMEOUT,
+				700
+			),
+			$packetEncoder,
+			$nameValuePairEncoder
+		);
+		$socketOne->sendRequest( $request );
+
+		self::assertSame( 700, $this->collection->getStreamSelectTimeout() );
+
+		$socketTwo = $this->collection->new(
+			new NetworkSocket(
+				$this->getNetworkSocketHost(),
+				$this->getNetworkSocketPort(),
+				Defaults::CONNECT_TIMEOUT,
+				Defaults::READ_WRITE_TIMEOUT,
+				300
+			),
+			$packetEncoder,
+			$nameValuePairEncoder
+		);
+		$socketTwo->sendRequest( $request );
+
+		self::assertSame( 300, $this->collection->getStreamSelectTimeout() );
 	}
 
 	/**

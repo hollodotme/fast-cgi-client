@@ -42,6 +42,8 @@ final class UnixDomainSocketTest extends TestCase
 		self::assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
 		self::assertSame( Defaults::CONNECT_TIMEOUT, $connection->getConnectTimeout() );
 		self::assertSame( Defaults::READ_WRITE_TIMEOUT, $connection->getReadWriteTimeout() );
+		self::assertSame( Defaults::STREAM_SELECT_TIMEOUT, $connection->getStreamSelectTimeout() );
+		self::assertSame( 200, $connection->getStreamSelectTimeout() );
 	}
 
 	/**
@@ -50,13 +52,14 @@ final class UnixDomainSocketTest extends TestCase
 	 */
 	public function testCanGetSetValues() : void
 	{
-		$connection = new UnixDomainSocket( $this->getUnixDomainSocket(), 2000, 3000 );
+		$connection = new UnixDomainSocket( $this->getUnixDomainSocket(), 2000, 3000, 500 );
 
 		$expectedSocketAddress = sprintf( 'unix://%s', $this->getUnixDomainSocket() );
 
 		self::assertSame( $expectedSocketAddress, $connection->getSocketAddress() );
 		self::assertSame( 2000, $connection->getConnectTimeout() );
 		self::assertSame( 3000, $connection->getReadWriteTimeout() );
+		self::assertSame( 500, $connection->getStreamSelectTimeout() );
 	}
 
 	/**
@@ -97,6 +100,15 @@ final class UnixDomainSocketTest extends TestCase
 				'connection'    => new UnixDomainSocket(
 					$this->getUnixDomainSocket(),
 					Defaults::CONNECT_TIMEOUT,
+					1000
+				),
+				'expectedEqual' => false,
+			],
+			[
+				'connection'    => new UnixDomainSocket(
+					$this->getUnixDomainSocket(),
+					Defaults::CONNECT_TIMEOUT,
+					Defaults::READ_WRITE_TIMEOUT,
 					1000
 				),
 				'expectedEqual' => false,
