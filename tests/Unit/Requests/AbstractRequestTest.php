@@ -38,6 +38,8 @@ final class AbstractRequestTest extends TestCase
 		self::assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
 		self::assertSame( [], $request->getCustomVars() );
 		self::assertSame( '', $request->getRequestUri() );
+		self::assertSame( [], $request->getQueryParams() );
+		self::assertSame( '', $request->getQueryString() );
 	}
 
 	private function getRequest(
@@ -119,6 +121,116 @@ final class AbstractRequestTest extends TestCase
 		];
 
 		self::assertSame( $expectedParams, $request->getParams() );
+	}
+
+	/**
+	 * @param string               $requestUri
+	 * @param array<string, mixed> $queryParams
+	 * @param string               $expectedRequestUri
+	 * @param string               $expectedQueryString
+	 *
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @dataProvider queryParamsProvider
+	 */
+	public function testQueryParamsAreAddedToParametersArray(
+		string $requestUri,
+		array $queryParams,
+		string $expectedRequestUri,
+		string $expectedQueryString
+	) : void
+	{
+		$request = $this->getRequest( 'GET', '/path/to/script.php' );
+		$request->setRequestUri( $requestUri );
+		$request->setQueryParams( $queryParams );
+
+		$params = $request->getParams();
+
+		self::assertSame( $queryParams, $request->getQueryParams() );
+		self::assertSame( $requestUri, $request->getRequestUri() );
+		self::assertSame( $expectedRequestUri, $params['REQUEST_URI'] );
+		self::assertSame( $expectedQueryString, $params['QUERY_STRING'] );
+	}
+
+	/**
+	 * @return array<array<string, mixed>>
+	 */
+	public function queryParamsProvider() : array
+	{
+		return [
+			[
+				'requestUri'          => '/unit/test/',
+				'queryParams'         => ['unit' => 'test'],
+				'expectedRequestUri'  => '/unit/test/?unit=test',
+				'expectedQueryString' => 'unit=test',
+			],
+			[
+				'requestUri'          => '',
+				'queryParams'         => ['unit' => 'test', 'number' => 1],
+				'expectedRequestUri'  => '?unit=test&number=1',
+				'expectedQueryString' => 'unit=test&number=1',
+			],
+			[
+				'requestUri'          => '/unit/test/',
+				'queryParams'         => ['text' => 'some text & more', 'list' => ['a', 'b'], 'map' => ['key' => 'value']],
+				'expectedRequestUri'  => '/unit/test/?text=some%20text%20%26%20more&list%5B0%5D=a&list%5B1%5D=b&map%5Bkey%5D=value',
+				'expectedQueryString' => 'text=some%20text%20%26%20more&list%5B0%5D=a&list%5B1%5D=b&map%5Bkey%5D=value',
+			],
+			# Query params are appended to a query string that is already part of the request URI
+			[
+				'requestUri'          => '/unit/test/?existing=value',
+				'queryParams'         => ['unit' => 'test'],
+				'expectedRequestUri'  => '/unit/test/?existing=value&unit=test',
+				'expectedQueryString' => 'existing=value&unit=test',
+			],
+			[
+				'requestUri'          => '/unit/test/?',
+				'queryParams'         => ['unit' => 'test'],
+				'expectedRequestUri'  => '/unit/test/?unit=test',
+				'expectedQueryString' => 'unit=test',
+			],
+			[
+				'requestUri'          => '/unit/test/?existing=value&',
+				'queryParams'         => ['unit' => 'test'],
+				'expectedRequestUri'  => '/unit/test/?existing=value&unit=test',
+				'expectedQueryString' => 'existing=value&unit=test',
+			],
+		];
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testQueryParamsOverwriteQueryStringFromCustomVars() : void
+	{
+		$request = $this->getRequest( 'GET', '/path/to/script.php' );
+		$request->setCustomVar( 'QUERY_STRING', 'custom=var' );
+
+		self::assertSame( 'custom=var', $request->getParams()['QUERY_STRING'] );
+
+		$request->setQueryParams( ['unit' => 'test'] );
+
+		self::assertSame( 'unit=test', $request->getParams()['QUERY_STRING'] );
+
+		$request->setQueryParams( [] );
+
+		self::assertSame( 'custom=var', $request->getParams()['QUERY_STRING'] );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testParametersArrayHasNoQueryStringWithoutQueryParams() : void
+	{
+		$request = $this->getRequest( 'GET', '/path/to/script.php' );
+		$request->setRequestUri( '/unit/test/?existing=value' );
+
+		$params = $request->getParams();
+
+		self::assertSame( '/unit/test/?existing=value', $params['REQUEST_URI'] );
+		self::assertArrayNotHasKey( 'QUERY_STRING', $params );
 	}
 
 	/**

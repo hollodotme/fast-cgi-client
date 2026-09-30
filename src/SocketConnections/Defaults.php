@@ -8,7 +8,9 @@ namespace hollodotme\FastCGI\SocketConnections;
  */
 abstract class Defaults
 {
-	public const CONNECT_TIMEOUT    = 5000;
+	public const CONNECT_TIMEOUT       = 5000;
 
-	public const READ_WRITE_TIMEOUT = 5000;
+	public const READ_WRITE_TIMEOUT    = 5000;
+
+	public const STREAM_SELECT_TIMEOUT = 200;
 }

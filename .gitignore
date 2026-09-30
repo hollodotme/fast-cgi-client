@@ -1,6 +1,9 @@
-/.idea/
+.idea/
 /vendor/
 .phpunit.result.cache
-/composer.lock
-/.tools/*
+composer.lock
+.tools/*
 !.gitkeep
+CLAUDE.md
+AGENTS.md
+.claude/

@@ -5,7 +5,13 @@ namespace hollodotme\FastCGI\Requests;
 use hollodotme\FastCGI\Constants\ServerProtocol;
 use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
+use function http_build_query;
+use function str_contains;
+use function str_ends_with;
 use function strlen;
+use function strpos;
+use function substr;
+use const PHP_QUERY_RFC3986;
 
 /**
  * Class AbstractRequest
@@ -41,6 +47,9 @@ abstract class AbstractRequest implements ProvidesRequestData
 	private array $customVars = [];
 
 	private string $requestUri = '';
+
+	/** @var array<int|string, mixed> */
+	private array $queryParams = [];
 
 	/** @var array<callable> */
 	private array $responseCallbacks = [];
@@ -199,7 +208,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 	 */
 	public function getParams() : array
 	{
-		return array_merge(
+		$params = array_merge(
 			$this->customVars,
 			[
 				'GATEWAY_INTERFACE' => $this->getGatewayInterface(),
@@ -217,6 +226,56 @@ abstract class AbstractRequest implements ProvidesRequestData
 				'CONTENT_LENGTH'    => $this->getContentLength(),
 			]
 		);
+
+		$queryString = $this->getQueryString();
+
+		if ( '' === $queryString )
+		{
+			return $params;
+		}
+
+		$requestUri = $this->getRequestUri() . $this->getQueryStringSeparator() . $queryString;
+
+		$params['REQUEST_URI']  = $requestUri;
+		$params['QUERY_STRING'] = substr( $requestUri, (int)strpos( $requestUri, '?' ) + 1 );
+
+		return $params;
+	}
+
+	private function getQueryStringSeparator() : string
+	{
+		if ( !str_contains( $this->requestUri, '?' ) )
+		{
+			return '?';
+		}
+
+		if ( str_ends_with( $this->requestUri, '?' ) || str_ends_with( $this->requestUri, '&' ) )
+		{
+			return '';
+		}
+
+		return '&';
+	}
+
+	/**
+	 * @return array<int|string, mixed>
+	 */
+	public function getQueryParams() : array
+	{
+		return $this->queryParams;
+	}
+
+	/**
+	 * @param array<int|string, mixed> $queryParams
+	 */
+	public function setQueryParams( array $queryParams ) : void
+	{
+		$this->queryParams = $queryParams;
+	}
+
+	public function getQueryString() : string
+	{
+		return http_build_query( $this->queryParams, '', '&', PHP_QUERY_RFC3986 );
 	}
 
 	public function getRequestUri() : string

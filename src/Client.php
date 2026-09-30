@@ -16,8 +16,10 @@ use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Sockets\Socket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
+use InvalidArgumentException;
 use Throwable;
 use function count;
+use function intdiv;
 use function stream_select;
 
 class Client
@@ -82,6 +84,72 @@ class Client
 
 			throw $e;
 		}
+	}
+
+	/**
+	 * Sends the request like sendRequest(), but retries on another socket if writing the request to the socket failed.
+	 * Failures while reading the response are not retried, because the request may already have been processed.
+	 *
+	 * @param ConfiguresSocketConnection $connection
+	 * @param ProvidesRequestData        $request
+	 * @param int                        $maxTries Maximum number of attempts to send the request
+	 *
+	 * @return ProvidesResponseData
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws ConnectException
+	 * @throws InvalidArgumentException
+	 */
+	public function tryRequest(
+		ConfiguresSocketConnection $connection,
+		ProvidesRequestData $request,
+		int $maxTries = 5
+	) : ProvidesResponseData
+	{
+		$socketId = $this->tryAsyncRequest( $connection, $request, $maxTries );
+
+		return $this->readResponse( $socketId );
+	}
+
+	/**
+	 * Sends the request like sendAsyncRequest(), but retries on another socket if writing the request to the socket failed.
+	 *
+	 * @param ConfiguresSocketConnection $connection
+	 * @param ProvidesRequestData        $request
+	 * @param int                        $maxTries Maximum number of attempts to send the request
+	 *
+	 * @return int SocketId
+	 *
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws ConnectException
+	 * @throws InvalidArgumentException
+	 */
+	public function tryAsyncRequest(
+		ConfiguresSocketConnection $connection,
+		ProvidesRequestData $request,
+		int $maxTries = 5
+	) : int
+	{
+		if ( $maxTries < 1 )
+		{
+			throw new InvalidArgumentException( 'Maximum number of tries must be at least 1, got: ' . $maxTries );
+		}
+
+		for ( $try = 1; $try < $maxTries; $try++ )
+		{
+			try
+			{
+				return $this->sendAsyncRequest( $connection, $request );
+			}
+			catch ( WriteFailedException $e )
+			{
+				# The broken socket was removed, the next try uses another one
+			}
+		}
+
+		return $this->sendAsyncRequest( $connection, $request );
 	}
 
 	/**
@@ -196,10 +264,17 @@ class Client
 			return [];
 		}
 
-		$reads  = $this->sockets->collectResources();
-		$writes = $excepts = null;
+		$reads     = $this->sockets->collectResources();
+		$writes    = $excepts = null;
+		$timeoutMs = $this->sockets->getStreamSelectTimeout();
 
-		$result = @stream_select( $reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
+		$result = @stream_select(
+			$reads,
+			$writes,
+			$excepts,
+			intdiv( $timeoutMs, 1000 ),
+			($timeoutMs % 1000) * 1000
+		);
 
 		if ( false === $result || 0 === count( $reads ) )
 		{
