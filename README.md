@@ -1226,6 +1226,14 @@ This runs PHPStan on and for each PHP version from 8.0 to 8.5. To analyse the co
 `make phpstan-php-8.0` ... `make phpstan-php-8.5`. The PHP version PHPStan analyses for is set in the configuration
 files in [.phpstan](./.phpstan), which include the base configuration [phpstan.neon](./phpstan.neon).
 
+## Run compatibility tests
+
+    make test-compatibility
+
+This runs the tests in `tests/Compatibility` against FastCGI servers of other programming languages. Each server
+runs a small application in a docker container, see [.docker/compatibility](./.docker/compatibility/README.md).
+To check a single server use `make test-compatibility-<name>`, where `<name>` is a directory in `.docker/compatibility`.
+
 ## Check the coding standard
 
     make phpcs

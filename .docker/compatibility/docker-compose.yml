@@ -1,0 +1,10 @@
+# Adds the FastCGI server of another programming language to the setup in the main docker-compose.yml.
+# FASTCGI_SERVER is the name of a directory next to this file, see README.md.
+services:
+  fastcgi-server:
+    build:
+      context: .docker/compatibility/${FASTCGI_SERVER}
+    container_name: fcc_fastcgi_server
+    restart: "no"
+    networks:
+      - fcc_network

@@ -210,3 +210,18 @@ examples: dcdown
 	$(DOCKER_COMPOSE_EXEC_COMMAND) $(IMAGE) php $(PHP_OPTIONS) bin/examples.php
 .PHONY: examples
 
+COMPATIBILITY_DIR = .docker/compatibility
+COMPATIBILITY_SERVERS = $(notdir $(patsubst %/Dockerfile,%,$(wildcard $(COMPATIBILITY_DIR)/*/Dockerfile)))
+COMPATIBILITY_COMPOSE_COMMAND = FASTCGI_SERVER=$* $(DOCKER_COMPOSE_BASE_COMMAND) -f $(COMPATIBILITY_DIR)/docker-compose.yml
+
+## Run compatibility tests against the FastCGI servers of all other programming languages
+test-compatibility: $(addprefix test-compatibility-,$(COMPATIBILITY_SERVERS))
+.PHONY: test-compatibility
+
+## Run compatibility tests against the FastCGI server in .docker/compatibility/<name>: make test-compatibility-<name>
+test-compatibility-%: dcdown
+	printf "\n\033[33mRun compatibility tests against FastCGI server: $*\033[0m\n"
+	$(COMPATIBILITY_COMPOSE_COMMAND) up -d --build --force-recreate fastcgi-server $(IMAGE)
+	$(COMPATIBILITY_COMPOSE_COMMAND) exec -T $(IMAGE) php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Compatibility $(PHPUNIT_OPTIONS) \
+	|| { $(COMPATIBILITY_COMPOSE_COMMAND) logs fastcgi-server; $(COMPATIBILITY_COMPOSE_COMMAND) down; exit 1; }
+	$(COMPATIBILITY_COMPOSE_COMMAND) down

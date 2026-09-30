@@ -72,6 +72,8 @@ This file covers the 4.x releases. For previous major versions see:
 * Values passed to `chr()` when encoding packets are limited to one byte, because values out of this range are
   deprecated in PHP 8.5.
 * A single PHPUnit version is used for all supported PHP versions.
+* Compatibility with FastCGI servers of other programming languages is checked continuously in the CI workflow
+  (`make test-compatibility`).
 * PHP_CodeSniffer is part of the test pipeline and checks the coding standard, PSR-12 with the adjustments listed
   in the README (`make phpcs`, `make phpcbf`). - [#75]
 * Integration tests do not depend on fixed waiting times anymore. - [#86]

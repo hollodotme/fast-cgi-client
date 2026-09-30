@@ -11,6 +11,8 @@
     <env name="restricted-unix-domain-socket" value="/var/run/php-ruds.sock"/>
     <env name="non-existing-unix-domain-socket" value="/tmp/not/existing.sock"/>
     <env name="invalid-unix-domain-socket" value="/Fixtures/test.sock"/>
+    <env name="compatibility-server-host" value="fastcgi-server"/>
+    <env name="compatibility-server-port" value="9000"/>
   </php>
 
   <testsuites>
@@ -31,6 +33,9 @@
     </testsuite>
     <testsuite name="Signals-Integration">
       <directory>tests/Integration/Signals</directory>
+    </testsuite>
+    <testsuite name="Compatibility">
+      <directory>tests/Compatibility</directory>
     </testsuite>
   </testsuites>
   <coverage processUncoveredFiles="true">
