@@ -278,13 +278,15 @@ echo "Request sent, got ID: {$socketId}";
 
 # Blocking call until response is received or read timed out
 # If response was received all registered response callbacks will be notified
+# If no response was received within the timeout, all registered failure callbacks
+# will be notified with a TimedoutException
 $client->waitForResponse( 
 	$socketId,     # The socket ID 
 	3000            # Optional timeout to wait for response,
 					# defaults to read/write timeout in milliseconds set in connection
 );
 
-# ... is the same as
+# ... is the same as, apart from the timeout while waiting for the response
 
 while(true)
 {
@@ -1162,9 +1164,12 @@ All exceptions thrown by the client while connecting, sending requests and readi
 The methods deal differently with exceptions that occur while reading a response:
 
 * `sendRequest()`, `tryRequest()` and `readResponse()` throw them.
+* `readResponses()` and `readReadyResponses()` throw them as well. The remaining responses are not read then,
+  but you can read them with another call. Unknown socket IDs are skipped.
 * `waitForResponse()`, `waitForResponses()`, `handleResponse()`, `handleResponses()` and `handleReadyResponses()`
-  pass them to the failure callbacks of the request instead of throwing them.
-* `readResponses()` and `readReadyResponses()` skip responses that could not be read.
+  pass them to the failure callbacks of the request instead of throwing them. `waitForResponse()` and
+  `waitForResponses()` also notify the failure callbacks with a `TimedoutException`, if there is no response within
+  the timeout.
 
 The client validates every packet it receives. A response is rejected with a `ReadFailedException`, if a packet
 

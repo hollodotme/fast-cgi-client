@@ -41,6 +41,8 @@ This file covers the 4.x releases. For previous major versions see:
   of the `ComposesRequestContent` interface.
 * The interface `ConfiguresSocketConnection` has the new method `getStreamSelectTimeout() : int`, which must be added
   to own implementations of this interface. - [#82]
+* `Client#readResponses()` and `Client#readReadyResponses()` throw the exception, if a response cannot be read,
+  e.g. a `TimedoutException`. Before, such responses were skipped silently. Unknown socket IDs are still skipped.
 * The interface `ProvidesResponseData` has the new method `getStatusCode() : int`, which must be added to own
   implementations of this interface.
 * The public constant `Socket::STREAM_SELECT_USEC` was removed in favour of the configurable stream select timeout
@@ -86,6 +88,10 @@ This file covers the 4.x releases. For previous major versions see:
 
 ### Fixed
 
+* `Client#waitForResponse()` and `Client#waitForResponses()` did not return, if the server did not respond. After the
+  timeout (default: the read/write timeout of the connection) the failure callbacks of the request are notified with
+  a `TimedoutException` now.
+* A socket that could not connect stayed in the collection of the client.
 * Endless loop when the connection was closed before a packet was received completely, e.g. when the process
   handling the request was terminated while it sent its response, or when the client was connected to a HTTP server
   instead of a FastCGI server. A `ReadFailedException` is thrown now. - [#78]

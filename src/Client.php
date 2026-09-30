@@ -20,6 +20,7 @@ use InvalidArgumentException;
 use Throwable;
 use function count;
 use function intdiv;
+use function microtime;
 use function stream_select;
 
 class Client
@@ -71,7 +72,7 @@ class Client
 
 			return $socket->getId();
 		}
-		catch ( TimedoutException | WriteFailedException $e )
+		catch ( ConnectException | TimedoutException | WriteFailedException $e )
 		{
 			$this->sockets->remove( $socket->getId() );
 
@@ -159,23 +160,35 @@ class Client
 	}
 
 	/**
+	 * Waits until the response is received and notifies the response callbacks of the request.
+	 * If there is no response within the timeout (default: the read/write timeout of the connection),
+	 * the failure callbacks are notified with a TimedoutException.
+	 *
 	 * @throws ReadFailedException
 	 */
 	public function waitForResponse( int $socketId, ?int $timeoutMs = null ) : void
 	{
-		$socket = $this->sockets->getById( $socketId );
+		$socket       = $this->sockets->getById( $socketId );
+		$waitingSince = microtime( true );
 
-		while ( true )
+		while ( !$socket->hasResponse() )
 		{
-			if ( $socket->hasResponse() )
+			if ( $this->isWaitingTimedOut( $socket, $waitingSince, $timeoutMs ) )
 			{
-				$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
-				break;
+				$this->notifyTimeout( $socket );
+
+				return;
 			}
 		}
+
+		$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
 	}
 
 	/**
+	 * Waits until all responses are received and notifies the callbacks of their requests.
+	 * Requests without response within the timeout (default: the read/write timeout of their connection)
+	 * notify their failure callbacks with a TimedoutException.
+	 *
 	 * @throws ReadFailedException
 	 * @throws Throwable
 	 */
@@ -186,9 +199,38 @@ class Client
 			throw new ReadFailedException( 'No pending requests found.' );
 		}
 
+		$waitingSince = microtime( true );
+
 		while ( $this->hasUnhandledResponses() )
 		{
 			$this->handleReadyResponses( $timeoutMs );
+
+			foreach ( $this->sockets->getBusySockets() as $socket )
+			{
+				if ( $this->isWaitingTimedOut( $socket, $waitingSince, $timeoutMs ) )
+				{
+					$this->notifyTimeout( $socket );
+				}
+			}
+		}
+	}
+
+	private function isWaitingTimedOut( Socket $socket, float $waitingSince, ?int $timeoutMs ) : bool
+	{
+		$timeoutSeconds = ($timeoutMs ?? $socket->getReadWriteTimeout()) / 1000;
+
+		return microtime( true ) - $waitingSince >= $timeoutSeconds;
+	}
+
+	private function notifyTimeout( Socket $socket ) : void
+	{
+		try
+		{
+			$socket->notifyFailureCallbacks( new TimedoutException( 'Read timed out' ) );
+		}
+		finally
+		{
+			$this->sockets->remove( $socket->getId() );
 		}
 	}
 
@@ -255,9 +297,15 @@ class Client
 	}
 
 	/**
+	 * Reads the responses of the given sockets in the given order. Unknown socket IDs are skipped.
+	 * If a response cannot be read, its exception is thrown and the remaining responses are not read.
+	 *
 	 * @param int      ...$socketIds
 	 *
 	 * @return Generator|ProvidesResponseData[]
+	 * @throws ReadFailedException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
 	 */
 	public function readResponses( ?int $timeoutMs = null, int ...$socketIds ) : Generator
 	{
@@ -265,11 +313,17 @@ class Client
 		{
 			try
 			{
-				yield $this->sockets->getById( $socketId )->fetchResponse( $timeoutMs );
+				$socket = $this->sockets->getById( $socketId );
 			}
-			catch ( Throwable )
+			catch ( ReadFailedException )
 			{
-				# Skip unknown socket ids
+				# Skip unknown socket IDs
+				continue;
+			}
+
+			try
+			{
+				yield $socket->fetchResponse( $timeoutMs );
 			}
 			finally
 			{
