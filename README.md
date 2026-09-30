@@ -1,4 +1,4 @@
-![FastCGI Client CI PHP 7.1 - 8.1](https://github.com/hollodotme/fast-cgi-client/workflows/FastCGI%20Client%20CI%20PHP%207.1%20-%208.1/badge.svg)
+[![FastCGI Client CI PHP 8.0 - 8.5](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml/badge.svg)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
 [![Latest Stable Version](https://poser.pugx.org/hollodotme/fast-cgi-client/v/stable)](https://packagist.org/packages/hollodotme/fast-cgi-client)
 [![Total Downloads](https://poser.pugx.org/hollodotme/fast-cgi-client/downloads)](https://packagist.org/packages/hollodotme/fast-cgi-client)
 
@@ -14,16 +14,21 @@ loops) and unit and integration tests as well.
 
 ---
 
-This is the documentation of the latest release.
+This is the documentation of version 4.x, which requires PHP >= 8.0.
 
-Please have a look at the [backwards incompatible changes (BC breaks) in the changelog](./CHANGELOG.md).
+Please have a look at the [backwards incompatible changes (BC breaks) in the changelog](./CHANGELOG.md), if you
+upgrade from a previous version.
 
-Please see the following links for earlier releases:
+Documentation and changelogs by major version:
 
-* PHP >= 7.0 (EOL) [v1.0.0], [v1.0.1], [v1.1.0], [v1.2.0], [v1.3.0], [v1.4.0], [v1.4.1], [v1.4.2]
-* PHP >= 7.1 [v2.0.0], [v2.0.1], [v2.1.0], [v2.2.0], [v2.3.0], [v2.4.0], [v2.4.1], [v2.4.2], [v2.4.3], [v2.5.0],
-  [v2.6.0], [v2.7.0], [v2.7.1], [v2.7.2], [v3.0.0-alpha], [v3.0.0-beta], [v3.0.0], [v3.0.1], [v3.1.0], [v3.1.1],
-  [v3.1.2], [v3.1.3], [v3.1.4], [v3.1.5]
+| Version | PHP    | Documentation                                                                           | Changelog                                 |
+|---------|--------|-----------------------------------------------------------------------------------------|-------------------------------------------|
+| 4.x     | >= 8.0 | This document                                                                           | [CHANGELOG.md](./CHANGELOG.md)            |
+| 3.x     | >= 7.1 | [3.x-stable](https://github.com/hollodotme/fast-cgi-client/blob/3.x-stable/README.md)   | [3.x](./docs/changelog/3.x.md)            |
+| 2.x     | >= 7.1 | [2.x-stable](https://github.com/hollodotme/fast-cgi-client/blob/2.x-stable/README.md)   | [2.x](./docs/changelog/2.x.md)            |
+| 1.x     | >= 7.0 | [1.x-stable](https://github.com/hollodotme/fast-cgi-client/blob/1.x-stable/README.md)   | [1.x](./docs/changelog/1.x.md)            |
+
+Version 3.x still gets bug fixes, but no new features.
 
 Read more about the journey to and changes in `v2.6.0`
 in [this blog post](https://github.com/hollodotme/fast-cgi-client/wiki/Background-Info-FastCgiClient-Version-2.6.0).
@@ -81,7 +86,7 @@ namespace YourVendor\YourProject;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
 $connection = new UnixDomainSocket(
-	'/var/run/php/php7.3-fpm.sock',     # Socket path
+	'/var/run/php/php8.3-fpm.sock',     # Socket path
 	5000,                               # Connect timeout in milliseconds (default: 5000)
 	5000                                # Read/write timeout in milliseconds (default: 5000)
 );
@@ -570,13 +575,19 @@ interface ProvidesRequestData
 
 	public function getContentLength() : int;
 
-	public function getContent() : string;
+	public function getContent() : ?ComposesRequestContent;
 
 	public function getCustomVars() : array;
 
 	public function getParams() : array;
-	
+
 	public function getRequestUri() : string;
+
+	public function getResponseCallbacks() : array;
+
+	public function getFailureCallbacks() : array;
+
+	public function getPassThroughCallbacks() : array;
 }
 ```
 
@@ -617,6 +628,19 @@ content types:
 * [UrlEncodedFormData](./src/RequestContents/UrlEncodedFormData.php)
 * [MultipartFormData](./src/RequestContents/MultipartFormData.php)
 * [JsonData](./src/RequestContents/JsonData.php)
+* [PlainText](./src/RequestContents/PlainText.php)
+
+The content of a request is optional. You can pass it as the second argument to the constructor of a request
+or set it later with `setContent()`. Both ways also set the content type and content length of the request:
+
+```php
+$request = new PostRequest( '/path/to/target/script.php', new JsonData( ['key' => 'value'] ) );
+
+# ... is the same as
+
+$request = new PostRequest( '/path/to/target/script.php' );
+$request->setContent( new JsonData( ['key' => 'value'] ) );
+```
 
 You can create your own request content type composer by implementing the following interface:
 
@@ -656,7 +680,7 @@ $urlEncodedContent = new UrlEncodedFormData(
 	]
 );
 
-$postRequest = PostRequest::newWithRequestContent( '/path/to/target/script.php', $urlEncodedContent );
+$postRequest = new PostRequest( '/path/to/target/script.php', $urlEncodedContent );
 
 $response = $client->sendRequest( $connection, $postRequest );
 ```
@@ -713,7 +737,7 @@ $multipartContent = new MultipartFormData(
 	]
 );
 
-$postRequest = PostRequest::newWithRequestContent( '/path/to/target/script.php', $multipartContent );
+$postRequest = new PostRequest( '/path/to/target/script.php', $multipartContent );
 
 $response = $client->sendRequest( $connection, $postRequest );
 ```
@@ -812,7 +836,7 @@ $jsonContent = new JsonData(
 	]
 );
 
-$postRequest = PostRequest::newWithRequestContent( '/path/to/target/script.php', $jsonContent );
+$postRequest = new PostRequest( '/path/to/target/script.php', $jsonContent );
 
 $response = $client->sendRequest( $connection, $postRequest );
 ```
@@ -991,7 +1015,7 @@ if ('File not found.' === trim($response->getBody()))
 
 ## Prepare local development environment
 
-This requires `docker` and `docker-compose` installed on your machine.
+This requires `docker` with the `docker compose` plugin installed on your machine.
 
     make update
 
@@ -1003,82 +1027,24 @@ This requires `docker` and `docker-compose` installed on your machine.
 
     make tests
 
+This runs the static analysis and all test suites on PHP 8.0 - 8.5. To run the test suites on a single PHP version use
+one of `make test-php-8.0` ... `make test-php-8.5`.
+
 ## Command line tool (for local debugging only)
 
 **Please note:** `bin/fcgiget` is not included and linked to `vendor/bin` via composer anymore since version `v3.1.2`for
 security reasons. [Read more.](https://github.com/hollodotme/fast-cgi-client/pull/58)
 
+Start one of the PHP containers:
+
+    docker compose -p fast-cgi-client up -d php80
+
 Run a call through a network socket:
 
-    docker-compose exec php74 php bin/fcgiget localhost:9001/status
+    docker compose -p fast-cgi-client exec php80 php bin/fcgiget localhost:9001/status
 
 Run a call through a Unix Domain Socket
 
-    docker-compose exec php74 php bin/fcgiget unix:///var/run/php-uds.sock/status
+    docker compose -p fast-cgi-client exec php80 php bin/fcgiget unix:///var/run/php-uds.sock/status
 
 This shows the response of the php-fpm status page.
-
-
-[v3.1.5]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.5/README.md
-
-[v3.1.4]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.4/README.md
-
-[v3.1.3]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.3/README.md
-
-[v3.1.2]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.2/README.md
-
-[v3.1.1]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.1/README.md
-
-[v3.1.0]: https://github.com/hollodotme/fast-cgi-client/blob/v3.1.0/README.md
-
-[v3.0.1]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.1/README.md
-
-[v3.0.0]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.0/README.md
-
-[v3.0.0-beta]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.0-beta/README.md
-
-[v3.0.0-alpha]: https://github.com/hollodotme/fast-cgi-client/blob/v3.0.0-alpha/README.md
-
-[v2.7.2]: https://github.com/hollodotme/fast-cgi-client/blob/v2.7.2/README.md
-
-[v2.7.1]: https://github.com/hollodotme/fast-cgi-client/blob/v2.7.1/README.md
-
-[v2.7.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.7.0/README.md
-
-[v2.6.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.6.0/README.md
-
-[v2.5.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.5.0/README.md
-
-[v2.4.3]: https://github.com/hollodotme/fast-cgi-client/blob/v2.4.3/README.md
-
-[v2.4.2]: https://github.com/hollodotme/fast-cgi-client/blob/v2.4.2/README.md
-
-[v2.4.1]: https://github.com/hollodotme/fast-cgi-client/blob/v2.4.1/README.md
-
-[v2.4.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.4.0/README.md
-
-[v2.3.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.3.0/README.md
-
-[v2.2.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.2.0/README.md
-
-[v2.1.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.1.0/README.md
-
-[v2.0.1]: https://github.com/hollodotme/fast-cgi-client/blob/v2.0.1/README.md
-
-[v2.0.0]: https://github.com/hollodotme/fast-cgi-client/blob/v2.0.0/README.md
-
-[v1.4.2]: https://github.com/hollodotme/fast-cgi-client/blob/v1.4.2/README.md
-
-[v1.4.1]: https://github.com/hollodotme/fast-cgi-client/blob/v1.4.1/README.md
-
-[v1.4.0]: https://github.com/hollodotme/fast-cgi-client/blob/v1.4.0/README.md
-
-[v1.3.0]: https://github.com/hollodotme/fast-cgi-client/blob/v1.3.0/README.md
-
-[v1.2.0]: https://github.com/hollodotme/fast-cgi-client/blob/v1.2.0/README.md
-
-[v1.1.0]: https://github.com/hollodotme/fast-cgi-client/blob/v1.1.0/README.md
-
-[v1.0.1]: https://github.com/hollodotme/fast-cgi-client/blob/v1.0.1/README.md
-
-[v1.0.0]: https://github.com/hollodotme/fast-cgi-client/blob/v1.0.0/README.md

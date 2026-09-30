@@ -22,5 +22,5 @@ We accept contributions via pull requests on [GitHub](https://github.com/hollodo
 
 ```bash
 $ make update
-$ make test
+$ make tests
 ```
