@@ -22,6 +22,7 @@ use function fflush;
 use function floor;
 use function fread;
 use function fwrite;
+use function intdiv;
 use function is_resource;
 use function max;
 use function microtime;
@@ -71,8 +72,6 @@ final class Socket
 	private const SOCK_STATE_IDLE      = 3;
 
 	private const REQ_MAX_CONTENT_SIZE = 65535;
-
-	public const  STREAM_SELECT_USEC   = 200000;
 
 	private SocketId $id;
 
@@ -145,7 +144,17 @@ final class Socket
 		$reads  = [$this->resource];
 		$writes = $excepts = null;
 
-		return (bool)stream_select( $reads, $writes, $excepts, 0, self::STREAM_SELECT_USEC );
+		$timeoutMs = $this->getStreamSelectTimeout();
+
+		return (bool)stream_select( $reads, $writes, $excepts, intdiv( $timeoutMs, 1000 ), ($timeoutMs % 1000) * 1000 );
+	}
+
+	/**
+	 * @return int Timeout in milliseconds
+	 */
+	public function getStreamSelectTimeout() : int
+	{
+		return max( 0, $this->connection->getStreamSelectTimeout() );
 	}
 
 	/**
