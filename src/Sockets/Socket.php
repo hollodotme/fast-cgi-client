@@ -114,6 +114,19 @@ final class Socket
 		return $this->socketId->getValue();
 	}
 
+	/**
+	 * Returns the ID that identifies the request of this socket in the FastCGI records sent to and received
+	 * from the server. It is not the same thing as the ID of the socket, which identifies the socket in the client.
+	 *
+	 * A socket handles one request at a time and does not multiplex requests, so one request ID per socket
+	 * is sufficient. It is derived from the ID of the socket and re-used for every request sent via this socket,
+	 * which the FastCGI specification allows as soon as the previous request is completed.
+	 */
+	private function getRequestId() : int
+	{
+		return $this->socketId->getValue();
+	}
+
 	public function usesConnection( ConfiguresSocketConnection $connection ) : bool
 	{
 		return $this->connection->equals( $connection );
@@ -330,7 +343,7 @@ final class Socket
 		$requestPackets = $this->packetEncoder->encodePacket(
 			self::BEGIN_REQUEST,
 			chr( 0 ) . chr( self::RESPONDER ) . chr( 1 ) . str_repeat( chr( 0 ), 5 ),
-			$this->socketId->getValue()
+			$this->getRequestId()
 		);
 
 		$paramsRequest = $this->nameValuePairEncoder->encodePairs( $request->getParams() );
@@ -340,11 +353,11 @@ final class Socket
 			$requestPackets .= $this->packetEncoder->encodePacket(
 				self::PARAMS,
 				$paramsRequest,
-				$this->socketId->getValue()
+				$this->getRequestId()
 			);
 		}
 
-		$requestPackets .= $this->packetEncoder->encodePacket( self::PARAMS, '', $this->socketId->getValue() );
+		$requestPackets .= $this->packetEncoder->encodePacket( self::PARAMS, '', $this->getRequestId() );
 
 		if ( $request->getContent() !== null )
 		{
@@ -358,14 +371,14 @@ final class Socket
 						$offset,
 						self::REQ_MAX_CONTENT_SIZE
 					),
-					$this->socketId->getValue()
+					$this->getRequestId()
 				);
 				$offset         += self::REQ_MAX_CONTENT_SIZE;
 			}
 			while ( $offset < $request->getContentLength() );
 		}
 
-		$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, '', $this->socketId->getValue() );
+		$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, '', $this->getRequestId() );
 
 		return $requestPackets;
 	}
@@ -438,7 +451,8 @@ final class Socket
 				continue;
 			}
 
-			if ( self::END_REQUEST === $packetType && $packet['requestId'] === $this->socketId->getValue() )
+			# The request ID of the record was already validated when the packet was read
+			if ( self::END_REQUEST === $packetType )
 			{
 				break;
 			}
@@ -570,12 +584,12 @@ final class Socket
 			throw new ReadFailedException( 'Invalid FastCGI packet: unexpected record type ' . $type );
 		}
 
-		if ( $this->socketId->getValue() !== $requestId )
+		if ( $this->getRequestId() !== $requestId )
 		{
 			throw new ReadFailedException(
 				sprintf(
 					'Invalid FastCGI packet: expected request ID %d, got %d',
-					$this->socketId->getValue(),
+					$this->getRequestId(),
 					$requestId
 				)
 			);

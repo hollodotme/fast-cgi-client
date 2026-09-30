@@ -277,7 +277,7 @@ final class MalformedResponsesTest extends TestCase
 			self::fail( 'Client did not connect to server.' );
 		}
 
-		# The ID of the socket is used as the ID of the request
+		# The client derives the ID of the request from the ID of the socket
 		fwrite( $connectionToClient, $response( $socketId ) );
 
 		if ( $closeConnection )
