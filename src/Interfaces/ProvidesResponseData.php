@@ -14,8 +14,6 @@ interface ProvidesResponseData
 	public function getHeaders() : array;
 
 	/**
-	 * @param string $headerKey
-	 *
 	 * @return array<int, string>
 	 */
 	public function getHeader( string $headerKey ) : array;

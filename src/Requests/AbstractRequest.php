@@ -162,11 +162,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		$this->contentLength = strlen( $content->getContent() );
 	}
 
-	/**
-	 * @param string $key
-	 * @param mixed  $value
-	 */
-	public function setCustomVar( string $key, $value ) : void
+	public function setCustomVar( string $key, mixed $value ) : void
 	{
 		$this->customVars[ $key ] = $value;
 	}

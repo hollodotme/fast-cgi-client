@@ -17,28 +17,15 @@ class Response implements ProvidesResponseData
 	private const HEADER_PATTERN = '#^([^\:]+):(.*)$#';
 
 	/** @var array<string, array<int, string>> */
-	private array $normalizedHeaders;
+	private array $normalizedHeaders = [];
 
 	/** @var array<string, array<int, string>> */
-	private array $headers;
+	private array $headers = [];
 
-	private string $body;
+	private string $body = '';
 
-	private string $output;
-
-	private string $error;
-
-	private float $duration;
-
-	public function __construct( string $output, string $error, float $duration )
+	public function __construct( private string $output, private string $error, private float $duration )
 	{
-		$this->output            = $output;
-		$this->error             = $error;
-		$this->duration          = $duration;
-		$this->normalizedHeaders = [];
-		$this->headers           = [];
-		$this->body              = '';
-
 		$this->parseHeadersAndBody();
 	}
 

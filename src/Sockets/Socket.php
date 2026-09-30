@@ -3,7 +3,6 @@
 namespace hollodotme\FastCGI\Sockets;
 
 use ErrorException;
-use Exception;
 use hollodotme\FastCGI\Exceptions\ConnectException;
 use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
@@ -73,60 +72,36 @@ final class Socket
 
 	private const REQ_MAX_CONTENT_SIZE = 65535;
 
-	private SocketId $id;
-
-	private ConfiguresSocketConnection $connection;
-
 	/** @var null|resource */
 	private $resource;
 
-	private EncodesPacket $packetEncoder;
-
-	private EncodesNameValuePair $nameValuePairEncoder;
+	/** @var callable[] */
+	private array $responseCallbacks = [];
 
 	/** @var callable[] */
-	private array $responseCallbacks;
+	private array $failureCallbacks = [];
 
 	/** @var callable[] */
-	private array $failureCallbacks;
-
-	/** @var callable[] */
-	private array $passThroughCallbacks;
+	private array $passThroughCallbacks = [];
 
 	private float $startTime;
 
-	private ?ProvidesResponseData $response;
+	private ?ProvidesResponseData $response = null;
 
-	private int $status;
+	private int $status = self::SOCK_STATE_INIT;
 
-	/**
-	 * @param SocketId                   $socketId
-	 * @param ConfiguresSocketConnection $connection
-	 * @param EncodesPacket              $packetEncoder
-	 * @param EncodesNameValuePair       $nameValuePairEncoder
-	 *
-	 * @throws Exception
-	 */
 	public function __construct(
-		SocketId $socketId,
-		ConfiguresSocketConnection $connection,
-		EncodesPacket $packetEncoder,
-		EncodesNameValuePair $nameValuePairEncoder
+		private SocketId $socketId,
+		private ConfiguresSocketConnection $connection,
+		private EncodesPacket $packetEncoder,
+		private EncodesNameValuePair $nameValuePairEncoder
 	)
 	{
-		$this->id                   = $socketId;
-		$this->connection           = $connection;
-		$this->packetEncoder        = $packetEncoder;
-		$this->nameValuePairEncoder = $nameValuePairEncoder;
-		$this->responseCallbacks    = [];
-		$this->failureCallbacks     = [];
-		$this->passThroughCallbacks = [];
-		$this->status               = self::SOCK_STATE_INIT;
 	}
 
 	public function getId() : int
 	{
-		return $this->id->getValue();
+		return $this->socketId->getValue();
 	}
 
 	public function usesConnection( ConfiguresSocketConnection $connection ) : bool
@@ -158,8 +133,6 @@ final class Socket
 	}
 
 	/**
-	 * @param ProvidesRequestData $request
-	 *
 	 * @throws ConnectException
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
@@ -297,9 +270,6 @@ final class Socket
 	}
 
 	/**
-	 * @param int|null    $errorNumber
-	 * @param string|null $errorString
-	 *
 	 * @throws ConnectException
 	 */
 	private function handleFailedResource( ?int $errorNumber, ?string $errorString ) : void
@@ -350,7 +320,7 @@ final class Socket
 		$requestPackets = $this->packetEncoder->encodePacket(
 			self::BEGIN_REQUEST,
 			chr( 0 ) . chr( self::RESPONDER ) . chr( 1 ) . str_repeat( chr( 0 ), 5 ),
-			$this->id->getValue()
+			$this->socketId->getValue()
 		);
 
 		$paramsRequest = $this->nameValuePairEncoder->encodePairs( $request->getParams() );
@@ -360,11 +330,11 @@ final class Socket
 			$requestPackets .= $this->packetEncoder->encodePacket(
 				self::PARAMS,
 				$paramsRequest,
-				$this->id->getValue()
+				$this->socketId->getValue()
 			);
 		}
 
-		$requestPackets .= $this->packetEncoder->encodePacket( self::PARAMS, '', $this->id->getValue() );
+		$requestPackets .= $this->packetEncoder->encodePacket( self::PARAMS, '', $this->socketId->getValue() );
 
 		if ( $request->getContent() !== null )
 		{
@@ -378,21 +348,19 @@ final class Socket
 						$offset,
 						self::REQ_MAX_CONTENT_SIZE
 					),
-					$this->id->getValue()
+					$this->socketId->getValue()
 				);
 				$offset         += self::REQ_MAX_CONTENT_SIZE;
 			}
 			while ( $offset < $request->getContentLength() );
 		}
 
-		$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, '', $this->id->getValue() );
+		$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, '', $this->socketId->getValue() );
 
 		return $requestPackets;
 	}
 
 	/**
-	 * @param string $data
-	 *
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 */
@@ -418,9 +386,6 @@ final class Socket
 	}
 
 	/**
-	 * @param int|null $timeoutMs
-	 *
-	 * @return ProvidesResponseData
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 * @throws ReadFailedException
@@ -463,7 +428,7 @@ final class Socket
 				continue;
 			}
 
-			if ( self::END_REQUEST === $packetType && $packet['requestId'] === $this->id->getValue() )
+			if ( self::END_REQUEST === $packetType && $packet['requestId'] === $this->socketId->getValue() )
 			{
 				break;
 			}
@@ -527,8 +492,6 @@ final class Socket
 	}
 
 	/**
-	 * @param int $value
-	 *
 	 * @return int<0, max>
 	 */
 	private function getValidLength( int $value ) : int
@@ -571,30 +534,19 @@ final class Socket
 	}
 
 	/**
-	 * @param int $flag
-	 *
 	 * @throws ReadFailedException
 	 * @throws WriteFailedException
 	 */
 	private function guardRequestCompleted( int $flag ) : void
 	{
-		switch ( $flag )
+		match ( $flag )
 		{
-			case self::REQUEST_COMPLETE:
-				return;
-
-			case self::CANT_MPX_CONN:
-				throw new WriteFailedException( 'This app can\'t multiplex [CANT_MPX_CONN]' );
-
-			case self::OVERLOADED:
-				throw new WriteFailedException( 'New request rejected; too busy [OVERLOADED]' );
-
-			case self::UNKNOWN_ROLE:
-				throw new WriteFailedException( 'Role value not known [UNKNOWN_ROLE]' );
-
-			default:
-				throw new ReadFailedException( 'Unknown content.' );
-		}
+			self::REQUEST_COMPLETE => null,
+			self::CANT_MPX_CONN    => throw new WriteFailedException( 'This app can\'t multiplex [CANT_MPX_CONN]' ),
+			self::OVERLOADED       => throw new WriteFailedException( 'New request rejected; too busy [OVERLOADED]' ),
+			self::UNKNOWN_ROLE     => throw new WriteFailedException( 'Role value not known [UNKNOWN_ROLE]' ),
+			default                => throw new ReadFailedException( 'Unknown content.' ),
+		};
 	}
 
 	private function disconnect() : void
@@ -634,7 +586,7 @@ final class Socket
 	{
 		if ( null !== $this->resource )
 		{
-			$resources[ (string)$this->id->getValue() ] = $this->resource;
+			$resources[ (string)$this->socketId->getValue() ] = $this->resource;
 		}
 	}
 }

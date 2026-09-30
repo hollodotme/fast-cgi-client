@@ -20,10 +20,7 @@ final class MultipartFormData implements ComposesRequestContent
 	private const FILE_CONTENT_TYPE_DEFAULT = 'application/octet-stream';
 
 	/** @var array<string, string> */
-	private array $formData;
-
-	/** @var array<string, string> */
-	private array $files;
+	private array $files = [];
 
 	/**
 	 * @param array<string, string> $formData
@@ -31,11 +28,8 @@ final class MultipartFormData implements ComposesRequestContent
 	 *
 	 * @throws InvalidArgumentException
 	 */
-	public function __construct( array $formData, array $files )
+	public function __construct( private array $formData, array $files )
 	{
-		$this->formData = $formData;
-		$this->files    = [];
-
 		foreach ( $files as $name => $filePath )
 		{
 			$this->addFile( (string)$name, (string)$filePath );
@@ -43,9 +37,6 @@ final class MultipartFormData implements ComposesRequestContent
 	}
 
 	/**
-	 * @param string $name
-	 * @param string $filePath
-	 *
 	 * @throws InvalidArgumentException
 	 */
 	public function addFile( string $name, string $filePath ) : void

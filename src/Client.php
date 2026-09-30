@@ -38,10 +38,6 @@ class Client
 	}
 
 	/**
-	 * @param ConfiguresSocketConnection $connection
-	 * @param ProvidesRequestData        $request
-	 *
-	 * @return ProvidesResponseData
 	 * @throws Throwable
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
@@ -58,9 +54,6 @@ class Client
 	}
 
 	/**
-	 * @param ConfiguresSocketConnection $connection
-	 * @param ProvidesRequestData        $request
-	 *
 	 * @return int SocketId
 	 *
 	 * @throws TimedoutException
@@ -90,11 +83,8 @@ class Client
 	 * Sends the request like sendRequest(), but retries on another socket if writing the request to the socket failed.
 	 * Failures while reading the response are not retried, because the request may already have been processed.
 	 *
-	 * @param ConfiguresSocketConnection $connection
-	 * @param ProvidesRequestData        $request
 	 * @param int                        $maxTries Maximum number of attempts to send the request
 	 *
-	 * @return ProvidesResponseData
 	 * @throws Throwable
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
@@ -115,8 +105,6 @@ class Client
 	/**
 	 * Sends the request like sendAsyncRequest(), but retries on another socket if writing the request to the socket failed.
 	 *
-	 * @param ConfiguresSocketConnection $connection
-	 * @param ProvidesRequestData        $request
 	 * @param int                        $maxTries Maximum number of attempts to send the request
 	 *
 	 * @return int SocketId
@@ -143,7 +131,7 @@ class Client
 			{
 				return $this->sendAsyncRequest( $connection, $request );
 			}
-			catch ( WriteFailedException $e )
+			catch ( WriteFailedException )
 			{
 				# The broken socket was removed, the next try uses another one
 			}
@@ -153,10 +141,6 @@ class Client
 	}
 
 	/**
-	 * @param int      $socketId
-	 * @param int|null $timeoutMs
-	 *
-	 * @return ProvidesResponseData
 	 * @throws Throwable
 	 */
 	public function readResponse( int $socketId, ?int $timeoutMs = null ) : ProvidesResponseData
@@ -174,9 +158,6 @@ class Client
 	}
 
 	/**
-	 * @param int      $socketId
-	 * @param int|null $timeoutMs
-	 *
 	 * @throws ReadFailedException
 	 */
 	public function waitForResponse( int $socketId, ?int $timeoutMs = null ) : void
@@ -194,8 +175,6 @@ class Client
 	}
 
 	/**
-	 * @param int|null $timeoutMs
-	 *
 	 * @throws ReadFailedException
 	 * @throws Throwable
 	 */
@@ -212,10 +191,6 @@ class Client
 		}
 	}
 
-	/**
-	 * @param Socket   $socket
-	 * @param int|null $timeoutMs
-	 */
 	private function fetchResponseAndNotifyCallback( Socket $socket, ?int $timeoutMs = null ) : void
 	{
 		try
@@ -234,18 +209,12 @@ class Client
 		}
 	}
 
-	/**
-	 * @return bool
-	 */
 	public function hasUnhandledResponses() : bool
 	{
 		return $this->sockets->hasBusySockets();
 	}
 
 	/**
-	 * @param int $socketId
-	 *
-	 * @return bool
 	 * @throws ReadFailedException
 	 */
 	public function hasResponse( int $socketId ) : bool
@@ -285,7 +254,6 @@ class Client
 	}
 
 	/**
-	 * @param int|null $timeoutMs
 	 * @param int      ...$socketIds
 	 *
 	 * @return Generator|ProvidesResponseData[]
@@ -298,7 +266,7 @@ class Client
 			{
 				yield $this->sockets->getById( $socketId )->fetchResponse( $timeoutMs );
 			}
-			catch ( Throwable $e )
+			catch ( Throwable )
 			{
 				# Skip unknown socket ids
 			}
@@ -310,8 +278,6 @@ class Client
 	}
 
 	/**
-	 * @param int|null $timeoutMs
-	 *
 	 * @return Generator|ProvidesResponseData[]
 	 * @throws ReadFailedException
 	 */
@@ -326,9 +292,6 @@ class Client
 	}
 
 	/**
-	 * @param int      $socketId
-	 * @param int|null $timeoutMs
-	 *
 	 * @throws ReadFailedException
 	 */
 	public function handleResponse( int $socketId, ?int $timeoutMs = null ) : void
@@ -340,7 +303,6 @@ class Client
 	}
 
 	/**
-	 * @param int|null $timeoutMs
 	 * @param int      ...$socketIds
 	 *
 	 * @throws ReadFailedException
@@ -354,8 +316,6 @@ class Client
 	}
 
 	/**
-	 * @param int|null $timeoutMs
-	 *
 	 * @throws ReadFailedException
 	 */
 	public function handleReadyResponses( ?int $timeoutMs = null ) : void
