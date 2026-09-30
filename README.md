@@ -1213,6 +1213,14 @@ This requires `docker` with the `docker compose` plugin installed on your machin
 This runs the static analysis and all test suites on PHP 8.0 - 8.5. To run the test suites on a single PHP version use
 one of `make test-php-8.0` ... `make test-php-8.5`.
 
+## Run static analysis
+
+    make phpstan
+
+This runs PHPStan on and for each PHP version from 8.0 to 8.5. To analyse the code for a single PHP version use one of
+`make phpstan-php-8.0` ... `make phpstan-php-8.5`. The PHP version PHPStan analyses for is set in the configuration
+files in [.phpstan](./.phpstan), which include the base configuration [phpstan.neon](./phpstan.neon).
+
 ## Command line tool (for local debugging only)
 
 **Please note:** `bin/fcgiget` is not included and linked to `vendor/bin` via composer anymore since version `v3.1.2`for
