@@ -25,8 +25,8 @@ use function intdiv;
 use function is_resource;
 use function max;
 use function microtime;
-use function min;
 use function ord;
+use function sprintf;
 use function str_repeat;
 use function stream_get_meta_data;
 use function stream_select;
@@ -35,7 +35,7 @@ use function stream_socket_client;
 use function stream_socket_shutdown;
 use function strlen;
 use function substr;
-use const PHP_INT_MAX;
+use const PHP_VERSION_ID;
 use const STREAM_SHUT_RDWR;
 
 final class Socket
@@ -51,6 +51,16 @@ final class Socket
 	private const STDOUT               = 6;
 
 	private const STDERR               = 7;
+
+	private const GET_VALUES_RESULT    = 10;
+
+	private const UNKNOWN_TYPE         = 11;
+
+	private const VERSION              = 1;
+
+	private const NULL_REQUEST_ID      = 0;
+
+	private const END_REQUEST_LEN      = 8;
 
 	private const RESPONDER            = 1;
 
@@ -453,50 +463,130 @@ final class Socket
 
 	/**
 	 * @return array<string, mixed>|null
+	 * @throws ReadFailedException
 	 */
 	private function readPacket() : ?array
 	{
-		if ( !is_resource( $this->resource ) )
+		$header = $this->read( self::HEADER_LEN );
+
+		if ( null === $header )
 		{
 			return null;
 		}
 
-		if ( $header = fread( $this->resource, self::HEADER_LEN ) )
+		$packet = $this->packetEncoder->decodeHeader( $header );
+
+		$this->guardPacketHeaderIsValid( $packet );
+
+		$content = $this->read( (int)$packet['contentLength'] );
+		$padding = $this->read( (int)$packet['paddingLength'] );
+
+		if ( null === $content || null === $padding )
 		{
-			$packet            = $this->packetEncoder->decodeHeader( $header );
-			$packet['content'] = '';
-
-			if ( $packet['contentLength'] )
-			{
-				$length = $this->getValidLength( (int)$packet['contentLength'] );
-
-				while ( $length && ($buffer = fread( $this->resource, $length )) !== false )
-				{
-					$length            = $this->getValidLength( $length - strlen( (string)$buffer ) );
-					$packet['content'] .= $buffer;
-				}
-			}
-
-			$paddingLength = $this->getValidLength( (int)$packet['paddingLength'] );
-
-			if ( $paddingLength > 0 )
-			{
-				/** @noinspection UnusedFunctionResultInspection */
-				fread( $this->resource, $paddingLength );
-			}
-
-			return $packet;
+			return null;
 		}
 
-		return null;
+		$packet['content'] = $content;
+
+		return $packet;
 	}
 
 	/**
-	 * @return int<0, max>
+	 * Reads exactly the given number of bytes from the stream.
+	 * Returns NULL, if the stream ended or timed out before all bytes were received.
 	 */
-	private function getValidLength( int $value ) : int
+	private function read( int $length ) : ?string
 	{
-		return (int)max( 0, min( $value, PHP_INT_MAX ) );
+		$resource = $this->resource;
+
+		if ( !is_resource( $resource ) )
+		{
+			return null;
+		}
+
+		$data = '';
+
+		while ( $length > 0 )
+		{
+			$buffer = fread( $resource, $length );
+
+			# An empty string means that the stream timed out or was closed by the peer,
+			# further attempts to read would return an empty string over and over again
+			if ( false === $buffer || '' === $buffer )
+			{
+				return null;
+			}
+
+			$data   .= $buffer;
+			$length -= strlen( $buffer );
+
+			# Before PHP 8.3 an incomplete read only returns after the timeout was reached,
+			# so there is no point in waiting for the rest once again.
+			# Since PHP 8.3 incomplete reads are the normal case for large packets and must not be checked.
+			if ( $length > 0 && PHP_VERSION_ID < 80300 && stream_get_meta_data( $resource )['timed_out'] )
+			{
+				return null;
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * A responder application only sends stdout, stderr and end-request records for the ID of the current request,
+	 * and replies to management records with a request ID of zero.
+	 * Everything else did not come from a FastCGI server or belongs to another request.
+	 *
+	 * @param array<string, int> $header
+	 *
+	 * @throws ReadFailedException
+	 */
+	private function guardPacketHeaderIsValid( array $header ) : void
+	{
+		if ( self::VERSION !== $header['version'] )
+		{
+			throw new ReadFailedException(
+				'Not a FastCGI packet: unsupported protocol version ' . $header['version']
+			);
+		}
+
+		$type      = $header['type'];
+		$requestId = $header['requestId'];
+
+		if ( self::GET_VALUES_RESULT === $type || self::UNKNOWN_TYPE === $type )
+		{
+			if ( self::NULL_REQUEST_ID !== $requestId )
+			{
+				throw new ReadFailedException(
+					'Invalid FastCGI packet: management record with request ID ' . $requestId
+				);
+			}
+
+			return;
+		}
+
+		if ( self::STDOUT !== $type && self::STDERR !== $type && self::END_REQUEST !== $type )
+		{
+			throw new ReadFailedException( 'Invalid FastCGI packet: unexpected record type ' . $type );
+		}
+
+		if ( $this->socketId->getValue() !== $requestId )
+		{
+			throw new ReadFailedException(
+				sprintf(
+					'Invalid FastCGI packet: expected request ID %d, got %d',
+					$this->socketId->getValue(),
+					$requestId
+				)
+			);
+		}
+
+		if ( self::END_REQUEST === $type && self::END_REQUEST_LEN !== $header['contentLength'] )
+		{
+			throw new ReadFailedException(
+				'Invalid FastCGI packet: unexpected length of end-request record ' . $header['contentLength']
+			);
+		}
 	}
 
 	private function notifyPassThroughCallbacks( string $outputBuffer, string $errorBuffer ) : void
