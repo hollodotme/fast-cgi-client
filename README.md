@@ -254,6 +254,44 @@ while(true)
 value
 ```
 
+### Retry sending a request
+
+The client keeps its sockets open and reuses them for subsequent requests to the same connection.
+Sockets that were closed in the meantime, e.g. because their php-fpm child process was terminated, are detected
+and replaced by new ones before a request is sent.
+
+If writing a request to a socket still fails, `sendRequest()` and `sendAsyncRequest()` throw a `WriteFailedException`.
+If you want the client to send the request again on another socket instead, use the following methods:
+
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
+$content    = new UrlEncodedFormData(['key' => 'value']);
+$request    = new PostRequest('/path/to/target/script.php', $content);
+
+# Same as sendRequest(), but tries to send the request up to 5 times (default)
+$response = $client->tryRequest($connection, $request);
+
+# Same as sendAsyncRequest(), but tries to send the request up to 3 times
+$socketId = $client->tryAsyncRequest($connection, $request, 3);
+```
+
+Please note:
+
+* Each try uses another socket, because a socket is discarded when writing to it failed.
+* If the last try fails too, its `WriteFailedException` is thrown.
+* Only sending the request is retried. If reading the response fails, the request is not sent again,
+  because it may already have been processed by the target script.
+
 ---
 
 ## Usage - multiple requests
