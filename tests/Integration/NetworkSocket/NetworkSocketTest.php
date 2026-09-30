@@ -28,6 +28,7 @@ use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 use function json_decode;
 use function preg_match;
+use function str_repeat;
 use const PHP_VERSION_ID;
 
 final class NetworkSocketTest extends TestCase
@@ -705,6 +706,43 @@ final class NetworkSocketTest extends TestCase
 		];
 
 		self::assertSame( $expectedResult, json_decode( $response->getBody(), true ) );
+	}
+
+	/**
+	 * Params longer than one FastCGI record are sent in multiple records, split between name-value pairs.
+	 *
+	 * @throws Throwable
+	 */
+	public function testParamsLongerThanOneRecordAreReceived() : void
+	{
+		$request         = new GetRequest( $this->getWorkerPath( 'paramsWorker.php' ) );
+		$expectedLengths = [];
+
+		for ( $i = 10; $i < 30; $i++ )
+		{
+			$request->setCustomVar( 'LARGE_PARAM_' . $i, str_repeat( 'p', 5000 ) );
+			$expectedLengths[ 'LARGE_PARAM_' . $i ] = 5000;
+		}
+
+		$response = $this->client->sendRequest( $this->connection, $request );
+
+		self::assertSame( $expectedLengths, json_decode( $response->getBody(), true ) );
+	}
+
+	/**
+	 * php-fpm cannot receive a single name-value pair that is longer than one record, and closes the connection.
+	 *
+	 * @throws Throwable
+	 */
+	public function testPhpFpmDoesNotAcceptParamLongerThanOneRecord() : void
+	{
+		$request = new GetRequest( $this->getWorkerPath( 'paramsWorker.php' ) );
+		$request->setCustomVar( 'LARGE_PARAM_1', str_repeat( 'p', 70000 ) );
+
+		$this->expectException( ReadFailedException::class );
+
+		/** @noinspection UnusedFunctionResultInspection */
+		$this->client->sendRequest( $this->connection, $request );
 	}
 
 	/**

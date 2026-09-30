@@ -714,6 +714,11 @@ Each of these values has a setter in the abstract request class: `setServerSoftw
 `setRemotePort()`, `setServerAddress()`, `setServerPort()`, `setServerName()`, `setServerProtocol()`,
 `setContentType()` and `setRequestUri()`. Custom variables can be removed again with `resetCustomVars()`.
 
+All parameters of a request are sent in FastCGI records of at most 65535 bytes. If they are longer in total, they are
+split into multiple records between two parameters, so php-fpm can decode them. A single parameter (name and value)
+that is longer than 65535 bytes is split as well, which the FastCGI specification allows, but php-fpm does not accept
+such a parameter and closes the connection. The client then throws a `ReadFailedException`.
+
 **Please note:** `setContent()` overwrites the content type of the request. If you need a content type that differs
 from the one of the request content, call `setContentType()` after the content was set.
 

@@ -204,6 +204,27 @@ final class SocketCollection implements Countable
 		return $resources;
 	}
 
+	/**
+	 * Only sockets that wait for a response can have a new one. An idle socket becomes readable as well,
+	 * when the server closes its connection, but it only has the response that was already read.
+	 *
+	 * @return array<int, resource>
+	 */
+	public function collectResourcesOfBusySockets() : array
+	{
+		$resources = [];
+
+		foreach ( $this->sockets as $socket )
+		{
+			if ( $socket->isBusy() )
+			{
+				$socket->collectResource( $resources );
+			}
+		}
+
+		return $resources;
+	}
+
 	public function count() : int
 	{
 		return count( $this->sockets );

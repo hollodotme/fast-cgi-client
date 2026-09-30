@@ -234,7 +234,7 @@ class Client
 			return [];
 		}
 
-		$reads     = $this->sockets->collectResources();
+		$reads     = $this->sockets->collectResourcesOfBusySockets();
 		$writes    = $excepts = null;
 		$timeoutMs = $this->sockets->getStreamSelectTimeout();
 

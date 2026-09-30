@@ -80,7 +80,8 @@ This file covers the 4.x releases. For previous major versions see:
 * PHP_CodeSniffer is part of the test pipeline and checks the coding standard, PSR-12 with the adjustments listed
   in the README (`make phpcs`, `make phpcbf`). - [#75]
 * Integration tests do not depend on fixed waiting times anymore. - [#86]
-* The content of a request is composed once per request when it is sent, instead of once for every 65535 bytes.
+* The content of a request is composed twice per request when it is sent, instead of once for every 65535 bytes:
+  once for the `CONTENT_LENGTH` parameter and once for the body.
 * Documentation and changelog are split by major version. - [#87]
 * The development environment uses the `docker compose` plugin instead of the standalone `docker-compose` binary.
 
@@ -93,6 +94,18 @@ This file covers the 4.x releases. For previous major versions see:
 * Packet headers are read completely before they are decoded, also if they arrive in several parts.
 * The first two lines of a response were lost, if it did not start with a header.
 * Headers and body of a response are separated independently of the line endings of the platform the client runs on.
+* Request parameters longer than 65535 bytes in total corrupted the request, because the length of a record was cut
+  to 2 bytes. They are sent in multiple records now, split between name-value pairs. `PacketEncoder#encodePacket()`
+  splits content that is longer than one record into consecutive records of the same type.
+* The `CONTENT_LENGTH` parameter always matches the length of the content that is sent, even if the content
+  object composes a different content each time.
+* A request that could only be written partly, e.g. because the server did not read it before the read/write timeout,
+  was treated as sent. A `TimedoutException` or `WriteFailedException` is thrown now.
+* A read timeout passed to `readResponse()` and the other methods reading responses applied to writing the next
+  request on the same socket as well. The read/write timeout of the connection applies again.
+* An idle socket was reported as having a response, when the server closed its connection. Its response was then
+  returned again by `readReadyResponses()`, and its callbacks were notified again by `handleReadyResponses()` and
+  `waitForResponses()`.
 
 ### Removed
 
