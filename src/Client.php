@@ -63,7 +63,7 @@ class Client
 	public function sendAsyncRequest( ConfiguresSocketConnection $connection, ProvidesRequestData $request ) : int
 	{
 		$socket = $this->sockets->getIdleSocket( $connection )
-		          ?? $this->sockets->new( $connection, $this->packetEncoder, $this->nameValuePairEncoder );
+				  ?? $this->sockets->new( $connection, $this->packetEncoder, $this->nameValuePairEncoder );
 
 		try
 		{
@@ -103,7 +103,8 @@ class Client
 	}
 
 	/**
-	 * Sends the request like sendAsyncRequest(), but retries on another socket if writing the request to the socket failed.
+	 * Sends the request like sendAsyncRequest(), but retries on another socket
+	 * if writing the request to the socket failed.
 	 *
 	 * @param int                        $maxTries Maximum number of attempts to send the request
 	 *

@@ -51,7 +51,7 @@ final class AbstractRequestTest extends TestCase
 		?ComposesRequestContent $content = null
 	) : AbstractRequest
 	{
-		return new class($requestMethod, $scriptFilename, $content) extends AbstractRequest
+		return new class ( $requestMethod, $scriptFilename, $content ) extends AbstractRequest
 		{
 			public function __construct(
 				private string $requestMethod,
@@ -175,9 +175,15 @@ final class AbstractRequestTest extends TestCase
 			],
 			[
 				'requestUri'          => '/unit/test/',
-				'queryParams'         => ['text' => 'some text & more', 'list' => ['a', 'b'], 'map' => ['key' => 'value']],
-				'expectedRequestUri'  => '/unit/test/?text=some%20text%20%26%20more&list%5B0%5D=a&list%5B1%5D=b&map%5Bkey%5D=value',
-				'expectedQueryString' => 'text=some%20text%20%26%20more&list%5B0%5D=a&list%5B1%5D=b&map%5Bkey%5D=value',
+				'queryParams'         => [
+					'text' => 'some text & more',
+					'list' => ['a', 'b'],
+					'map'  => ['key' => 'value'],
+				],
+				'expectedRequestUri'  => '/unit/test/?text=some%20text%20%26%20more'
+					. '&list%5B0%5D=a&list%5B1%5D=b&map%5Bkey%5D=value',
+				'expectedQueryString' => 'text=some%20text%20%26%20more'
+					. '&list%5B0%5D=a&list%5B1%5D=b&map%5Bkey%5D=value',
 			],
 			# Query params are appended to a query string that is already part of the request URI
 			[

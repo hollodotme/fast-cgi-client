@@ -33,8 +33,7 @@ final class AsyncRequestsTest extends TestCase
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 */
-	public function testAsyncRequestsWillRespondToCallbackIfRequestsExceedPhpFpmMaxChildrenSettingOnNetworkSocket(
-	) : void
+	public function testAsyncRequestsWillRespondToCallbackIfRequestsExceedMaxChildrenOnNetworkSocket() : void
 	{
 		$maxChildren = $this->getMaxChildrenSettingFromNetworkSocket();
 		$limit       = $maxChildren + 5;
@@ -93,8 +92,7 @@ final class AsyncRequestsTest extends TestCase
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 */
-	public function testAsyncRequestsWillRespondToCallbackIfRequestsExceedPhpFpmMaxChildrenSettingOnUnixDomainSocket(
-	) : void
+	public function testAsyncRequestsWillRespondToCallbackIfRequestsExceedMaxChildrenOnUnixDomainSocket() : void
 	{
 		$maxChildren = $this->getMaxChildrenSettingFromUnixDomainSocket();
 		$limit       = $maxChildren + 5;
@@ -150,7 +148,7 @@ final class AsyncRequestsTest extends TestCase
 	 * @throws WriteFailedException
 	 * @throws InvalidArgumentException
 	 */
-	public function testCanReadResponsesOfAsyncRequestsIfRequestsExceedPhpFpmMaxChildrenSettingOnNetworkSocket() : void
+	public function testCanReadResponsesOfAsyncRequestsIfRequestsExceedMaxChildrenOnNetworkSocket() : void
 	{
 		$maxChildren = $this->getMaxChildrenSettingFromNetworkSocket();
 		$limit       = $maxChildren + 5;
@@ -191,8 +189,7 @@ final class AsyncRequestsTest extends TestCase
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
 	 */
-	public function testCanReadResponsesOfAsyncRequestsIfRequestsExceedPhpFpmMaxChildrenSettingOnUnixDomainSocket(
-	) : void
+	public function testCanReadResponsesOfAsyncRequestsIfRequestsExceedMaxChildrenOnUnixDomainSocket() : void
 	{
 		$maxChildren = $this->getMaxChildrenSettingFromUnixDomainSocket();
 		$limit       = $maxChildren + 5;

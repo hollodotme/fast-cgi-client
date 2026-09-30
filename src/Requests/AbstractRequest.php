@@ -315,7 +315,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->failureCallbacks;
 	}
 
-	public function addFailureCallbacks( callable  ...$callbacks ) : void
+	public function addFailureCallbacks( callable ...$callbacks ) : void
 	{
 		$this->failureCallbacks = array_merge( $this->failureCallbacks, $callbacks );
 	}
