@@ -3,6 +3,8 @@ title: Multiple requests
 sidebar_position: 3
 ---
 
+import Animation from '@site/src/components/Animation';
+
 ## Sending multiple requests and reading their responses (order preserved)
 
 ```php
@@ -46,6 +48,13 @@ foreach ($client->readResponses(3000, ...$socketIds) as $response)
 2
 3
 ```
+
+### See it in action
+
+The three requests run in parallel, but `readResponses()` returns their responses in the order the requests were
+sent. Switch to `readReadyResponses()` to compare it with the reactive way below:
+
+<Animation scene="multipleRequests" settings={{mode: 'ordered'}} />
 
 ## Sending multiple requests and reading their responses (reactive)
 
@@ -126,6 +135,12 @@ while ( $client->hasUnhandledResponses() )
 ...............................................2
 ...............................................1
 ```
+
+### See it in action
+
+`readReadyResponses()` returns each response as soon as it is ready, so the fastest request is printed first:
+
+<Animation scene="multipleRequests" settings={{mode: 'reactive'}} />
 
 ## Sending multiple requests and notifying callbacks (reactive)
 

@@ -3,6 +3,8 @@ title: Single requests
 sidebar_position: 2
 ---
 
+import Animation from '@site/src/components/Animation';
+
 The following examples assume that the content of `/path/to/target/script.php` looks like this:
 
 ```php
@@ -38,6 +40,13 @@ echo $response->getBody();
 # prints
 value
 ```
+
+### See it in action
+
+`sendRequest()` blocks your script until PHP-FPM has run the script and the response has arrived.
+Press play, step through, or change the runtime of the script:
+
+<Animation scene="syncRequest" />
 
 ## Send request asynchronously (Fire and forget)
 
@@ -98,6 +107,13 @@ echo $response->getBody();
 # prints
 value
 ```
+
+### See it in action
+
+With `sendAsyncRequest()` your script can do other work while PHP-FPM runs the script.
+`readResponse()` only waits, if the response is not there yet. Change the runtimes to see both cases:
+
+<Animation scene="asyncRequest" />
 
 ## Notify a callback when async request responded
 
