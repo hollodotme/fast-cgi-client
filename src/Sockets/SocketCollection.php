@@ -169,6 +169,24 @@ final class SocketCollection implements Countable
 	}
 
 	/**
+	 * @return array<int, Socket>
+	 */
+	public function getBusySockets() : array
+	{
+		$busySockets = [];
+
+		foreach ( $this->sockets as $socket )
+		{
+			if ( $socket->isBusy() )
+			{
+				$busySockets[] = $socket;
+			}
+		}
+
+		return $busySockets;
+	}
+
+	/**
 	 * Returns the smallest stream select timeout of all sockets waiting for a response,
 	 * so that none of them is checked less often than its connection is configured to.
 	 *

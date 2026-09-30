@@ -158,6 +158,14 @@ final class Socket
 	}
 
 	/**
+	 * @return int Timeout in milliseconds
+	 */
+	public function getReadWriteTimeout() : int
+	{
+		return $this->connection->getReadWriteTimeout();
+	}
+
+	/**
 	 * @throws ConnectException
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
