@@ -1067,9 +1067,9 @@ Hello World
 * All headers sent by your script will precede the response body
 * The headers are separated from the body by the first blank line. If the output does not start with headers
   followed by a blank line, the whole output is the body.
-* php-fpm sends the status as `Status` header, if the script sets one. There is no HTTP status line like
-  `HTTP/1.1 200 OK`, because there is no web server involved. Some FastCGI servers of other programming languages
-  start the response with such a status line. It is then available as `Status` header as well.
+* The status of a response is sent as `Status` header, if the script sets one. There is no HTTP status line like
+  `HTTP/1.1 200 OK`, because there is no web server involved. A response that starts with such a line has no
+  headers, its whole output is the body.
 
 Custom headers will also be part of the response:
 

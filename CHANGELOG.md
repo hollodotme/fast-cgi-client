@@ -91,9 +91,7 @@ This file covers the 4.x releases. For previous major versions see:
   instead of a FastCGI server. A `ReadFailedException` is thrown now. - [#78]
 * Reading a response that was not completed by the server timed out after twice the read/write timeout.
 * Packet headers are read completely before they are decoded, also if they arrive in several parts.
-* The first two lines of a response body were lost, if the response had no headers.
-* Responses that start with a HTTP status line like `HTTP/1.1 200 OK` had no headers, and their body was wrong.
-  The status line is available as `Status` header now.
+* The first two lines of a response were lost, if it did not start with a header.
 * Headers and body of a response are separated independently of the line endings of the platform the client runs on.
 
 ### Removed
