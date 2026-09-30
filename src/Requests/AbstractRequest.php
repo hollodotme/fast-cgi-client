@@ -19,6 +19,8 @@ use const PHP_QUERY_RFC3986;
  */
 abstract class AbstractRequest implements ProvidesRequestData
 {
+	private const DEFAULT_CONTENT_TYPE = 'application/x-www-form-urlencoded';
+
 	private string $gatewayInterface = 'FastCGI/1.0';
 
 	private string $scriptFilename;
@@ -37,9 +39,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 
 	private string $serverProtocol = ServerProtocol::HTTP_1_1;
 
-	private string $contentType = 'application/x-www-form-urlencoded';
-
-	private int $contentLength = 0;
+	private ?string $contentType = null;
 
 	private ?ComposesRequestContent $content = null;
 
@@ -140,9 +140,12 @@ abstract class AbstractRequest implements ProvidesRequestData
 		$this->serverProtocol = $serverProtocol;
 	}
 
+	/**
+	 * Returns the content type that was set explicitly, otherwise the content type of the request content.
+	 */
 	public function getContentType() : string
 	{
-		return $this->contentType;
+		return $this->contentType ?? $this->content?->getContentType() ?? self::DEFAULT_CONTENT_TYPE;
 	}
 
 	public function setContentType( string $contentType ) : void
@@ -157,9 +160,8 @@ abstract class AbstractRequest implements ProvidesRequestData
 
 	public function setContent( ComposesRequestContent $content ) : void
 	{
-		$this->content       = $content;
-		$this->contentType   = $content->getContentType();
-		$this->contentLength = strlen( $content->getContent() );
+		$this->content     = $content;
+		$this->contentType = null;
 	}
 
 	public function setCustomVar( string $key, mixed $value ) : void
@@ -198,9 +200,13 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->scriptFilename;
 	}
 
+	/**
+	 * The length is determined from the current state of the request content on every call,
+	 * so it is still correct if the content object was changed after it was passed to the request.
+	 */
 	public function getContentLength() : int
 	{
-		return $this->contentLength;
+		return null === $this->content ? 0 : strlen( $this->content->getContent() );
 	}
 
 	/**

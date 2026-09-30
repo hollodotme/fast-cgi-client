@@ -4,11 +4,14 @@ namespace hollodotme\FastCGI\Tests\Unit\Requests;
 
 use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
 use hollodotme\FastCGI\RequestContents\JsonData;
+use hollodotme\FastCGI\RequestContents\MultipartFormData;
 use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\AbstractRequest;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
+use function dirname;
+use function strlen;
 
 final class AbstractRequestTest extends TestCase
 {
@@ -250,6 +253,72 @@ final class AbstractRequestTest extends TestCase
 		$request->setContent( new UrlEncodedFormData( ['test' => 'some new content'] ) );
 
 		self::assertSame( 21, $request->getContentLength() );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
+	 */
+	public function testContentLengthChangesIfContentObjectIsChangedAfterItWasSet() : void
+	{
+		$content = new MultipartFormData( ['test' => 'some content'], [] );
+		$request = $this->getRequest( 'POST', '/path/to/script.php', $content );
+
+		$lengthWithoutFile = strlen( $content->getContent() );
+
+		self::assertSame( $lengthWithoutFile, $request->getContentLength() );
+		self::assertSame( $lengthWithoutFile, $request->getParams()['CONTENT_LENGTH'] );
+
+		$content->addFile( 'textFile', dirname( __DIR__ ) . '/RequestContents/_files/TestFile.txt' );
+
+		$lengthWithFile = strlen( $content->getContent() );
+
+		self::assertGreaterThan( $lengthWithoutFile, $lengthWithFile );
+		self::assertSame( $lengthWithFile, $request->getContentLength() );
+		self::assertSame( $lengthWithFile, $request->getParams()['CONTENT_LENGTH'] );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testContentTypeChangesIfContentObjectIsChangedAfterItWasSet() : void
+	{
+		$content = new class implements ComposesRequestContent
+		{
+			public string $contentType = 'text/plain';
+
+			public function getContentType() : string
+			{
+				return $this->contentType;
+			}
+
+			public function getContent() : string
+			{
+				return 'unit';
+			}
+		};
+
+		$request = $this->getRequest( 'POST', '/path/to/script.php', $content );
+
+		self::assertSame( 'text/plain', $request->getContentType() );
+
+		$content->contentType = 'text/csv';
+
+		self::assertSame( 'text/csv', $request->getContentType() );
+		self::assertSame( 'text/csv', $request->getParams()['CONTENT_TYPE'] );
+
+		# A content type that was set explicitly takes precedence ...
+		$request->setContentType( 'text/html' );
+		$content->contentType = 'text/xml';
+
+		self::assertSame( 'text/html', $request->getContentType() );
+
+		# ... until the content is set again
+		$request->setContent( $content );
+
+		self::assertSame( 'text/xml', $request->getContentType() );
 	}
 
 	/**
