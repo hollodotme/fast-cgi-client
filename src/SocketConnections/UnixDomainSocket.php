@@ -10,25 +10,13 @@ use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
  */
 class UnixDomainSocket implements ConfiguresSocketConnection
 {
-	private string $socketPath;
-
-	private int $connectTimeout;
-
-	private int $readWriteTimeout;
-
-	private int $streamSelectTimeout;
-
 	public function __construct(
-		string $socketPath,
-		int $connectTimeout = Defaults::CONNECT_TIMEOUT,
-		int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT,
-		int $streamSelectTimeout = Defaults::STREAM_SELECT_TIMEOUT
+		private string $socketPath,
+		private int $connectTimeout = Defaults::CONNECT_TIMEOUT,
+		private int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT,
+		private int $streamSelectTimeout = Defaults::STREAM_SELECT_TIMEOUT
 	)
 	{
-		$this->socketPath          = $socketPath;
-		$this->connectTimeout      = $connectTimeout;
-		$this->readWriteTimeout    = $readWriteTimeout;
-		$this->streamSelectTimeout = $streamSelectTimeout;
 	}
 
 	public function getSocketAddress() : string

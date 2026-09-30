@@ -6,29 +6,14 @@ use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 
 class NetworkSocket implements ConfiguresSocketConnection
 {
-	private string $host;
-
-	private int $port;
-
-	private int $connectTimeout;
-
-	private int $readWriteTimeout;
-
-	private int $streamSelectTimeout;
-
 	public function __construct(
-		string $host,
-		int $port,
-		int $connectTimeout = Defaults::CONNECT_TIMEOUT,
-		int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT,
-		int $streamSelectTimeout = Defaults::STREAM_SELECT_TIMEOUT
+		private string $host,
+		private int $port,
+		private int $connectTimeout = Defaults::CONNECT_TIMEOUT,
+		private int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT,
+		private int $streamSelectTimeout = Defaults::STREAM_SELECT_TIMEOUT
 	)
 	{
-		$this->host                = $host;
-		$this->port                = $port;
-		$this->connectTimeout      = $connectTimeout;
-		$this->readWriteTimeout    = $readWriteTimeout;
-		$this->streamSelectTimeout = $streamSelectTimeout;
 	}
 
 	public function getSocketAddress() : string
