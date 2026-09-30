@@ -6,7 +6,9 @@ use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
 
 final class PlainText implements ComposesRequestContent
 {
-	public function __construct( private string $plainText ) { }
+	public function __construct( private string $plainText )
+	{
+	}
 
 	public function getContentType() : string
 	{

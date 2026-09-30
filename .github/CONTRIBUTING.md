@@ -8,6 +8,8 @@ We accept contributions via pull requests on [GitHub](https://github.com/hollodo
 
 - **Add tests!** - Your patch will not be accepted if it does not have tests.
 
+- **Follow the coding standard** - Run `make phpcs` to check your code and `make phpcbf` to fix violations automatically. The standard is described in the `README.md`.
+
 - **Document any change in behaviour** - Make sure the documentation in `README.md` is kept up-to-date.
 
 - **Consider our release cycle** - We follow [SemVer v2.0.0](http://semver.org/). Randomly breaking public APIs is not an option.

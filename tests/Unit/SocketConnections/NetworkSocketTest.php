@@ -52,7 +52,13 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanGetSetValues() : void
 	{
-		$connection = new NetworkSocket( $this->getNetworkSocketHost(), $this->getNetworkSocketPort(), 2000, 3000, 500 );
+		$connection = new NetworkSocket(
+			$this->getNetworkSocketHost(),
+			$this->getNetworkSocketPort(),
+			2000,
+			3000,
+			500
+		);
 
 		$expectedSocketAddress = sprintf( 'tcp://%s:%d', $this->getNetworkSocketHost(), $this->getNetworkSocketPort() );
 

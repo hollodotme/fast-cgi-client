@@ -181,7 +181,7 @@ final class MalformedResponsesTest extends TestCase
 			],
 			'incomplete end-request body' => [
 				fn( int $id ) : string => $this->record( self::STDOUT, $id, 'unit' )
-				                          . $this->header( self::END_REQUEST, $id, 8 ) . chr( 0 ),
+										  . $this->header( self::END_REQUEST, $id, 8 ) . chr( 0 ),
 			],
 		];
 	}
@@ -223,7 +223,7 @@ final class MalformedResponsesTest extends TestCase
 	{
 		$socketId = $this->sendRequestAndRespond(
 			fn( int $id ) : string => $this->record( self::STDOUT, $id, "X-Unit: Test\r\n\r\nunit" )
-			                          . $this->endRequest( $id )
+									  . $this->endRequest( $id )
 		);
 
 		$response = $this->client->readResponse( $socketId );
@@ -240,10 +240,10 @@ final class MalformedResponsesTest extends TestCase
 	{
 		$socketId = $this->sendRequestAndRespond(
 			fn( int $id ) : string => $this->record( self::STDOUT, $id, "X-Unit: Test\r\n\r\n", 3 )
-			                          . $this->record( self::UNKNOWN_TYPE, 0, str_repeat( chr( 0 ), 8 ) )
-			                          . $this->record( self::STDERR, $id, 'error', 7 )
-			                          . $this->record( self::STDOUT, $id, 'unit', 4 )
-			                          . $this->endRequest( $id )
+									  . $this->record( self::UNKNOWN_TYPE, 0, str_repeat( chr( 0 ), 8 ) )
+									  . $this->record( self::STDERR, $id, 'error', 7 )
+									  . $this->record( self::STDOUT, $id, 'unit', 4 )
+									  . $this->endRequest( $id )
 		);
 
 		$response = $this->client->readResponse( $socketId );
@@ -301,20 +301,20 @@ final class MalformedResponsesTest extends TestCase
 	) : string
 	{
 		return chr( $version & 0xFF )
-		       . chr( $type & 0xFF )
-		       . chr( ($requestId >> 8) & 0xFF )
-		       . chr( $requestId & 0xFF )
-		       . chr( ($contentLength >> 8) & 0xFF )
-		       . chr( $contentLength & 0xFF )
-		       . chr( $paddingLength & 0xFF )
-		       . chr( 0 );
+			   . chr( $type & 0xFF )
+			   . chr( ($requestId >> 8) & 0xFF )
+			   . chr( $requestId & 0xFF )
+			   . chr( ($contentLength >> 8) & 0xFF )
+			   . chr( $contentLength & 0xFF )
+			   . chr( $paddingLength & 0xFF )
+			   . chr( 0 );
 	}
 
 	private function record( int $type, int $requestId, string $content, int $paddingLength = 0 ) : string
 	{
 		return $this->header( $type, $requestId, strlen( $content ), $paddingLength )
-		       . $content
-		       . str_repeat( chr( 0 ), $paddingLength );
+			   . $content
+			   . str_repeat( chr( 0 ), $paddingLength );
 	}
 
 	private function endRequest( int $requestId ) : string

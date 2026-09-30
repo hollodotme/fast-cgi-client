@@ -20,14 +20,14 @@ final class PacketEncoder implements EncodesPacket
 		$contentLength = strlen( $content );
 
 		return chr( self::VERSION )                     /* version */
-		       . chr( $type & 0xFF )                    /* type */
-		       . chr( ($requestId >> 8) & 0xFF )        /* requestIdB1 */
-		       . chr( $requestId & 0xFF )               /* requestIdB0 */
-		       . chr( ($contentLength >> 8) & 0xFF )    /* contentLengthB1 */
-		       . chr( $contentLength & 0xFF )           /* contentLengthB0 */
-		       . chr( 0 )                               /* paddingLength */
-		       . chr( 0 )                               /* reserved */
-		       . $content;                                   /* content */
+			   . chr( $type & 0xFF )                    /* type */
+			   . chr( ($requestId >> 8) & 0xFF )        /* requestIdB1 */
+			   . chr( $requestId & 0xFF )               /* requestIdB0 */
+			   . chr( ($contentLength >> 8) & 0xFF )    /* contentLengthB1 */
+			   . chr( $contentLength & 0xFF )           /* contentLengthB0 */
+			   . chr( 0 )                               /* paddingLength */
+			   . chr( 0 )                               /* reserved */
+			   . $content;                                   /* content */
 	}
 
 	/**

@@ -10,4 +10,5 @@ Makefile export-ignore
 CHANGELOG.md export-ignore
 docs/ export-ignore
 docker-compose.yml export-ignore
+phpcs.xml export-ignore
 phpstan.neon export-ignore

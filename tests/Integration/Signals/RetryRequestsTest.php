@@ -307,7 +307,11 @@ final class RetryRequestsTest extends TestCase
 	 * @return array<int> IDs of the broken sockets
 	 * @throws Throwable
 	 */
-	private function createBrokenIdleSockets( Client $client, ConfiguresSocketConnection $connection, int $count ) : array
+	private function createBrokenIdleSockets(
+		Client $client,
+		ConfiguresSocketConnection $connection,
+		int $count
+	) : array
 	{
 		$socketIds = [];
 

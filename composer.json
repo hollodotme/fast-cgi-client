@@ -34,6 +34,7 @@
     "require-dev": {
         "ext-xdebug": ">=3.1",
         "phpunit/phpunit": "^9",
-        "phpstan/phpstan": "^2.1"
+        "phpstan/phpstan": "^2.1",
+        "squizlabs/php_codesniffer": "^4.0"
     }
 }

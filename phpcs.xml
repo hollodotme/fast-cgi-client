@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         name="hollodotme/fast-cgi-client"
+         xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
+
+    <description>Coding standard of hollodotme/fast-cgi-client: PSR-12 with the adjustments listed below</description>
+
+    <arg name="basepath" value="."/>
+    <arg name="cache" value=".phpcs-cache"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+    <arg name="tab-width" value="4"/>
+    <arg value="sp"/>
+
+    <!-- The minimum supported PHP version -->
+    <config name="php_version" value="80000"/>
+
+    <file>src/</file>
+    <file>bin/</file>
+    <file>bin/fcgiget</file>
+    <file>tests/</file>
+
+    <rule ref="PSR12">
+        <!-- Tabs are used for indentation, see below -->
+        <exclude name="Generic.WhiteSpace.DisallowTabIndent"/>
+
+        <!-- The declare statement follows the opening tag on the same line: <?php declare(strict_types=1); -->
+        <exclude name="PSR12.Files.OpenTag.NotAlone"/>
+        <exclude name="PSR12.Files.FileHeader.SpacingAfterTagBlock"/>
+
+        <!-- Imports of classes, functions and constants are not separated by blank lines -->
+        <exclude name="PSR12.Files.FileHeader.SpacingAfterUseBlock"/>
+        <exclude name="PSR12.Files.FileHeader.SpacingAfterUseFunctionBlock"/>
+
+        <!-- Replaced by PSR2.ControlStructures.ControlStructureSpacing, which can be configured, see below -->
+        <exclude name="PSR12.ControlStructures.ControlStructureSpacing"/>
+
+        <!-- Arguments of anonymous classes get the same spacing as all other arguments, see below -->
+        <exclude name="PSR12.Classes.AnonClassDeclaration.SpaceAfterOpenBracket"/>
+        <exclude name="PSR12.Classes.AnonClassDeclaration.SpaceBeforeCloseBracket"/>
+
+        <!-- Return types are separated from the parameter list by " : " -->
+        <exclude name="PSR12.Functions.ReturnTypeDeclaration.SpaceBeforeColon"/>
+
+        <!-- Opening braces of control structures and multi-line declarations are on their own line -->
+        <exclude name="Squiz.ControlStructures.ControlSignature.SpaceAfterCloseParenthesis"/>
+        <exclude name="Squiz.ControlStructures.ControlSignature.SpaceAfterCloseBrace"/>
+        <exclude name="Squiz.ControlStructures.ControlSignature.SpaceAfterKeyword"/>
+        <exclude name="Squiz.Functions.MultiLineFunctionDeclaration.BraceOnNewLine"/>
+        <exclude name="Squiz.Functions.MultiLineFunctionDeclaration.NewlineBeforeOpenBrace"/>
+    </rule>
+
+    <!-- Scripts in bin/ declare symbols and execute logic by nature -->
+    <rule ref="PSR1.Files.SideEffects">
+        <exclude-pattern>bin/*</exclude-pattern>
+    </rule>
+
+    <!-- Indentation with tabs instead of spaces -->
+    <rule ref="Generic.WhiteSpace.DisallowSpaceIndent"/>
+    <rule ref="Generic.WhiteSpace.ScopeIndent">
+        <properties>
+            <property name="indent" value="4"/>
+            <property name="tabIndent" value="true"/>
+        </properties>
+    </rule>
+
+    <!-- One space inside of parentheses: foo( $bar ), function foo( string $bar ), if ( $foo ) -->
+    <rule ref="PSR2.Methods.FunctionCallSignature">
+        <properties>
+            <property name="requiredSpacesAfterOpen" value="1"/>
+            <property name="requiredSpacesBeforeClose" value="1"/>
+        </properties>
+    </rule>
+    <rule ref="Squiz.Functions.FunctionDeclarationArgumentSpacing">
+        <properties>
+            <property name="requiredSpacesAfterOpen" value="1"/>
+            <property name="requiredSpacesBeforeClose" value="1"/>
+        </properties>
+    </rule>
+    <rule ref="PSR2.ControlStructures.ControlStructureSpacing">
+        <properties>
+            <property name="requiredSpacesAfterOpen" value="1"/>
+            <property name="requiredSpacesBeforeClose" value="1"/>
+        </properties>
+    </rule>
+</ruleset>

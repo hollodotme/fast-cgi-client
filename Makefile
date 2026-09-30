@@ -106,8 +106,20 @@ phpstan-php-8.5:
 	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php85 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.5.neon
 .PHONY: phpstan-php-8.5
 
+## Check the coding standard with PHP_CodeSniffer
+phpcs:
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
+	php /repo/vendor/bin/phpcs
+.PHONY: phpcs
+
+## Fix violations of the coding standard with PHP Code Beautifier and Fixer
+phpcbf:
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
+	php /repo/vendor/bin/phpcbf
+.PHONY: phpcbf
+
 ## Run all tests on all PHP versions
-tests: composer-validate phpstan test-php-8.0 test-php-8.1 test-php-8.2 test-php-8.3 test-php-8.4 test-php-8.5 dcdown
+tests: composer-validate phpcs phpstan test-php-8.0 test-php-8.1 test-php-8.2 test-php-8.3 test-php-8.4 test-php-8.5 dcdown
 .PHONY: tests
 
 INTEGRATION_WORKER_DIR = ./tests/Integration/Workers

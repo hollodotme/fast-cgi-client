@@ -16,13 +16,13 @@ final class ResponseTest extends TestCase
 	public function testCanGetHeaders() : void
 	{
 		$output = "X-Powered-By: PHP/7.3.0\r\n"
-		          . "X-Custom: Header\r\n"
-		          . "Set-Cookie: yummy_cookie=choco\r\n"
-		          . "Set-Cookie: tasty_cookie=strawberry\r\n"
-		          . "Set-cookie: delicious_cookie=cherry\r\n"
-		          . "Content-type: text/html; charset=UTF-8\r\n"
-		          . "\r\n"
-		          . 'unit';
+				  . "X-Custom: Header\r\n"
+				  . "Set-Cookie: yummy_cookie=choco\r\n"
+				  . "Set-Cookie: tasty_cookie=strawberry\r\n"
+				  . "Set-cookie: delicious_cookie=cherry\r\n"
+				  . "Content-type: text/html; charset=UTF-8\r\n"
+				  . "\r\n"
+				  . 'unit';
 
 		$error    = '';
 		$duration = 0.54321;
@@ -94,11 +94,11 @@ final class ResponseTest extends TestCase
 	public function testCanGetBody() : void
 	{
 		$output   = "X-Powered-By: PHP/7.1.0\r\n"
-		            . "X-Custom: Header\r\n"
-		            . "Content-type: text/html; charset=UTF-8\r\n"
-		            . "\r\n"
-		            . "unit\r\n"
-		            . 'test';
+					. "X-Custom: Header\r\n"
+					. "Content-type: text/html; charset=UTF-8\r\n"
+					. "\r\n"
+					. "unit\r\n"
+					. 'test';
 		$error    = '';
 		$duration = 0.54321;
 		$response = new Response( $output, $error, $duration );
@@ -115,11 +115,11 @@ final class ResponseTest extends TestCase
 	public function testCanGetOutput() : void
 	{
 		$output   = "X-Powered-By: PHP/7.1.0\r\n"
-		            . "X-Custom: Header\r\n"
-		            . "Content-type: text/html; charset=UTF-8\r\n"
-		            . "\r\n"
-		            . "unit\r\n"
-		            . 'test';
+					. "X-Custom: Header\r\n"
+					. "Content-type: text/html; charset=UTF-8\r\n"
+					. "\r\n"
+					. "unit\r\n"
+					. 'test';
 		$error    = '';
 		$duration = 0.54321;
 		$response = new Response( $output, $error, $duration );
@@ -135,11 +135,11 @@ final class ResponseTest extends TestCase
 	public function testCanGetError() : void
 	{
 		$output   = "Status: 404 Not Found\r\n"
-		            . "X-Powered-By: PHP/7.1.0\r\n"
-		            . "X-Custom: Header\r\n"
-		            . "Content-type: text/html; charset=UTF-8\r\n"
-		            . "\r\n"
-		            . 'File not found.';
+					. "X-Powered-By: PHP/7.1.0\r\n"
+					. "X-Custom: Header\r\n"
+					. "Content-type: text/html; charset=UTF-8\r\n"
+					. "\r\n"
+					. 'File not found.';
 		$error    = 'Primary script unknown';
 		$duration = 0.54321;
 		$response = new Response( $output, $error, $duration );
