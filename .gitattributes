@@ -7,5 +7,6 @@ bin/ export-ignore
 tests/ export-ignore
 Makefile export-ignore
 CHANGELOG.md export-ignore
+docs/ export-ignore
 docker-compose.yml export-ignore
 phpstan.neon export-ignore

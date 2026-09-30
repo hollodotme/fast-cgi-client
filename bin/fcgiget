@@ -84,7 +84,7 @@ else
 	echo "Call: {$uri} on {$host}:{$port}\n\n";
 }
 
-$request = new GetRequest( $url['path'], '' );
+$request = new GetRequest( $url['path'] );
 $request->addCustomVars(
 	[
 		'SCRIPT_NAME'  => $req,
