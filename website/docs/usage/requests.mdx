@@ -3,6 +3,8 @@ title: Requests
 sidebar_position: 4
 ---
 
+import Animation from '@site/src/components/Animation';
+
 Requests are defined by the following interface:
 
 ```php
@@ -78,7 +80,7 @@ The abstract request class defines several default values which you can optional
 | SERVER_NAME       | localhost                         |                                                                                         |
 | SERVER_PROTOCOL   | HTTP/1.1                          | You can use the public class constants in `hollodotme\FastCGI\Constants\ServerProtocol` |
 | CONTENT_TYPE      | application/x-www-form-urlencoded | Is set to the content type of the request content, if the request has one               |
-| REQUEST_URI       | <empty string>                    |                                                                                         |
+| REQUEST_URI       | (empty string)                    |                                                                                         |
 | CUSTOM_VARS       | empty array                       | You can use the methods `setCustomVar`, `addCustomVars` to add own key-value pairs      |
 
 Each of these values has a setter in the abstract request class: `setServerSoftware()`, `setRemoteAddress()`,
@@ -92,6 +94,13 @@ such a parameter and closes the connection. The client then throws a `ReadFailed
 
 **Please note:** `setContent()` overwrites the content type of the request. If you need a content type that differs
 from the one of the request content, call `setContentType()` after the content was set.
+
+### Under the hood: FastCGI records
+
+You never deal with the FastCGI protocol yourself, but it helps to know how a request travels to PHP-FPM:
+as a sequence of records with at most 65,535 bytes of content each. Change the size of the body to see how it is split:
+
+<Animation scene="records" />
 
 ### Query parameters
 

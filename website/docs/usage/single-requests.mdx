@@ -226,3 +226,10 @@ Please note:
   because it may already have been processed by the target script.
 
 ---
+
+### See it in action
+
+The client reuses idle sockets and replaces sockets that PHP-FPM closed. Compare what happens when writing a request
+fails with `sendRequest()` and with `tryRequest()`:
+
+<Animation scene="socketReuse" />

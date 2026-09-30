@@ -100,7 +100,9 @@ while ($client->hasUnhandledResponses())                 //@poll
       )
       .show('send');
 
-    const requests = runtimes.map((runtime, index) => timeline.send(SOCKET_IDS[index], runtime));
+    const requests = runtimes.map((runtime, index) =>
+      timeline.send(timeline.lane(`Request #${index + 1}`), SOCKET_IDS[index], runtime),
+    );
     timeline.print(`Sent requests with IDs: ${SOCKET_IDS.join(', ')}\n`);
 
     if (settings.mode === 'ordered') {
@@ -138,7 +140,7 @@ function readInOrder(timeline: TimelineBuilder, requests: Request[]): void {
     }
 
     timeline.say(`Your script reads and prints the response of request #${request.number}.`).show('read');
-    timeline.read(request, `${request.number}\n`).show('wait');
+    timeline.read(request, `${request.number}\n`).close(request.lane, 'socket closed').show('wait');
   }
 }
 
@@ -170,6 +172,7 @@ function readWhenReady(timeline: TimelineBuilder, requests: Request[]): void {
         )
         .show('read')
         .read(request, `${request.number}\n`)
+        .close(request.lane, 'socket closed')
         .show('poll');
     }
 

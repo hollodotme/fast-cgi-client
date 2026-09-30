@@ -12,9 +12,9 @@ import {
 } from 'motion/react';
 import CodeBlock from '@theme/CodeBlock';
 import {defaultSettings, type Scene, type Settings} from './scene';
-import {highlightMetastring, outputAt, spanAt, stepsOf} from './timeline';
+import {captionAt, codeAt, highlightMetastring, outputAt, stepsOf} from './timeline';
 import Stage from './Stage';
-import Gantt, {legend} from './Gantt';
+import Gantt, {legendOf} from './Gantt';
 import styles from './styles.module.css';
 
 const SPEEDS = [0.5, 1, 2];
@@ -44,7 +44,7 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
   const container = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const inView = useInView(stage, {once: true, amount: 0.8});
-  const [narrow, setNarrow] = useState(false);
+  const [compact, setCompact] = useState(false);
 
   // Switch to the compact layout of stage and chart on narrow screens
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
     if (element === null) {
       return undefined;
     }
-    const observer = new ResizeObserver(([entry]) => setNarrow(entry.contentRect.width < 600));
+    const observer = new ResizeObserver(([entry]) => setCompact(entry.contentRect.width < 600));
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
@@ -109,17 +109,12 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
     setPlaying(!reduceMotion);
   };
 
-  const caption = spanAt(timeline.captions, time)?.value ?? '';
+  const caption = captionAt(timeline, time);
   const stepNumber = steps.filter((step) => step <= time).length;
-  const highlight = highlightMetastring(code, spanAt(timeline.code, time)?.value ?? []);
+  const highlight = highlightMetastring(code, codeAt(timeline, time));
   const output = outputAt(timeline, time);
-  const kinds = new Set([...timeline.activities.map((span) => span.value), 'transfer', 'running']);
-  if (timeline.requests.some((request) => request.readAt > request.returnAt + 0.01)) {
-    kinds.add('ready');
-  }
-  if (kinds.has('setup') || kinds.has('send') || kinds.has('read')) {
-    kinds.add('work');
-  }
+  const legend = useMemo(() => legendOf(timeline), [timeline]);
+  const filename = typeof scene.filename === 'function' ? scene.filename(settings) : scene.filename;
 
   return (
     <div ref={container} className={styles.player}>
@@ -140,7 +135,7 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
       </p>
 
       <div ref={stage}>
-        <Stage timeline={timeline} time={time} summary={scene.summary} narrow={narrow} />
+        <Stage timeline={timeline} time={time} summary={scene.summary} compact={compact} />
       </div>
 
       <div className={styles.controls}>
@@ -184,15 +179,13 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
         </select>
       </div>
 
-      <Gantt timeline={timeline} time={time} onSeek={(target) => seek(target)} narrow={narrow} />
+      <Gantt timeline={timeline} time={time} onSeek={(target) => seek(target)} compact={compact} />
       <ul className={styles.legend}>
-        {legend
-          .filter((entry) => kinds.has(entry.kind))
-          .map((entry) => (
-            <li key={entry.kind} data-kind={entry.kind}>
-              {entry.label}
-            </li>
-          ))}
+        {legend.map((entry) => (
+          <li key={entry.kind} data-kind={entry.kind}>
+            {entry.label}
+          </li>
+        ))}
       </ul>
 
       {(scene.sliders.length > 0 || scene.choices.length > 0) && (
@@ -233,11 +226,11 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
       )}
 
       <div className={styles.panels}>
-        <CodeBlock language="php" title={scene.filename} metastring={highlight} showLineNumbers>
+        <CodeBlock language={scene.language?.(settings) ?? 'php'} title={filename} metastring={highlight} showLineNumbers>
           {code.map((line) => line.text).join('\n')}
         </CodeBlock>
         <div className={styles.console}>
-          <div className={styles.consoleTitle}>$ php {scene.filename}</div>
+          <div className={styles.consoleTitle}>{scene.outputTitle?.(settings) ?? `$ php ${filename}`}</div>
           <pre className={styles.consoleOutput}>
             {output}
             <span className={styles.cursor} aria-hidden="true">

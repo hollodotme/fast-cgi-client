@@ -5,6 +5,8 @@ slug: /
 description: A dependency-free PHP client that talks the FastCGI protocol to PHP-FPM, synchronously or asynchronously.
 ---
 
+import Animation from '@site/src/components/Animation';
+
 # FastCGI Client
 
 A PHP FastCGI client to send requests (a)synchronously to PHP-FPM, or any other FastCGI server, using
@@ -14,6 +16,13 @@ This library is based on the work
 of [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](https://github.com/adoy/PHP-FastCGI-Client/)
 and was ported and modernized to latest PHP versions, extended with some features for handling multiple requests (in
 loops) and unit and integration tests as well.
+
+## How it works
+
+PHP-FPM runs PHP scripts for requests it receives via FastCGI. Usually a web server sends these requests.
+With this library, your own PHP script does — compare both:
+
+<Animation scene="fastcgiBasics" />
 
 ## What you can do with it
 

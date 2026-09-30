@@ -25,7 +25,11 @@ export type Scene = {
   /** Describes the scene for screen readers */
   summary: string;
   /** File name shown above the code */
-  filename: string;
+  filename: string | ((settings: Settings) => string);
+  /** Language of the code, default: php */
+  language?: (settings: Settings) => string;
+  /** Title of the output panel, default: the command running the file */
+  outputTitle?: (settings: Settings) => string;
   sliders: Slider[];
   choices: Choice[];
   code: (settings: Settings) => CodeLine[];

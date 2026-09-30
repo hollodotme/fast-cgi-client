@@ -1,5 +1,5 @@
 import type {MouseEvent, ReactNode} from 'react';
-import {READ, type Span, type Timeline} from './timeline';
+import {ganttRows, type GanttKind, type Timeline} from './timeline';
 import styles from './styles.module.css';
 
 const ROW = 22;
@@ -10,38 +10,21 @@ type Props = {
   timeline: Timeline;
   time: number;
   onSeek: (time: number) => void;
-  narrow: boolean;
+  compact: boolean;
 };
 
-type Row = {
-  label: string;
-  spans: Span<string>[];
-};
+const shortLabel = (label: string) =>
+  label.replace(/^Your script$/, 'Script').replace(/^Web server$/, 'Server').replace(/^Request /, 'Req. ');
 
-function rowsOf(timeline: Timeline, narrow: boolean): Row[] {
-  return [
-    {label: narrow ? 'Script' : 'Your script', spans: timeline.activities},
-    ...timeline.requests.map((request) => ({
-      label: `${narrow ? 'Req.' : 'Request'} #${request.number}`,
-      spans: [
-        {from: request.sendAt, to: request.arriveAt, value: 'transfer'},
-        {from: request.arriveAt, to: request.finishAt, value: 'running'},
-        {from: request.finishAt, to: request.returnAt, value: 'transfer'},
-        {from: request.returnAt, to: request.readAt, value: 'ready'},
-        {from: request.readAt, to: request.readAt + READ, value: 'read'},
-      ].filter((span) => Number.isFinite(span.to) && span.to > span.from),
-    })),
-  ];
-}
-
-/** A chart of what the client script and each request do over time, with a playhead at the current time */
-export default function Gantt({timeline, time, onSeek, narrow}: Props): ReactNode {
-  const width = narrow ? 440 : 720;
-  const plot = {from: narrow ? 60 : 112, to: width - 12};
-  const rows = rowsOf(timeline, narrow);
+/** A chart of what the client script and each socket do over time, with a playhead at the current time */
+export default function Gantt({timeline, time, onSeek, compact}: Props): ReactNode {
+  const width = compact ? 440 : 720;
+  const plot = {from: compact ? 60 : 112, to: width - 12};
+  const rows = ganttRows(timeline);
   const height = rows.length * (ROW + GAP) + AXIS;
   const x = (at: number) => plot.from + (Math.min(at, timeline.duration) / timeline.duration) * (plot.to - plot.from);
-  const ticks = Array.from({length: Math.floor(timeline.duration) + 1}, (_, second) => second);
+  const tick = timeline.duration > (compact ? 6 : 12) ? 2 : 1;
+  const ticks = Array.from({length: Math.floor(timeline.duration / tick) + 1}, (_, index) => index * tick);
 
   const seek = (event: MouseEvent<SVGSVGElement>) => {
     const box = event.currentTarget.getBoundingClientRect();
@@ -55,13 +38,13 @@ export default function Gantt({timeline, time, onSeek, narrow}: Props): ReactNod
       {rows.map((row, index) => {
         const y = index * (ROW + GAP);
         return (
-          <g key={row.label}>
+          <g key={index}>
             <text className={styles.ganttLabel} x={0} y={y + ROW / 2 + 4}>
-              {row.label}
+              {compact ? shortLabel(row.label) : row.label}
             </text>
             <rect className={styles.ganttTrack} x={plot.from} y={y} width={plot.to - plot.from} height={ROW} rx={4} />
-            {row.spans.map((span) => (
-              <g key={`${span.from}-${span.value}`} data-kind={span.value}>
+            {row.spans.map((span, spanIndex) => (
+              <g key={spanIndex} data-kind={span.value}>
                 <rect className={styles.ganttPlanned} x={x(span.from)} y={y} width={x(span.to) - x(span.from)} height={ROW} />
                 {time > span.from && (
                   <rect
@@ -94,11 +77,22 @@ export default function Gantt({timeline, time, onSeek, narrow}: Props): ReactNod
   );
 }
 
-export const legend: {kind: string; label: string}[] = [
-  {kind: 'work', label: 'your script works'},
-  {kind: 'blocked', label: 'your script waits (blocked)'},
-  {kind: 'poll', label: 'your script polls'},
-  {kind: 'transfer', label: 'request / response on the way'},
-  {kind: 'running', label: 'script.php runs in PHP-FPM'},
-  {kind: 'ready', label: 'response ready, not yet read'},
+const legend: {kinds: GanttKind[]; label: string}[] = [
+  {kinds: ['setup', 'send', 'work', 'read'], label: '%s works'},
+  {kinds: ['blocked'], label: '%s waits (blocked)'},
+  {kinds: ['poll'], label: '%s polls'},
+  {kinds: ['callback'], label: 'a callback runs'},
+  {kinds: ['transfer'], label: 'on the way over the socket'},
+  {kinds: ['running'], label: 'the script runs in PHP-FPM'},
+  {kinds: ['ready'], label: 'response ready, not yet read'},
+  {kinds: ['error', 'failed'], label: 'failure'},
 ];
+
+/** The entries of the legend for the kinds of spans in the chart */
+export function legendOf(timeline: Timeline): {kind: GanttKind; label: string}[] {
+  const kinds = new Set(ganttRows(timeline).flatMap((row) => row.spans.map((span) => span.value)));
+  const subject = timeline.client.short.toLowerCase();
+  return legend
+    .filter((entry) => entry.kinds.some((kind) => kinds.has(kind)))
+    .map((entry) => ({kind: entry.kinds[0], label: entry.label.replace('%s', subject)}));
+}

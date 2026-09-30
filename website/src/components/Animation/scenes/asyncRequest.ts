@@ -46,7 +46,7 @@ echo $response->getBody();                                      //@read
     timeline
       .say('sendAsyncRequest() writes the request to a socket and returns the socket ID right away — it does not wait.')
       .show('send');
-    const request = timeline.send(SOCKET_ID, runtime);
+    const request = timeline.send(timeline.lane('Request #1'), SOCKET_ID, runtime);
     timeline.print(`Request sent, got ID: ${SOCKET_ID}\n`);
 
     timeline
