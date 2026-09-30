@@ -1,0 +1,20 @@
+name: Compatible with Rust FastCGI server
+
+on:
+  push:
+    branches:
+      - master
+      - development
+
+  pull_request:
+
+  schedule:
+    - cron: "13 7 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  compatibility:
+    uses: ./.github/workflows/compatibility.yml
+    with:
+      server: rust
