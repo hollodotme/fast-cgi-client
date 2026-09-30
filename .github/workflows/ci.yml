@@ -45,6 +45,9 @@ jobs:
         run: make -s "phpstan-php-${{ matrix.php }}"
 
   tests:
+    needs:
+      - static-analysis
+
     runs-on: ubuntu-latest
     strategy:
       matrix:
