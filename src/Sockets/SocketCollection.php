@@ -18,11 +18,6 @@ final class SocketCollection implements Countable
 	private array $sockets = [];
 
 	/**
-	 * @param ConfiguresSocketConnection $connection
-	 * @param EncodesPacket              $packetEncoder
-	 * @param EncodesNameValuePair       $nameValuePairEncoder
-	 *
-	 * @return Socket
 	 * @throws Exception
 	 * @throws WriteFailedException
 	 */
@@ -55,9 +50,6 @@ final class SocketCollection implements Countable
 	}
 
 	/**
-	 * @param int $socketId
-	 *
-	 * @return Socket
 	 * @throws ReadFailedException
 	 */
 	public function getById( int $socketId ) : Socket
@@ -88,7 +80,6 @@ final class SocketCollection implements Countable
 	/**
 	 * @param resource $resource
 	 *
-	 * @return Socket
 	 * @throws ReadFailedException
 	 */
 	public function getByResource( $resource ) : Socket
@@ -104,8 +95,6 @@ final class SocketCollection implements Countable
 	}
 
 	/**
-	 * @param int $socketId
-	 *
 	 * @throws ReadFailedException
 	 */
 	private function guardSocketExists( int $socketId ) : void

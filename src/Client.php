@@ -223,7 +223,7 @@ class Client
 			{
 				yield $this->sockets->getById( $socketId )->fetchResponse( $timeoutMs );
 			}
-			catch ( Throwable $e )
+			catch ( Throwable )
 			{
 				# Skip unknown socket ids
 			}

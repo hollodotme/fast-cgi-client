@@ -550,23 +550,14 @@ final class Socket
 	 */
 	private function guardRequestCompleted( int $flag ) : void
 	{
-		switch ( $flag )
+		match ( $flag )
 		{
-			case self::REQUEST_COMPLETE:
-				return;
-
-			case self::CANT_MPX_CONN:
-				throw new WriteFailedException( 'This app can\'t multiplex [CANT_MPX_CONN]' );
-
-			case self::OVERLOADED:
-				throw new WriteFailedException( 'New request rejected; too busy [OVERLOADED]' );
-
-			case self::UNKNOWN_ROLE:
-				throw new WriteFailedException( 'Role value not known [UNKNOWN_ROLE]' );
-
-			default:
-				throw new ReadFailedException( 'Unknown content.' );
-		}
+			self::REQUEST_COMPLETE => null,
+			self::CANT_MPX_CONN    => throw new WriteFailedException( 'This app can\'t multiplex [CANT_MPX_CONN]' ),
+			self::OVERLOADED       => throw new WriteFailedException( 'New request rejected; too busy [OVERLOADED]' ),
+			self::UNKNOWN_ROLE     => throw new WriteFailedException( 'Role value not known [UNKNOWN_ROLE]' ),
+			default                => throw new ReadFailedException( 'Unknown content.' ),
+		};
 	}
 
 	private function disconnect() : void
