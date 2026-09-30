@@ -65,7 +65,9 @@ This file covers the 4.x releases. For previous major versions see:
 * Idle sockets that were closed by the peer, e.g. because their php-fpm child process was terminated, are detected
   and replaced before a request is sent. - [#84]
 * Use of PHP 8.0 language features like constructor property promotion, `match` and `mixed`. - [#85]
-* PHPStan (level 8) is part of the test pipeline.
+* PHPStan (level 8) is part of the test pipeline and analyses the code on and for each supported PHP version.
+* Values passed to `chr()` when encoding packets are limited to one byte, because values out of this range are
+  deprecated in PHP 8.5.
 * A single PHPUnit version is used for all supported PHP versions.
 * Integration tests do not depend on fixed waiting times anymore. - [#86]
 * Documentation and changelog are split by major version. - [#87]

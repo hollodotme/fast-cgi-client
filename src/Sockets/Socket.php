@@ -457,7 +457,7 @@ final class Socket
 				break;
 			}
 		}
-		while ( null !== $packet );
+		while ( true );
 
 		$this->handleNullPacket( $packet );
 		$character = isset( $packet['content'] ) ? ((string)$packet['content'])[4] : '';

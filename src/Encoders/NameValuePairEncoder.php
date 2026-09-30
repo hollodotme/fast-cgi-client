@@ -41,7 +41,7 @@ final class NameValuePairEncoder implements EncodesNameValuePair
 		else
 		{
 			/* nameLengthB3 & nameLengthB2 & nameLengthB1 & nameLengthB0 */
-			$nameValuePair = chr( ($nameLength >> 24) | 0x80 )
+			$nameValuePair = chr( (($nameLength >> 24) & 0x7F) | 0x80 )
 			                 . chr( ($nameLength >> 16) & 0xFF )
 			                 . chr( ($nameLength >> 8) & 0xFF )
 			                 . chr( $nameLength & 0xFF );
@@ -54,7 +54,7 @@ final class NameValuePairEncoder implements EncodesNameValuePair
 		else
 		{
 			/* valueLengthB3 & valueLengthB2 & valueLengthB1 & valueLengthB0 */
-			$nameValuePair .= chr( ($valueLength >> 24) | 0x80 )
+			$nameValuePair .= chr( (($valueLength >> 24) & 0x7F) | 0x80 )
 			                  . chr( ($valueLength >> 16) & 0xFF )
 			                  . chr( ($valueLength >> 8) & 0xFF )
 			                  . chr( $valueLength & 0xFF );

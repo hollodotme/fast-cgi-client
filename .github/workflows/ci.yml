@@ -17,9 +17,17 @@ on:
 jobs:
   static-analysis:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        php:
+          - "8.0"
+          - "8.1"
+          - "8.2"
+          - "8.3"
+          - "8.4"
+          - "8.5"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
 
       - name: Pull docker services
         run: make dcpull
@@ -33,10 +41,13 @@ jobs:
       - name: Composer update
         run: make composer-update
 
-      - name: Run PHPStan
-        run: vendor/bin/phpstan
+      - name: Run PHPStan on PHP ${{ matrix.php }}
+        run: make -s "phpstan-php-${{ matrix.php }}"
 
   tests:
+    needs:
+      - static-analysis
+
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -48,7 +59,7 @@ jobs:
           - "8.4"
           - "8.5"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
 
       - name: Pull docker services
         run: make dcpull
@@ -80,7 +91,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
 
       - name: Extract version
         id: data
@@ -92,10 +103,10 @@ jobs:
           [[ "${{ github.ref }}" == "refs/tags/"* ]] && RELEASE_VERSION=$(echo $RELEASE_VERSION | sed -e 's/^v//')
 
           echo $RELEASE_VERSION
-          echo "##[set-output name=version;]$RELEASE_VERSION"
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           name: Version ${{ steps.data.outputs.version }}
