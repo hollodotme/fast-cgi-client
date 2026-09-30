@@ -98,6 +98,7 @@ This file covers the 4.x releases. For previous major versions see:
   instead of a FastCGI server. A `ReadFailedException` is thrown now. - [#78]
 * Reading a response that was not completed by the server timed out after twice the read/write timeout.
 * Packet headers are read completely before they are decoded, also if they arrive in several parts.
+* `NameValuePairEncoder#decodePairs()` decoded names and values of 16 MiB and more with a wrong length.
 * The first two lines of a response were lost, if it did not start with a header.
 * Headers and body of a response are separated independently of the line endings of the platform the client runs on.
 * Request parameters longer than 65535 bytes in total corrupted the request, because the length of a record was cut
