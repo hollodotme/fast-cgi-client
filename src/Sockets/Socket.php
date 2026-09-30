@@ -221,7 +221,26 @@ final class Socket
 			return false;
 		}
 
-		return !($metaData['timed_out'] || $metaData['unread_bytes'] || $metaData['eof']);
+		if ( $metaData['timed_out'] || $metaData['unread_bytes'] || $metaData['eof'] )
+		{
+			return false;
+		}
+
+		# There is nothing to read from an idle socket, unless the connection was closed by the peer
+		return !($this->isIdle() && $this->isReadable());
+	}
+
+	private function isReadable() : bool
+	{
+		if ( !is_resource( $this->resource ) )
+		{
+			return false;
+		}
+
+		$reads  = [$this->resource];
+		$writes = $excepts = null;
+
+		return (bool)@stream_select( $reads, $writes, $excepts, 0, 0 );
 	}
 
 	public function isBusy() : bool
