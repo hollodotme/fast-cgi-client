@@ -27,4 +27,9 @@ interface ProvidesResponseData
 	public function getError() : string;
 
 	public function getDuration() : float;
+
+	/**
+	 * Returns the status code of the Status header, or 200 if there is no Status header.
+	 */
+	public function getStatusCode() : int;
 }

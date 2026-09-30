@@ -41,6 +41,8 @@ This file covers the 4.x releases. For previous major versions see:
   of the `ComposesRequestContent` interface.
 * The interface `ConfiguresSocketConnection` has the new method `getStreamSelectTimeout() : int`, which must be added
   to own implementations of this interface. - [#82]
+* The interface `ProvidesResponseData` has the new method `getStatusCode() : int`, which must be added to own
+  implementations of this interface.
 * The public constant `Socket::STREAM_SELECT_USEC` was removed in favour of the configurable stream select timeout
   of the socket connections. - [#82]
 * Properties and some method parameters have native type declarations now, e.g. `AbstractRequest#setCustomVar()`
@@ -49,6 +51,7 @@ This file covers the 4.x releases. For previous major versions see:
 
 ### Added
 
+* Method `Response#getStatusCode()`, which returns the status code of the `Status` header, or 200 if there is none.
 * Request content composer `PlainText` for content type `text/plain`.
 * Configurable stream select timeout as third timeout of the socket connections `NetworkSocket` and
   `UnixDomainSocket`. It defines how long the client waits when checking for responses. The default is
@@ -88,6 +91,10 @@ This file covers the 4.x releases. For previous major versions see:
   instead of a FastCGI server. A `ReadFailedException` is thrown now. - [#78]
 * Reading a response that was not completed by the server timed out after twice the read/write timeout.
 * Packet headers are read completely before they are decoded, also if they arrive in several parts.
+* The first two lines of a response body were lost, if the response had no headers.
+* Responses that start with a HTTP status line like `HTTP/1.1 200 OK` had no headers, and their body was wrong.
+  The status line is available as `Status` header now.
+* Headers and body of a response are separated independently of the line endings of the platform the client runs on.
 
 ### Removed
 

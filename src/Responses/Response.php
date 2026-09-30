@@ -3,10 +3,15 @@
 namespace hollodotme\FastCGI\Responses;
 
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
-use function array_slice;
+use function count;
 use function implode;
+use function preg_match;
+use function preg_split;
+use function strlen;
 use function strtolower;
+use function substr;
 use function trim;
+use const PREG_OFFSET_CAPTURE;
 
 /**
  * Class Response
@@ -14,7 +19,17 @@ use function trim;
  */
 class Response implements ProvidesResponseData
 {
-	private const HEADER_PATTERN = '#^([^\:]+):(.*)$#';
+	private const HEADER_PATTERN        = '#^([^:\s][^:]*):(.*)$#';
+
+	private const STATUS_LINE_PATTERN   = '#^HTTP/\d+(?:\.\d+)?\s+(\d{3})(?:\s+(.*))?$#';
+
+	private const STATUS_CODE_PATTERN   = '#^\s*(\d{3})(?:\s|$)#';
+
+	private const LINE_BREAK_PATTERN    = '#\r?\n#';
+
+	private const BLANK_LINE_PATTERN    = '#\r?\n\r?\n#';
+
+	private const DEFAULT_STATUS_CODE   = 200;
 
 	/** @var array<string, array<int, string>> */
 	private array $normalizedHeaders = [];
@@ -29,28 +44,76 @@ class Response implements ProvidesResponseData
 		$this->parseHeadersAndBody();
 	}
 
+	/**
+	 * The headers are separated from the body by the first blank line.
+	 * If the output does not start with a block of headers, the whole output is the body.
+	 */
 	private function parseHeadersAndBody() : void
 	{
-		$lines  = explode( PHP_EOL, $this->output );
-		$offset = 0;
+		$this->body = $this->output;
 
-		foreach ( $lines as $i => $line )
+		if ( 1 !== preg_match( self::BLANK_LINE_PATTERN, $this->output, $matches, PREG_OFFSET_CAPTURE ) )
 		{
-			$matches = [];
-			if ( !preg_match( self::HEADER_PATTERN, $line, $matches ) )
-			{
-				break;
-			}
+			return;
+		}
 
-			$offset      = $i;
-			$headerKey   = trim( $matches[1] );
-			$headerValue = trim( $matches[2] );
+		$blankLinePosition = $matches[0][1];
+		$headers           = $this->parseHeaderBlock( substr( $this->output, 0, $blankLinePosition ) );
 
+		if ( null === $headers )
+		{
+			return;
+		}
+
+		foreach ( $headers as [$headerKey, $headerValue] )
+		{
 			$this->addRawHeader( $headerKey, $headerValue );
 			$this->addNormalizedHeader( $headerKey, $headerValue );
 		}
 
-		$this->body = implode( PHP_EOL, array_slice( $lines, $offset + 2 ) );
+		$this->body = substr( $this->output, $blankLinePosition + strlen( $matches[0][0] ) );
+	}
+
+	/**
+	 * @return array<int, array{0: string, 1: string}>|null NULL, if the block contains a line that is not a header
+	 */
+	private function parseHeaderBlock( string $headerBlock ) : ?array
+	{
+		$headers = [];
+
+		if ( '' === $headerBlock )
+		{
+			return $headers;
+		}
+
+		foreach ( (array)preg_split( self::LINE_BREAK_PATTERN, $headerBlock ) as $index => $line )
+		{
+			$line = (string)$line;
+
+			# Some FastCGI servers start the response with a HTTP status line instead of a Status header
+			if ( 0 === $index && 1 === preg_match( self::STATUS_LINE_PATTERN, $line, $matches ) )
+			{
+				$headers[] = ['Status', trim( $matches[1] . ' ' . ($matches[2] ?? '') )];
+				continue;
+			}
+
+			# A line starting with whitespace continues the value of the previous header (obsolete line folding)
+			if ( [] !== $headers && ('' !== $line && ($line[0] === ' ' || $line[0] === "\t")) )
+			{
+				$lastIndex                = count( $headers ) - 1;
+				$headers[ $lastIndex ][1] = trim( $headers[ $lastIndex ][1] . ' ' . trim( $line ) );
+				continue;
+			}
+
+			if ( 1 !== preg_match( self::HEADER_PATTERN, $line, $matches ) )
+			{
+				return null;
+			}
+
+			$headers[] = [trim( $matches[1] ), trim( $matches[2] )];
+		}
+
+		return $headers;
 	}
 
 	private function addRawHeader( string $headerKey, string $headerValue ) : void
@@ -112,5 +175,21 @@ class Response implements ProvidesResponseData
 	public function getDuration() : float
 	{
 		return $this->duration;
+	}
+
+	/**
+	 * Returns the status code of the Status header, or 200 if there is no Status header,
+	 * as defined by the CGI specification.
+	 */
+	public function getStatusCode() : int
+	{
+		$status = $this->normalizedHeaders['status'][0] ?? '';
+
+		if ( 1 === preg_match( self::STATUS_CODE_PATTERN, $status, $matches ) )
+		{
+			return (int)$matches[1];
+		}
+
+		return self::DEFAULT_STATUS_CODE;
 	}
 }
