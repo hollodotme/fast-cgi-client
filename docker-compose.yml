@@ -65,5 +65,23 @@ services:
     volumes:
       - ./:/repo
 
+  docs:
+    image: node:24-alpine
+    profiles: [ docs ]
+    working_dir: /repo/website
+    restart: "no"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/repo
+
+  docs-api:
+    build:
+      context: .docker/docs-api
+    profiles: [ docs ]
+    restart: "no"
+    volumes:
+      - ./:/repo
+
 networks:
   fcc_network:

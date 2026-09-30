@@ -1,0 +1,26 @@
+/**
+ * Global styles, infima variables: https://infima.dev
+ */
+
+:root {
+  --ifm-color-primary: #4f5b93;
+  --ifm-color-primary-dark: #475284;
+  --ifm-color-primary-darker: #434e7d;
+  --ifm-color-primary-darkest: #374067;
+  --ifm-color-primary-light: #5864a2;
+  --ifm-color-primary-lighter: #5f6ba7;
+  --ifm-color-primary-lightest: #737eb3;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='dark'] {
+  --ifm-color-primary: #8f98d0;
+  --ifm-color-primary-dark: #7a84c6;
+  --ifm-color-primary-darker: #6f7ac1;
+  --ifm-color-primary-darkest: #505cae;
+  --ifm-color-primary-light: #a4acda;
+  --ifm-color-primary-lighter: #afb6df;
+  --ifm-color-primary-lightest: #d0d4ec;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}

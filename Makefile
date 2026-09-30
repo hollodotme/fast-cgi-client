@@ -229,3 +229,30 @@ test-compatibility-%: dcdown
 	$(COMPATIBILITY_COMPOSE_COMMAND) exec -T $(IMAGE) php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Compatibility $(PHPUNIT_OPTIONS) \
 	|| { $(COMPATIBILITY_COMPOSE_COMMAND) logs fastcgi-server; $(COMPATIBILITY_COMPOSE_COMMAND) down; exit 1; }
 	$(COMPATIBILITY_COMPOSE_COMMAND) down
+
+# The docs containers write into the working copy, so they run with the user and group of the host
+DOCS_RUN_COMMAND = $(DOCKER_COMPOSE_BASE_COMMAND) run --rm --user "$(shell id -u):$(shell id -g)" -e HOME=/tmp -e NPM_CONFIG_UPDATE_NOTIFIER=false
+
+## Install the dependencies of the documentation website
+docs-install:
+	$(DOCS_RUN_COMMAND) docs npm ci --no-audit --no-fund
+.PHONY: docs-install
+
+# In a git worktree, .git refers to the git directory of the main working copy, which is mounted at the same path
+GIT_COMMON_DIR = $(shell git rev-parse --path-format=absolute --git-common-dir)
+
+## Build the API reference of all major versions with Doctum
+docs-api:
+	$(DOCKER_COMPOSE_BASE_COMMAND) build docs-api
+	$(DOCS_RUN_COMMAND) -v "$(GIT_COMMON_DIR):$(GIT_COMMON_DIR):ro" docs-api sh website/scripts/build-api.sh
+.PHONY: docs-api
+
+## Build the documentation website into website/build
+docs-build: docs-install docs-api
+	$(DOCS_RUN_COMMAND) docs npm run build
+.PHONY: docs-build
+
+## Serve the documentation website with live reload on http://localhost:3000
+docs-serve: docs-install
+	$(DOCS_RUN_COMMAND) --service-ports docs npm run start -- --host 0.0.0.0
+.PHONY: docs-serve
