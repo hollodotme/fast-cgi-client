@@ -6,6 +6,9 @@
   --anim-running: #2f9e44;
   --anim-ready: #1098ad;
   --anim-done: #adb5bd;
+  --anim-callback: #ae3ec9;
+  --anim-error: #e03131;
+  --anim-chunk: #0ca678;
   --anim-surface: var(--ifm-background-surface-color);
   --anim-border: var(--ifm-color-emphasis-300);
   --anim-muted: var(--ifm-color-emphasis-600);
@@ -23,6 +26,9 @@
   --anim-running: #69db7c;
   --anim-ready: #66d9e8;
   --anim-done: #495057;
+  --anim-callback: #e599f7;
+  --anim-error: #ff6b6b;
+  --anim-chunk: #63e6be;
 }
 
 /* Caption */
@@ -95,6 +101,16 @@
   color: var(--anim-poll);
 }
 
+.status[data-activity='callback'],
+.statusDot[data-activity='callback'] {
+  color: var(--anim-callback);
+}
+
+.status[data-activity='failed'],
+.statusDot[data-activity='failed'] {
+  color: var(--anim-error);
+}
+
 .status[data-activity='done'],
 .statusDot[data-activity='done'] {
   color: var(--anim-done);
@@ -122,6 +138,13 @@
 .socketIdle {
   stroke: var(--anim-border);
   stroke-dasharray: 4 6;
+}
+
+.socketClosed {
+  stroke: var(--anim-error);
+  stroke-width: 2;
+  stroke-dasharray: 2 8;
+  opacity: 0.6;
 }
 
 .socketLabel {
@@ -167,6 +190,14 @@
 
 .packetResponse {
   fill: var(--anim-running);
+}
+
+.packetChunk {
+  fill: var(--anim-chunk);
+}
+
+.packetFailed {
+  fill: var(--anim-error);
 }
 
 .packetText {
@@ -306,6 +337,15 @@
   fill: var(--anim-ready);
 }
 
+.gantt [data-kind='callback'] > rect {
+  fill: var(--anim-callback);
+}
+
+.gantt [data-kind='error'] > rect,
+.gantt [data-kind='failed'] > rect {
+  fill: var(--anim-error);
+}
+
 .gantt [data-kind='done'] > rect {
   fill: transparent;
 }
@@ -355,6 +395,14 @@
 
 .legend li[data-kind='ready']::before {
   background: var(--anim-ready);
+}
+
+.legend li[data-kind='callback']::before {
+  background: var(--anim-callback);
+}
+
+.legend li[data-kind='error']::before {
+  background: var(--anim-error);
 }
 
 /* Settings */

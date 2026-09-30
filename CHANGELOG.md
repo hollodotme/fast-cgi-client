@@ -89,7 +89,9 @@ This file covers the 4.x releases. For previous major versions see:
   documentation of all major versions and their API reference. It is built with Docusaurus and Doctum
   (`make docs-serve`, `make docs-build`) and deployed to GitHub Pages. The README gives a short overview.
 * Interactive animations in the documentation show step by step what happens when sending requests synchronously,
-  asynchronously and in parallel, next to the example code and its output.
+  asynchronously and in parallel, with callbacks, pass-through callbacks and retries, how sockets are reused and
+  how a request is sent as FastCGI records — next to the example code and its output.
+* The pass-through callback example prints the output and the error output only if the callback receives them.
 * The development environment uses the `docker compose` plugin instead of the standalone `docker-compose` binary.
 
 ### Fixed

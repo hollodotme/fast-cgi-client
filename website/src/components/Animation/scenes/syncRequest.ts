@@ -36,7 +36,7 @@ echo $response->getBody();                                  //@print
       .do('setup', 0.8);
 
     timeline.say('sendRequest() opens a socket to PHP-FPM and writes the request to it.').show('send');
-    const request = timeline.send(SOCKET_ID, runtime);
+    const request = timeline.send(timeline.lane('Request #1'), SOCKET_ID, runtime);
 
     timeline
       .doUntil('blocked', request.arriveAt)

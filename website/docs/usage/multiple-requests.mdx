@@ -232,6 +232,13 @@ while ( $client->hasUnhandledResponses() )
 1
 ```
 
+### See it in action
+
+`waitForResponses()` calls the response callback of each request as soon as its response is there. Lower the timeout
+to see the failure callback of a request that takes too long:
+
+<Animation scene="callbacks" />
+
 ## Reading output buffer from worker script using pass through callbacks
 
 It may be useful to see the progression of a requested script by having access to the flushed output of that script. The
@@ -275,10 +282,18 @@ use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 $client     = new Client();
 $connection = new NetworkSocket('127.0.0.1', 9000);
 
+# Each call passes either output (STDOUT) or error output (STDERR) of the script
 $passThroughCallback = static function( string $outputBuffer, string $errorBuffer )
 {
-	echo 'Output: ' . $outputBuffer;
-	echo 'Error: ' . $errorBuffer;
+	if ( '' !== $outputBuffer )
+	{
+		echo 'Output: ' . $outputBuffer;
+	}
+
+	if ( '' !== $errorBuffer )
+	{
+		echo 'Error: ' . $errorBuffer;
+	}
 };
 
 $request = new GetRequest('/path/to/target/script.php');
@@ -290,9 +305,9 @@ $client->waitForResponses();
 
 ```
 # prints immediately
-Buffer: Content-type: text/html; charset=UTF-8
+Output: Content-type: text/html; charset=UTF-8
 
-Output: One
+One
 # sleeps 1 sec
 Output: Two
 # sleeps 1 sec
@@ -302,4 +317,8 @@ Error: Oh oh!
 Output: End
 ```
 
-----
+### See it in action
+
+PHP-FPM sends flushed output right away. Compare a pass-through callback with reading the complete response:
+
+<Animation scene="passThrough" />
