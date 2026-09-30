@@ -80,11 +80,14 @@ This file covers the 4.x releases. For previous major versions see:
 * Compatibility with FastCGI servers of other programming languages is checked continuously in a workflow per server,
   independently of the CI workflow (`make test-compatibility`).
 * PHP_CodeSniffer is part of the test pipeline and checks the coding standard, PSR-12 with the adjustments listed
-  in the README (`make phpcs`, `make phpcbf`). - [#75]
+  in the contribution guide (`make phpcs`, `make phpcbf`). - [#75]
 * Integration tests do not depend on fixed waiting times anymore. - [#86]
 * The content of a request is composed twice per request when it is sent, instead of once for every 65535 bytes:
   once for the `CONTENT_LENGTH` parameter and once for the body.
 * Documentation and changelog are split by major version. - [#87]
+* The documentation moved to a website at [fast-cgi-client.hollo.me](https://fast-cgi-client.hollo.me), with the
+  documentation of all major versions and their API reference. It is built with Docusaurus and Doctum
+  (`make docs-serve`, `make docs-build`) and deployed to GitHub Pages. The README gives a short overview.
 * The development environment uses the `docker compose` plugin instead of the standalone `docker-compose` binary.
 
 ### Fixed

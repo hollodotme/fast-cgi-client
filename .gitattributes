@@ -12,3 +12,4 @@ docs/ export-ignore
 docker-compose.yml export-ignore
 phpcs.xml export-ignore
 phpstan.neon export-ignore
+website/ export-ignore

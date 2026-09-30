@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FastCGI Client">
+  <rect width="64" height="64" rx="14" fill="#4f5b93"/>
+  <path d="M14 22h26l-6-6M14 22l0 0" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M50 42H24l6 6" fill="none" stroke="#c9cdf0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="50" cy="22" r="4" fill="#fff"/>
+  <circle cx="14" cy="42" r="4" fill="#c9cdf0"/>
+</svg>
