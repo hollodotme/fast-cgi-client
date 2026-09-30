@@ -119,7 +119,7 @@ phpcbf:
 .PHONY: phpcbf
 
 ## Run all tests on all PHP versions
-tests: composer-validate phpstan test-php-8.0 test-php-8.1 test-php-8.2 test-php-8.3 test-php-8.4 test-php-8.5 dcdown
+tests: composer-validate phpcs phpstan test-php-8.0 test-php-8.1 test-php-8.2 test-php-8.3 test-php-8.4 test-php-8.5 dcdown
 .PHONY: tests
 
 INTEGRATION_WORKER_DIR = ./tests/Integration/Workers

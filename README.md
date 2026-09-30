@@ -1215,7 +1215,7 @@ This requires `docker` with the `docker compose` plugin installed on your machin
 
     make tests
 
-This runs the static analysis and all test suites on PHP 8.0 - 8.5. To run the test suites on a single PHP version use
+This runs the coding standard check, the static analysis and all test suites on PHP 8.0 - 8.5. To run the test suites on a single PHP version use
 one of `make test-php-8.0` ... `make test-php-8.5`.
 
 ## Run static analysis
@@ -1234,6 +1234,17 @@ This checks `src`, `bin` and `tests` with [PHP_CodeSniffer](https://github.com/P
 against the standard configured in [phpcs.xml](./phpcs.xml). Violations that can be fixed automatically are fixed by
 
     make phpcbf
+
+The standard is [PSR-12](https://www.php-fig.org/psr/psr-12/) with these adjustments:
+
+* Tabs are used for indentation.
+* There is one space inside of parentheses: `foo( $bar )`, `if ( $foo )`, `function foo( string $bar )`.
+* Opening braces of control structures are on their own line.
+* The return type is separated from the parameter list by ` : `.
+* `<?php declare(strict_types=1);` is the first line of each file.
+* Imports of classes, functions and constants are not separated by blank lines.
+
+The check is part of `make tests`.
 
 ## Command line tool (for local debugging only)
 

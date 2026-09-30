@@ -15,6 +15,24 @@ on:
     - cron: "7 7 * * *"
 
 jobs:
+  coding-standard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Pull docker services
+        run: make dcpull
+
+      - name: Install tools
+        run: make install-composer
+
+      - name: Composer update
+        run: make composer-update
+
+      - name: Run PHP_CodeSniffer
+        run: make -s phpcs
+
   static-analysis:
     runs-on: ubuntu-latest
     strategy:
@@ -46,6 +64,7 @@ jobs:
 
   tests:
     needs:
+      - coding-standard
       - static-analysis
 
     runs-on: ubuntu-latest
@@ -83,6 +102,7 @@ jobs:
 
   release:
     needs:
+      - coding-standard
       - static-analysis
       - tests
 
