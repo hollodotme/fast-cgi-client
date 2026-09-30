@@ -609,6 +609,62 @@ The abstract request class defines several default values which you can optional
 | REQUEST_URI       | <empty string>                    |                                                                                         |
 | CUSTOM_VARS       | empty array                       | You can use the methods `setCustomVar`, `addCustomVars` to add own key-value pairs      |
 
+#### Query parameters
+
+If the target script expects query parameters (`$_GET`), you can pass them as an array to any request.
+There is no need to compose a query string or to set the `QUERY_STRING` variable on your own.
+
+```php
+<?php declare(strict_types=1);
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\GetRequest;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+$client     = new Client();
+$connection = new NetworkSocket( '127.0.0.1', 9000 );
+
+$request = new GetRequest( '/path/to/target/script.php' );
+$request->setRequestUri( '/some/path' );
+$request->setQueryParams(
+	[
+		'key'  => 'value',
+		'list' => ['one', 'two'],
+	]
+);
+
+$response = $client->sendRequest( $connection, $request );
+```
+
+This example produces the following values at the target script:
+
+```
+# $_GET
+Array
+(
+    [key] => value
+    [list] => Array
+        (
+            [0] => one
+            [1] => two
+        )
+
+)
+
+# $_SERVER['REQUEST_URI']
+/some/path?key=value&list%5B0%5D=one&list%5B1%5D=two
+
+# $_SERVER['QUERY_STRING']
+key=value&list%5B0%5D=one&list%5B1%5D=two
+```
+
+Please note:
+
+* The query parameters are encoded according to [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986).
+* If the request URI already contains a query string, the query parameters are appended to it.
+* Query parameters take precedence over a `QUERY_STRING` that was set as a custom variable.
+* If you don't set query parameters, no `QUERY_STRING` is added and the request URI is sent as it is.
+
 #### Request contents
 
 In order to make the composition of different request content types easier there are classes covering the typical
