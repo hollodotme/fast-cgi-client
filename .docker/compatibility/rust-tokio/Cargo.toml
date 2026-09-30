@@ -1,0 +1,8 @@
+[package]
+name = "fastcgi-server"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["macros", "net", "rt-multi-thread"] }
+tokio-fastcgi = "1.3"
