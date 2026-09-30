@@ -56,6 +56,9 @@ This file covers the 4.x releases. For previous major versions see:
 * Methods `Client#tryRequest()` and `Client#tryAsyncRequest()`, which send a request again on another socket, if
   writing the request to a socket failed. - [#84]
 * Compatibility with PHP 8.2, 8.3, 8.4 and 8.5. All test suites run on PHP 8.0 - 8.5.
+* Validation of received packets according to the FastCGI specification. A `ReadFailedException` is thrown, if a
+  packet has an unsupported protocol version, an unexpected record type, the ID of another request or, in case of
+  an end-request record, an unexpected length. - [#78]
 
 ### Improved
 
@@ -68,6 +71,14 @@ This file covers the 4.x releases. For previous major versions see:
 * Documentation and changelog are split by major version. - [#87]
 * The development environment uses the `docker compose` plugin instead of the standalone `docker-compose` binary.
 
+### Fixed
+
+* Endless loop when the connection was closed before a packet was received completely, e.g. when the process
+  handling the request was terminated while it sent its response, or when the client was connected to a HTTP server
+  instead of a FastCGI server. A `ReadFailedException` is thrown now. - [#78]
+* Reading a response that was not completed by the server timed out after twice the read/write timeout.
+* Packet headers are read completely before they are decoded, also if they arrive in several parts.
+
 ### Removed
 
 * License information from all PHP files. The [LICENSE](./LICENSE) file applies to the whole project. - [#57]
@@ -77,6 +88,8 @@ This file covers the 4.x releases. For previous major versions see:
 [#18]: https://github.com/hollodotme/fast-cgi-client/issues/18
 
 [#57]: https://github.com/hollodotme/fast-cgi-client/issues/57
+
+[#78]: https://github.com/hollodotme/fast-cgi-client/pull/78
 
 [#81]: https://github.com/hollodotme/fast-cgi-client/issues/81
 
