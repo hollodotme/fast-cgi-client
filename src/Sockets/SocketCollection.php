@@ -22,6 +22,8 @@ final class SocketCollection implements Countable
 	/**
 	 * @throws Exception
 	 * @throws WriteFailedException
+	 *
+	 * @phpstan-impure
 	 */
 	public function new(
 		ConfiguresSocketConnection $connection,

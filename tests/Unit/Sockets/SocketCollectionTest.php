@@ -132,7 +132,11 @@ final class SocketCollectionTest extends TestCase
 		$resources = [];
 		$socket->collectResource( $resources );
 
-		$checkSocket = $this->collection->getByResource( reset( $resources ) );
+		$resource = reset( $resources );
+
+		self::assertIsResource( $resource );
+
+		$checkSocket = $this->collection->getByResource( $resource );
 
 		self::assertSame( $checkSocket, $socket );
 	}

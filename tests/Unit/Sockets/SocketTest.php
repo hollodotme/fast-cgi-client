@@ -27,6 +27,7 @@ use RuntimeException;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 use function dirname;
+use function get_resource_type;
 use const PHP_VERSION_ID;
 
 final class SocketTest extends TestCase
@@ -121,7 +122,9 @@ final class SocketTest extends TestCase
 
 		$socket->collectResource( $resources );
 
-		self::assertIsResource( $resources[ $socket->getId() ] );
+		self::assertCount( 1, $resources );
+		self::assertArrayHasKey( $socket->getId(), $resources );
+		self::assertSame( 'stream', get_resource_type( $resources[ $socket->getId() ] ) );
 	}
 
 	/**

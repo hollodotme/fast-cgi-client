@@ -300,13 +300,13 @@ final class MalformedResponsesTest extends TestCase
 		int $version = 1
 	) : string
 	{
-		return chr( $version )
-		       . chr( $type )
+		return chr( $version & 0xFF )
+		       . chr( $type & 0xFF )
 		       . chr( ($requestId >> 8) & 0xFF )
 		       . chr( $requestId & 0xFF )
 		       . chr( ($contentLength >> 8) & 0xFF )
 		       . chr( $contentLength & 0xFF )
-		       . chr( $paddingLength )
+		       . chr( $paddingLength & 0xFF )
 		       . chr( 0 );
 	}
 
