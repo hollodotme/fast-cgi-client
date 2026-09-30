@@ -44,6 +44,12 @@ You can also find slides of my talks about this project on [speakerdeck.com](htt
 
 ---
 
+## Requirements
+
+* PHP >= 8.0
+* PHP extensions `json` and `fileinfo`
+* A FastCGI server to talk to, e.g. php-fpm
+
 ## Installation
 
 ```bash
@@ -325,6 +331,7 @@ Please note:
 
 * Each try uses another socket, because a socket is discarded when writing to it failed.
 * If the last try fails too, its `WriteFailedException` is thrown.
+* The maximum number of tries must be at least 1, otherwise an `InvalidArgumentException` is thrown.
 * Only sending the request is retried. If reading the response fails, the request is not sent again,
   because it may already have been processed by the target script.
 
@@ -528,6 +535,15 @@ while ( $client->hasUnhandledResponses() )
 		$client->handleResponse($socketId, 3000);
 	}
 }
+
+# ... is the same as
+
+while ( $client->hasUnhandledResponses() )
+{
+	$readySocketIds = $client->getSocketIdsHavingResponse();
+	
+	$client->handleResponses(3000, ...$readySocketIds);
+}
 ```
 
 ```
@@ -685,9 +701,16 @@ The abstract request class defines several default values which you can optional
 | SERVER_PORT       | 80                                |                                                                                         |
 | SERVER_NAME       | localhost                         |                                                                                         |
 | SERVER_PROTOCOL   | HTTP/1.1                          | You can use the public class constants in `hollodotme\FastCGI\Constants\ServerProtocol` |
-| CONTENT_TYPE      | application/x-www-form-urlencoded |                                                                                         |
+| CONTENT_TYPE      | application/x-www-form-urlencoded | Is set to the content type of the request content, if the request has one               |
 | REQUEST_URI       | <empty string>                    |                                                                                         |
 | CUSTOM_VARS       | empty array                       | You can use the methods `setCustomVar`, `addCustomVars` to add own key-value pairs      |
+
+Each of these values has a setter in the abstract request class: `setServerSoftware()`, `setRemoteAddress()`,
+`setRemotePort()`, `setServerAddress()`, `setServerPort()`, `setServerName()`, `setServerProtocol()`,
+`setContentType()` and `setRequestUri()`. Custom variables can be removed again with `resetCustomVars()`.
+
+**Please note:** `setContent()` overwrites the content type of the request. If you need a content type that differs
+from the one of the request content, call `setContentType()` after the content was set.
 
 #### Query parameters
 
@@ -1103,6 +1126,28 @@ $response->getError();
 $response->getDuration(); 
 // e.g. 0.0016319751739502
 ```
+
+### Exceptions
+
+All exceptions thrown by the client while connecting, sending requests and reading responses extend
+`hollodotme\FastCGI\Exceptions\FastCGIClientException`, so you can catch them all at once or handle them separately:
+
+| Exception               | Is thrown, if ...                                                                                   |
+|-------------------------|-----------------------------------------------------------------------------------------------------|
+| `ConnectException`      | the connection to the FastCGI server could not be established.                                      |
+| `WriteFailedException`  | the request could not be written to the socket, or the FastCGI server rejected the request, e.g. because it is overloaded. |
+| `ReadFailedException`   | the response could not be read, e.g. because the process handling the request was terminated, or the given socket ID is unknown. |
+| `TimedoutException`     | writing the request or reading the response exceeded the read/write timeout.                        |
+
+The methods deal differently with exceptions that occur while reading a response:
+
+* `sendRequest()`, `tryRequest()` and `readResponse()` throw them.
+* `waitForResponse()`, `waitForResponses()`, `handleResponse()`, `handleResponses()` and `handleReadyResponses()`
+  pass them to the failure callbacks of the request instead of throwing them.
+* `readResponses()` and `readReadyResponses()` skip responses that could not be read.
+
+Invalid arguments are reported with PHP's `InvalidArgumentException`, e.g. if a file for a multipart form-data request
+does not exist. `JsonData` throws a `RuntimeException`, if the data cannot be encoded.
 
 ---
 

@@ -48,9 +48,11 @@ This file covers the 4.x releases. For previous major versions see:
 
 * Request content composer `PlainText` for content type `text/plain`.
 * Configurable stream select timeout as third timeout of the socket connections `NetworkSocket` and
-  `UnixDomainSocket`. It defines how long the client waits when checking for responses (default: 200 ms). - [#82], [#18]
+  `UnixDomainSocket`. It defines how long the client waits when checking for responses. The default is
+  `Defaults::STREAM_SELECT_TIMEOUT` (200 ms), which is the value used in previous versions. - [#82], [#18]
 * Query parameters can be passed as an array to all requests with `AbstractRequest#setQueryParams()`. They are sent
-  as `QUERY_STRING` and appended to the `REQUEST_URI`. - [#83]
+  as `QUERY_STRING` and appended to the `REQUEST_URI`. `AbstractRequest#getQueryParams()` and
+  `AbstractRequest#getQueryString()` return the parameters and the encoded query string. - [#83]
 * Methods `Client#tryRequest()` and `Client#tryAsyncRequest()`, which send a request again on another socket, if
   writing the request to a socket failed. - [#84]
 * Compatibility with PHP 8.2, 8.3, 8.4 and 8.5. All test suites run on PHP 8.0 - 8.5.
@@ -64,6 +66,7 @@ This file covers the 4.x releases. For previous major versions see:
 * A single PHPUnit version is used for all supported PHP versions.
 * Integration tests do not depend on fixed waiting times anymore. - [#86]
 * Documentation and changelog are split by major version. - [#87]
+* The development environment uses the `docker compose` plugin instead of the standalone `docker-compose` binary.
 
 ### Removed
 
