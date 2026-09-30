@@ -21,8 +21,6 @@ class Response implements ProvidesResponseData
 {
 	private const HEADER_PATTERN        = '#^([^:\s][^:]*):(.*)$#';
 
-	private const STATUS_LINE_PATTERN   = '#^HTTP/\d+(?:\.\d+)?\s+(\d{3})(?:\s+(.*))?$#';
-
 	private const STATUS_CODE_PATTERN   = '#^\s*(\d{3})(?:\s|$)#';
 
 	private const LINE_BREAK_PATTERN    = '#\r?\n#';
@@ -86,16 +84,9 @@ class Response implements ProvidesResponseData
 			return $headers;
 		}
 
-		foreach ( (array)preg_split( self::LINE_BREAK_PATTERN, $headerBlock ) as $index => $line )
+		foreach ( (array)preg_split( self::LINE_BREAK_PATTERN, $headerBlock ) as $line )
 		{
 			$line = (string)$line;
-
-			# Some FastCGI servers start the response with a HTTP status line instead of a Status header
-			if ( 0 === $index && 1 === preg_match( self::STATUS_LINE_PATTERN, $line, $matches ) )
-			{
-				$headers[] = ['Status', trim( $matches[1] . ' ' . ($matches[2] ?? '') )];
-				continue;
-			}
 
 			# A line starting with whitespace continues the value of the previous header (obsolete line folding)
 			if ( [] !== $headers && ('' !== $line && ($line[0] === ' ' || $line[0] === "\t")) )

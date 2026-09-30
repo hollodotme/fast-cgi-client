@@ -179,15 +179,11 @@ final class ResponseTest extends TestCase
 				'expectedHeaders' => ['Status' => ['404 Not Found'], 'Content-Type' => ['text/plain']],
 				'expectedBody'    => "Line 1\r\nLine 2",
 			],
+			# The status of a FastCGI response is a Status header, a HTTP status line is not a header
 			'HTTP status line'                      => [
 				'output'          => "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nLine 1\r\nLine 2",
-				'expectedHeaders' => ['Status' => ['404 Not Found'], 'Content-Type' => ['text/plain']],
-				'expectedBody'    => "Line 1\r\nLine 2",
-			],
-			'HTTP status line without reason'       => [
-				'output'          => "HTTP/2 204\r\n\r\n",
-				'expectedHeaders' => ['Status' => ['204']],
-				'expectedBody'    => '',
+				'expectedHeaders' => [],
+				'expectedBody'    => "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nLine 1\r\nLine 2",
 			],
 			'no headers'                            => [
 				'output'          => "Line 1\nLine 2\nLine 3",
@@ -275,7 +271,7 @@ final class ResponseTest extends TestCase
 			],
 			'HTTP status line'                   => [
 				'output'             => "HTTP/1.1 302 Found\r\nLocation: /elsewhere\r\n\r\n",
-				'expectedStatusCode' => 302,
+				'expectedStatusCode' => 200,
 			],
 			'no Status header'                   => [
 				'output'             => "Content-Type: text/plain\r\n\r\nLine 1",
