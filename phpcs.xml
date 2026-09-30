@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         name="hollodotme/fast-cgi-client"
+         xsi:noNamespaceSchemaLocation="vendor/squizlabs/php_codesniffer/phpcs.xsd">
+
+    <description>Coding standard of hollodotme/fast-cgi-client</description>
+
+    <arg name="basepath" value="."/>
+    <arg name="cache" value=".phpcs-cache"/>
+    <arg name="colors"/>
+    <arg name="extensions" value="php"/>
+    <arg value="sp"/>
+
+    <!-- The minimum supported PHP version -->
+    <config name="php_version" value="80000"/>
+
+    <file>src/</file>
+    <file>bin/</file>
+    <file>bin/fcgiget</file>
+    <file>tests/</file>
+
+    <rule ref="PSR12"/>
+</ruleset>

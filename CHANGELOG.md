@@ -72,6 +72,7 @@ This file covers the 4.x releases. For previous major versions see:
 * Values passed to `chr()` when encoding packets are limited to one byte, because values out of this range are
   deprecated in PHP 8.5.
 * A single PHPUnit version is used for all supported PHP versions.
+* PHP_CodeSniffer is part of the toolchain to check the coding standard (`make phpcs`, `make phpcbf`).
 * Integration tests do not depend on fixed waiting times anymore. - [#86]
 * The content of a request is composed once per request when it is sent, instead of once for every 65535 bytes.
 * Documentation and changelog are split by major version. - [#87]

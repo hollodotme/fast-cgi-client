@@ -1,6 +1,7 @@
 .idea/
 /vendor/
 .phpunit.result.cache
+.phpcs-cache
 composer.lock
 .tools/*
 !.gitkeep

@@ -1226,6 +1226,15 @@ This runs PHPStan on and for each PHP version from 8.0 to 8.5. To analyse the co
 `make phpstan-php-8.0` ... `make phpstan-php-8.5`. The PHP version PHPStan analyses for is set in the configuration
 files in [.phpstan](./.phpstan), which include the base configuration [phpstan.neon](./phpstan.neon).
 
+## Check the coding standard
+
+    make phpcs
+
+This checks `src`, `bin` and `tests` with [PHP_CodeSniffer](https://github.com/PHPCSStandards/PHP_CodeSniffer)
+against the standard configured in [phpcs.xml](./phpcs.xml). Violations that can be fixed automatically are fixed by
+
+    make phpcbf
+
 ## Command line tool (for local debugging only)
 
 **Please note:** `bin/fcgiget` is not included and linked to `vendor/bin` via composer anymore since version `v3.1.2`for
