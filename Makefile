@@ -52,19 +52,23 @@ install-composer:
 	curl -L -o "./.tools/composer.phar" "https://getcomposer.org/download/latest-stable/composer.phar"
 .PHONY: install-composer
 
+# Composer cannot detect the version of the package itself, because there is no git in the containers
+COMPOSER_ROOT_VERSION = dev-$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
+COMPOSER_RUN_COMMAND = $(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) -e COMPOSER_ROOT_VERSION=$(COMPOSER_ROOT_VERSION) $(IMAGE)
+
 ## Validate composer config
 composer-validate:
-	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
+	$(COMPOSER_RUN_COMMAND) \
     php /repo/.tools/composer.phar validate
 .PHONY: composer-validate
 
 ## Update composer dependencies
 composer-update: install-composer
-	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
+	$(COMPOSER_RUN_COMMAND) \
     php /repo/.tools/composer.phar update -o -v
 .PHONY: composer-update
 
-PHPSTAN_COMMAND = php /repo/vendor/bin/phpstan analyse --xdebug --memory-limit=1G
+PHPSTAN_COMMAND = php /repo/vendor/bin/phpstan analyse --memory-limit=1G
 
 ## Run PHPStan checks for all PHP versions
 phpstan: phpstan-php-8.0 phpstan-php-8.1 phpstan-php-8.2 phpstan-php-8.3 phpstan-php-8.4 phpstan-php-8.5
