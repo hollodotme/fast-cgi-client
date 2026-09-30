@@ -82,7 +82,7 @@ final class NameValuePairEncoder implements EncodesNameValuePair
 			$nameLength = ord( $data[ $p++ ] );
 			if ( $nameLength >= 128 )
 			{
-				$nameLength &= (0x7F << 24);
+				$nameLength = ($nameLength & 0x7F) << 24;
 				$nameLength |= (ord( $data[ $p++ ] ) << 16);
 				$nameLength |= (ord( $data[ $p++ ] ) << 8);
 				$nameLength |= ord( $data[ $p++ ] );
@@ -91,7 +91,7 @@ final class NameValuePairEncoder implements EncodesNameValuePair
 			$valueLength = ord( $data[ $p++ ] );
 			if ( $valueLength >= 128 )
 			{
-				$valueLength = ($nameLength & 0x7F << 24);
+				$valueLength = ($valueLength & 0x7F) << 24;
 				$valueLength |= (ord( $data[ $p++ ] ) << 16);
 				$valueLength |= (ord( $data[ $p++ ] ) << 8);
 				$valueLength |= ord( $data[ $p++ ] );
