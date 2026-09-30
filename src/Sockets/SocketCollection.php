@@ -9,8 +9,10 @@ use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\Interfaces\EncodesNameValuePair;
 use hollodotme\FastCGI\Interfaces\EncodesPacket;
+use hollodotme\FastCGI\SocketConnections\Defaults;
 use function array_search;
 use function count;
+use function min;
 
 final class SocketCollection implements Countable
 {
@@ -18,11 +20,6 @@ final class SocketCollection implements Countable
 	private array $sockets = [];
 
 	/**
-	 * @param ConfiguresSocketConnection $connection
-	 * @param EncodesPacket              $packetEncoder
-	 * @param EncodesNameValuePair       $nameValuePairEncoder
-	 *
-	 * @return Socket
 	 * @throws Exception
 	 * @throws WriteFailedException
 	 */
@@ -55,9 +52,6 @@ final class SocketCollection implements Countable
 	}
 
 	/**
-	 * @param int $socketId
-	 *
-	 * @return Socket
 	 * @throws ReadFailedException
 	 */
 	public function getById( int $socketId ) : Socket
@@ -88,7 +82,6 @@ final class SocketCollection implements Countable
 	/**
 	 * @param resource $resource
 	 *
-	 * @return Socket
 	 * @throws ReadFailedException
 	 */
 	public function getByResource( $resource ) : Socket
@@ -104,8 +97,6 @@ final class SocketCollection implements Countable
 	}
 
 	/**
-	 * @param int $socketId
-	 *
 	 * @throws ReadFailedException
 	 */
 	private function guardSocketExists( int $socketId ) : void
@@ -173,6 +164,27 @@ final class SocketCollection implements Countable
 		}
 
 		return false;
+	}
+
+	/**
+	 * Returns the smallest stream select timeout of all sockets waiting for a response,
+	 * so that none of them is checked less often than its connection is configured to.
+	 *
+	 * @return int Timeout in milliseconds
+	 */
+	public function getStreamSelectTimeout() : int
+	{
+		$timeouts = [];
+
+		foreach ( $this->sockets as $socket )
+		{
+			if ( $socket->isBusy() )
+			{
+				$timeouts[] = $socket->getStreamSelectTimeout();
+			}
+		}
+
+		return [] === $timeouts ? Defaults::STREAM_SELECT_TIMEOUT : min( $timeouts );
 	}
 
 	/**

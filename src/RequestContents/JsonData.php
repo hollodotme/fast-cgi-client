@@ -9,23 +9,15 @@ use const PHP_INT_MAX;
 
 final class JsonData implements ComposesRequestContent
 {
-	private mixed $data;
-
-	private int $encodingOptions;
-
 	/** @var int<1, max> */
 	private int $encodingDepth;
 
 	/**
-	 * @param mixed       $data
-	 * @param int         $options
 	 * @param int<1, max> $depth
 	 */
-	public function __construct( mixed $data, int $options = 0, int $depth = 512 )
+	public function __construct( private mixed $data, private int $options = 0, int $depth = 512 )
 	{
-		$this->data            = $data;
-		$this->encodingOptions = $options;
-		$this->encodingDepth   = max( 1, min( $depth, PHP_INT_MAX ) );
+		$this->encodingDepth = max( 1, min( $depth, PHP_INT_MAX ) );
 	}
 
 	public function getContentType() : string
@@ -34,12 +26,11 @@ final class JsonData implements ComposesRequestContent
 	}
 
 	/**
-	 * @return string
 	 * @throws RuntimeException
 	 */
 	public function getContent() : string
 	{
-		$json = json_encode( $this->data, $this->encodingOptions, $this->encodingDepth );
+		$json = json_encode( $this->data, $this->options, $this->encodingDepth );
 
 		if ( false === $json )
 		{

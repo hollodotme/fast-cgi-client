@@ -16,8 +16,10 @@ use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Sockets\Socket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
+use InvalidArgumentException;
 use Throwable;
 use function count;
+use function intdiv;
 use function stream_select;
 
 class Client
@@ -36,10 +38,6 @@ class Client
 	}
 
 	/**
-	 * @param ConfiguresSocketConnection $connection
-	 * @param ProvidesRequestData        $request
-	 *
-	 * @return ProvidesResponseData
 	 * @throws Throwable
 	 * @throws TimedoutException
 	 * @throws WriteFailedException
@@ -56,9 +54,6 @@ class Client
 	}
 
 	/**
-	 * @param ConfiguresSocketConnection $connection
-	 * @param ProvidesRequestData        $request
-	 *
 	 * @return int SocketId
 	 *
 	 * @throws TimedoutException
@@ -85,10 +80,67 @@ class Client
 	}
 
 	/**
-	 * @param int      $socketId
-	 * @param int|null $timeoutMs
+	 * Sends the request like sendRequest(), but retries on another socket if writing the request to the socket failed.
+	 * Failures while reading the response are not retried, because the request may already have been processed.
 	 *
-	 * @return ProvidesResponseData
+	 * @param int                        $maxTries Maximum number of attempts to send the request
+	 *
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws ConnectException
+	 * @throws InvalidArgumentException
+	 */
+	public function tryRequest(
+		ConfiguresSocketConnection $connection,
+		ProvidesRequestData $request,
+		int $maxTries = 5
+	) : ProvidesResponseData
+	{
+		$socketId = $this->tryAsyncRequest( $connection, $request, $maxTries );
+
+		return $this->readResponse( $socketId );
+	}
+
+	/**
+	 * Sends the request like sendAsyncRequest(), but retries on another socket if writing the request to the socket failed.
+	 *
+	 * @param int                        $maxTries Maximum number of attempts to send the request
+	 *
+	 * @return int SocketId
+	 *
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws ConnectException
+	 * @throws InvalidArgumentException
+	 */
+	public function tryAsyncRequest(
+		ConfiguresSocketConnection $connection,
+		ProvidesRequestData $request,
+		int $maxTries = 5
+	) : int
+	{
+		if ( $maxTries < 1 )
+		{
+			throw new InvalidArgumentException( 'Maximum number of tries must be at least 1, got: ' . $maxTries );
+		}
+
+		for ( $try = 1; $try < $maxTries; $try++ )
+		{
+			try
+			{
+				return $this->sendAsyncRequest( $connection, $request );
+			}
+			catch ( WriteFailedException )
+			{
+				# The broken socket was removed, the next try uses another one
+			}
+		}
+
+		return $this->sendAsyncRequest( $connection, $request );
+	}
+
+	/**
 	 * @throws Throwable
 	 */
 	public function readResponse( int $socketId, ?int $timeoutMs = null ) : ProvidesResponseData
@@ -106,9 +158,6 @@ class Client
 	}
 
 	/**
-	 * @param int      $socketId
-	 * @param int|null $timeoutMs
-	 *
 	 * @throws ReadFailedException
 	 */
 	public function waitForResponse( int $socketId, ?int $timeoutMs = null ) : void
@@ -126,8 +175,6 @@ class Client
 	}
 
 	/**
-	 * @param int|null $timeoutMs
-	 *
 	 * @throws ReadFailedException
 	 * @throws Throwable
 	 */
@@ -144,10 +191,6 @@ class Client
 		}
 	}
 
-	/**
-	 * @param Socket   $socket
-	 * @param int|null $timeoutMs
-	 */
 	private function fetchResponseAndNotifyCallback( Socket $socket, ?int $timeoutMs = null ) : void
 	{
 		try
@@ -166,18 +209,12 @@ class Client
 		}
 	}
 
-	/**
-	 * @return bool
-	 */
 	public function hasUnhandledResponses() : bool
 	{
 		return $this->sockets->hasBusySockets();
 	}
 
 	/**
-	 * @param int $socketId
-	 *
-	 * @return bool
 	 * @throws ReadFailedException
 	 */
 	public function hasResponse( int $socketId ) : bool
@@ -196,10 +233,17 @@ class Client
 			return [];
 		}
 
-		$reads  = $this->sockets->collectResources();
-		$writes = $excepts = null;
+		$reads     = $this->sockets->collectResources();
+		$writes    = $excepts = null;
+		$timeoutMs = $this->sockets->getStreamSelectTimeout();
 
-		$result = @stream_select( $reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
+		$result = @stream_select(
+			$reads,
+			$writes,
+			$excepts,
+			intdiv( $timeoutMs, 1000 ),
+			($timeoutMs % 1000) * 1000
+		);
 
 		if ( false === $result || 0 === count( $reads ) )
 		{
@@ -210,7 +254,6 @@ class Client
 	}
 
 	/**
-	 * @param int|null $timeoutMs
 	 * @param int      ...$socketIds
 	 *
 	 * @return Generator|ProvidesResponseData[]
@@ -223,7 +266,7 @@ class Client
 			{
 				yield $this->sockets->getById( $socketId )->fetchResponse( $timeoutMs );
 			}
-			catch ( Throwable $e )
+			catch ( Throwable )
 			{
 				# Skip unknown socket ids
 			}
@@ -235,8 +278,6 @@ class Client
 	}
 
 	/**
-	 * @param int|null $timeoutMs
-	 *
 	 * @return Generator|ProvidesResponseData[]
 	 * @throws ReadFailedException
 	 */
@@ -251,9 +292,6 @@ class Client
 	}
 
 	/**
-	 * @param int      $socketId
-	 * @param int|null $timeoutMs
-	 *
 	 * @throws ReadFailedException
 	 */
 	public function handleResponse( int $socketId, ?int $timeoutMs = null ) : void
@@ -265,7 +303,6 @@ class Client
 	}
 
 	/**
-	 * @param int|null $timeoutMs
 	 * @param int      ...$socketIds
 	 *
 	 * @throws ReadFailedException
@@ -279,8 +316,6 @@ class Client
 	}
 
 	/**
-	 * @param int|null $timeoutMs
-	 *
 	 * @throws ReadFailedException
 	 */
 	public function handleReadyResponses( ?int $timeoutMs = null ) : void

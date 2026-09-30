@@ -72,7 +72,8 @@ $connection = new NetworkSocket(
 	'127.0.0.1',    # Hostname
 	9000,           # Port
 	5000,           # Connect timeout in milliseconds (default: 5000)
-	5000            # Read/write timeout in milliseconds (default: 5000)
+	5000,           # Read/write timeout in milliseconds (default: 5000)
+	200             # Stream select timeout in milliseconds (default: 200)
 );
 ```
 
@@ -88,9 +89,39 @@ use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 $connection = new UnixDomainSocket(
 	'/var/run/php/php8.3-fpm.sock',     # Socket path
 	5000,                               # Connect timeout in milliseconds (default: 5000)
-	5000                                # Read/write timeout in milliseconds (default: 5000)
+	5000,                               # Read/write timeout in milliseconds (default: 5000)
+	200                                 # Stream select timeout in milliseconds (default: 200)
 );
 ```
+
+### Stream select timeout
+
+The stream select timeout defines how long the client waits for a response to become available, when you check for
+responses with one of the following methods:
+
+* `Client#hasResponse()`
+* `Client#getSocketIdsHavingResponse()`
+* `Client#readReadyResponses()`
+* `Client#handleReadyResponses()`
+* `Client#waitForResponse()`
+* `Client#waitForResponses()`
+
+The check returns as soon as a response is available, so a higher value does not delay the handling of responses.
+It only reduces the number of iterations (and CPU usage) of a loop like this:
+
+```php
+while ( !$client->hasResponse( $socketId ) )
+{
+	# Do something else here in the meanwhile
+}
+
+$client->handleResponse( $socketId );
+```
+
+If you check multiple sockets at once and their connections have different stream select timeouts, the client waits
+for the smallest timeout of all sockets that are waiting for a response.
+
+A timeout of `0` makes the check return immediately.
 
 ## Usage - single request
 
@@ -258,6 +289,44 @@ while(true)
 # prints
 value
 ```
+
+### Retry sending a request
+
+The client keeps its sockets open and reuses them for subsequent requests to the same connection.
+Sockets that were closed in the meantime, e.g. because their php-fpm child process was terminated, are detected
+and replaced by new ones before a request is sent.
+
+If writing a request to a socket still fails, `sendRequest()` and `sendAsyncRequest()` throw a `WriteFailedException`.
+If you want the client to send the request again on another socket instead, use the following methods:
+
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
+$content    = new UrlEncodedFormData(['key' => 'value']);
+$request    = new PostRequest('/path/to/target/script.php', $content);
+
+# Same as sendRequest(), but tries to send the request up to 5 times (default)
+$response = $client->tryRequest($connection, $request);
+
+# Same as sendAsyncRequest(), but tries to send the request up to 3 times
+$socketId = $client->tryAsyncRequest($connection, $request, 3);
+```
+
+Please note:
+
+* Each try uses another socket, because a socket is discarded when writing to it failed.
+* If the last try fails too, its `WriteFailedException` is thrown.
+* Only sending the request is retried. If reading the response fails, the request is not sent again,
+  because it may already have been processed by the target script.
 
 ---
 
@@ -620,6 +689,62 @@ The abstract request class defines several default values which you can optional
 | REQUEST_URI       | <empty string>                    |                                                                                         |
 | CUSTOM_VARS       | empty array                       | You can use the methods `setCustomVar`, `addCustomVars` to add own key-value pairs      |
 
+#### Query parameters
+
+If the target script expects query parameters (`$_GET`), you can pass them as an array to any request.
+There is no need to compose a query string or to set the `QUERY_STRING` variable on your own.
+
+```php
+<?php declare(strict_types=1);
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\GetRequest;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+$client     = new Client();
+$connection = new NetworkSocket( '127.0.0.1', 9000 );
+
+$request = new GetRequest( '/path/to/target/script.php' );
+$request->setRequestUri( '/some/path' );
+$request->setQueryParams(
+	[
+		'key'  => 'value',
+		'list' => ['one', 'two'],
+	]
+);
+
+$response = $client->sendRequest( $connection, $request );
+```
+
+This example produces the following values at the target script:
+
+```
+# $_GET
+Array
+(
+    [key] => value
+    [list] => Array
+        (
+            [0] => one
+            [1] => two
+        )
+
+)
+
+# $_SERVER['REQUEST_URI']
+/some/path?key=value&list%5B0%5D=one&list%5B1%5D=two
+
+# $_SERVER['QUERY_STRING']
+key=value&list%5B0%5D=one&list%5B1%5D=two
+```
+
+Please note:
+
+* The query parameters are encoded according to [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986).
+* If the request URI already contains a query string, the query parameters are appended to it.
+* Query parameters take precedence over a `QUERY_STRING` that was set as a custom variable.
+* If you don't set query parameters, no `QUERY_STRING` is added and the request URI is sent as it is.
+
 #### Request contents
 
 In order to make the composition of different request content types easier there are classes covering the typical
@@ -709,6 +834,9 @@ Multipart form-data can be used to transfer any binary data as files to the targ
 browser does.
 
 **PLEASE NOTE:** Multipart form-data content type works with POST requests only.
+
+The MIME type of each file is detected using the [fileinfo extension](https://www.php.net/manual/en/book.fileinfo.php),
+which is required by this library. Files whose type cannot be determined are sent as `application/octet-stream`.
 
 ```php
 <?php declare(strict_types=1);

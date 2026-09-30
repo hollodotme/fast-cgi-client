@@ -16,6 +16,7 @@ use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
+use hollodotme\FastCGI\Tests\Traits\Polling;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use InvalidArgumentException;
 use PHPUnit\Framework\AssertionFailedError;
@@ -27,12 +28,14 @@ use RuntimeException;
 use Throwable;
 use function chmod;
 use function dirname;
+use function json_decode;
 use function preg_match;
 use const PHP_VERSION_ID;
 
 final class UnixDomainSocketTest extends TestCase
 {
 	use SocketDataProviding;
+	use Polling;
 
 	private UnixDomainSocket $connection;
 
@@ -189,7 +192,7 @@ final class UnixDomainSocketTest extends TestCase
 
 		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		usleep( 60000 );
+		$this->waitUntil( fn() : bool => $this->client->hasResponse( $socketId ) );
 
 		self::assertTrue( $this->client->hasResponse( $socketId ) );
 		self::assertEquals( [$socketId], $this->client->getSocketIdsHavingResponse() );
@@ -212,7 +215,9 @@ final class UnixDomainSocketTest extends TestCase
 
 		$socketIdTwo = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		usleep( 110000 );
+		$this->waitUntil(
+			fn() : bool => $this->client->hasResponse( $socketIdOne ) && $this->client->hasResponse( $socketIdTwo )
+		);
 
 		$socketIds = [$socketIdOne, $socketIdTwo];
 
@@ -352,8 +357,6 @@ final class UnixDomainSocketTest extends TestCase
 		$socketIds   = [];
 		$socketIds[] = $this->client->sendAsyncRequest( $this->connection, $request );
 		$socketIds[] = 12345;
-
-		sleep( 1 );
 
 		foreach ( $this->client->readResponses( null, ...$socketIds ) as $response )
 		{
@@ -667,6 +670,39 @@ final class UnixDomainSocketTest extends TestCase
 	private function assertMatchesRegExp( string $pattern, string $string, string $message = '' ) : void
 	{
 		self::assertThat( $string, new RegularExpression( $pattern ), $message );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testQueryParamsAreAvailableInTargetScript() : void
+	{
+		$queryParams = [
+			'unit' => 'test',
+			'text' => 'some text & more',
+			'list' => ['a', 'b'],
+			'map'  => ['key' => 'value'],
+		];
+
+		$request = new GetRequest( $this->getWorkerPath( 'queryWorker.php' ) );
+		$request->setRequestUri( '/unit/test/' );
+		$request->setQueryParams( $queryParams );
+
+		$response = $this->client->sendRequest( $this->connection, $request );
+
+		$expectedQueryString = 'unit=test&text=some%20text%20%26%20more&list%5B0%5D=a&list%5B1%5D=b&map%5Bkey%5D=value';
+		$expectedResult      = [
+			'get'         => $queryParams,
+			'requestUri'  => '/unit/test/?' . $expectedQueryString,
+			'queryString' => $expectedQueryString,
+		];
+
+		self::assertSame( $expectedResult, json_decode( $response->getBody(), true ) );
 	}
 
 	/**

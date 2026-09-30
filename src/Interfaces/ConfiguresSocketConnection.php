@@ -14,5 +14,7 @@ interface ConfiguresSocketConnection
 
 	public function getReadWriteTimeout() : int;
 
+	public function getStreamSelectTimeout() : int;
+
 	public function equals( ConfiguresSocketConnection $other ) : bool;
 }

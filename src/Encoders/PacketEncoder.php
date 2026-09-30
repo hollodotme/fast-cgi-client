@@ -31,8 +31,6 @@ final class PacketEncoder implements EncodesPacket
 	}
 
 	/**
-	 * @param string $data
-	 *
 	 * @return array<string, int>
 	 */
 	public function decodeHeader( string $data ) : array
