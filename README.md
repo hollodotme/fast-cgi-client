@@ -790,6 +790,11 @@ $request = new PostRequest( '/path/to/target/script.php' );
 $request->setContent( new JsonData( ['key' => 'value'] ) );
 ```
 
+The content length and the content type are determined from the content object when the request is sent.
+So you can still change the content object after it was passed to the request, e.g. add files to a
+`MultipartFormData` object. A content type that was set with `setContentType()` takes precedence over the content
+type of the content object.
+
 You can create your own request content type composer by implementing the following interface:
 
 [**ComposesRequestContent**](./src/Interfaces/ComposesRequestContent.php)

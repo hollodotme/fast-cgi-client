@@ -361,21 +361,20 @@ final class Socket
 
 		if ( $request->getContent() !== null )
 		{
-			$offset = 0;
+			# The content is composed only once per request
+			$content = $request->getContent()->getContent();
+			$length  = strlen( $content );
+			$offset  = 0;
 			do
 			{
 				$requestPackets .= $this->packetEncoder->encodePacket(
 					self::STDIN,
-					substr(
-						$request->getContent()->getContent(),
-						$offset,
-						self::REQ_MAX_CONTENT_SIZE
-					),
+					substr( $content, $offset, self::REQ_MAX_CONTENT_SIZE ),
 					$this->getRequestId()
 				);
 				$offset         += self::REQ_MAX_CONTENT_SIZE;
 			}
-			while ( $offset < $request->getContentLength() );
+			while ( $offset < $length );
 		}
 
 		$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, '', $this->getRequestId() );

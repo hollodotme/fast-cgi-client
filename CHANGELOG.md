@@ -21,6 +21,9 @@ This file covers the 4.x releases. For previous major versions see:
     request. A content type that was set before is overwritten.
   * `ProvidesRequestData#getContent()` returns `?ComposesRequestContent` instead of `string`.
   * The named constructor `newWithRequestContent()`, introduced in 3.1.0, was removed from all request classes.
+  * The content length and, unless it was set explicitly, the content type of a request are determined from the
+    content object when the request is sent. Changes to the content object after it was passed to the request are
+    taken into account. - [#76]
 
   ```php
   # Previous versions
@@ -70,6 +73,7 @@ This file covers the 4.x releases. For previous major versions see:
   deprecated in PHP 8.5.
 * A single PHPUnit version is used for all supported PHP versions.
 * Integration tests do not depend on fixed waiting times anymore. - [#86]
+* The content of a request is composed once per request when it is sent, instead of once for every 65535 bytes.
 * Documentation and changelog are split by major version. - [#87]
 * The development environment uses the `docker compose` plugin instead of the standalone `docker-compose` binary.
 
@@ -90,6 +94,8 @@ This file covers the 4.x releases. For previous major versions see:
 [#18]: https://github.com/hollodotme/fast-cgi-client/issues/18
 
 [#57]: https://github.com/hollodotme/fast-cgi-client/issues/57
+
+[#76]: https://github.com/hollodotme/fast-cgi-client/pull/76
 
 [#78]: https://github.com/hollodotme/fast-cgi-client/pull/78
 
