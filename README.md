@@ -1,11 +1,11 @@
 [![FastCGI Client CI PHP 8.0 - 8.5](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml/badge.svg)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
 [![Latest Stable Version](https://poser.pugx.org/hollodotme/fast-cgi-client/v/stable)](https://packagist.org/packages/hollodotme/fast-cgi-client)
 [![Total Downloads](https://poser.pugx.org/hollodotme/fast-cgi-client/downloads)](https://packagist.org/packages/hollodotme/fast-cgi-client)
-[![Compatible with Go FastCGI server](https://img.shields.io/github/check-runs/hollodotme/fast-cgi-client/master?nameFilter=compatibility%20%28go%29&label=Compatible%20with%20Go%20FastCGI%20server)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
-[![Compatible with Rust FastCGI server](https://img.shields.io/github/check-runs/hollodotme/fast-cgi-client/master?nameFilter=compatibility%20%28rust%29&label=Compatible%20with%20Rust%20FastCGI%20server)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
-[![Compatible with Rust FastCGI server (tokio)](https://img.shields.io/github/check-runs/hollodotme/fast-cgi-client/master?nameFilter=compatibility%20%28rust-tokio%29&label=Compatible%20with%20Rust%20FastCGI%20server%20%28tokio%29)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
-[![Compatible with C# FastCGI server](https://img.shields.io/github/check-runs/hollodotme/fast-cgi-client/master?nameFilter=compatibility%20%28csharp%29&label=Compatible%20with%20C%23%20FastCGI%20server)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
-[![Compatible with Java FastCGI server](https://img.shields.io/github/check-runs/hollodotme/fast-cgi-client/master?nameFilter=compatibility%20%28java%29&label=Compatible%20with%20Java%20FastCGI%20server)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
+[![Compatible with Go FastCGI server](https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-go.yml/badge.svg)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-go.yml)
+[![Compatible with Rust FastCGI server](https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-rust.yml/badge.svg)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-rust.yml)
+[![Compatible with Rust FastCGI server (tokio)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-rust-tokio.yml/badge.svg)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-rust-tokio.yml)
+[![Compatible with C# FastCGI server](https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-csharp.yml/badge.svg)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-csharp.yml)
+[![Compatible with Java FastCGI server](https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-java.yml/badge.svg)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-java.yml)
 
 # Fast CGI Client
 
