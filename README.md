@@ -1138,7 +1138,7 @@ $response->getOutput();
 // 
 // Hello World'
 
-# Get the raw response from SFTERR stream
+# Get the raw response from STDERR stream
 $response->getError();
 // Some error
 
@@ -1146,6 +1146,21 @@ $response->getError();
 $response->getDuration(); 
 // e.g. 0.0016319751739502
 ```
+
+#### Size of responses
+
+The client keeps the whole response in memory until the FastCGI server has ended the request. There is no upper limit
+for the size of a response:
+
+* The output (STDOUT) and the error output (STDERR) are collected completely, also if you use pass-through
+  callbacks. The callbacks receive the output while it arrives, but the response object still contains all of it.
+* The read/write timeout limits how long the client waits for the next part of the response, not how long it reads
+  the response as a whole. A server that keeps sending output without ending the request, even slowly, makes the
+  client use more and more memory, until PHP's `memory_limit` is reached.
+
+php-fpm ends every request, so with php-fpm a response is as large as the output of the script. Only connect to
+FastCGI servers you trust, and make sure that the responses you expect fit into the `memory_limit` of the process
+running the client.
 
 ### Exceptions
 
