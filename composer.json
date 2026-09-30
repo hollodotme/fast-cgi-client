@@ -28,6 +28,7 @@
     },
     "require": {
         "php": ">=8.0",
+        "ext-fileinfo": "*",
         "ext-json": "*"
     },
     "require-dev": {

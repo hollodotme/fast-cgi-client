@@ -686,6 +686,9 @@ browser does.
 
 **PLEASE NOTE:** Multipart form-data content type works with POST requests only.
 
+The MIME type of each file is detected using the [fileinfo extension](https://www.php.net/manual/en/book.fileinfo.php),
+which is required by this library. Files whose type cannot be determined are sent as `application/octet-stream`.
+
 ```php
 <?php declare(strict_types=1);
 

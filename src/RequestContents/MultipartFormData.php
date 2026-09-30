@@ -7,8 +7,8 @@ use InvalidArgumentException;
 use function basename;
 use function file_exists;
 use function file_get_contents;
-use function function_exists;
 use function implode;
+use function mime_content_type;
 use function sprintf;
 
 final class MultipartFormData implements ComposesRequestContent
@@ -108,12 +108,6 @@ final class MultipartFormData implements ComposesRequestContent
 
 	private function getContentTypeOfFile( string $filePath ) : string
 	{
-		if ( function_exists( 'mime_content_type' ) )
-		{
-			/** @noinspection PhpComposerExtensionStubsInspection */
-			return (string)mime_content_type( $filePath ) ?: self::FILE_CONTENT_TYPE_DEFAULT;
-		}
-
-		return self::FILE_CONTENT_TYPE_DEFAULT;
+		return (string)mime_content_type( $filePath ) ?: self::FILE_CONTENT_TYPE_DEFAULT;
 	}
 }
