@@ -64,11 +64,47 @@ composer-update: install-composer
     php /repo/.tools/composer.phar update -o -v
 .PHONY: composer-update
 
-## Run PHPStan checks
-phpstan:
-	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
-	php /repo/vendor/bin/phpstan analyse --xdebug --memory-limit=1G -c /repo/phpstan.neon
+PHPSTAN_COMMAND = php /repo/vendor/bin/phpstan analyse --xdebug --memory-limit=1G
+
+## Run PHPStan checks for all PHP versions
+phpstan: phpstan-php-8.0 phpstan-php-8.1 phpstan-php-8.2 phpstan-php-8.3 phpstan-php-8.4 phpstan-php-8.5
 .PHONY: phpstan
+
+## Run PHPStan checks on and for PHP 8.0
+phpstan-php-8.0:
+	printf "\n\033[33mRun PHPStan on PHP 8.0\033[0m\n"
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php80 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.0.neon
+.PHONY: phpstan-php-8.0
+
+## Run PHPStan checks on and for PHP 8.1
+phpstan-php-8.1:
+	printf "\n\033[33mRun PHPStan on PHP 8.1\033[0m\n"
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php81 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.1.neon
+.PHONY: phpstan-php-8.1
+
+## Run PHPStan checks on and for PHP 8.2
+phpstan-php-8.2:
+	printf "\n\033[33mRun PHPStan on PHP 8.2\033[0m\n"
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php82 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.2.neon
+.PHONY: phpstan-php-8.2
+
+## Run PHPStan checks on and for PHP 8.3
+phpstan-php-8.3:
+	printf "\n\033[33mRun PHPStan on PHP 8.3\033[0m\n"
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php83 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.3.neon
+.PHONY: phpstan-php-8.3
+
+## Run PHPStan checks on and for PHP 8.4
+phpstan-php-8.4:
+	printf "\n\033[33mRun PHPStan on PHP 8.4\033[0m\n"
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php84 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.4.neon
+.PHONY: phpstan-php-8.4
+
+## Run PHPStan checks on and for PHP 8.5
+phpstan-php-8.5:
+	printf "\n\033[33mRun PHPStan on PHP 8.5\033[0m\n"
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php85 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.5.neon
+.PHONY: phpstan-php-8.5
 
 ## Run all tests on all PHP versions
 tests: composer-validate phpstan test-php-8.0 test-php-8.1 test-php-8.2 test-php-8.3 test-php-8.4 test-php-8.5 dcdown

@@ -17,7 +17,15 @@ on:
 jobs:
   static-analysis:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        php:
+          - "8.0"
+          - "8.1"
+          - "8.2"
+          - "8.3"
+          - "8.4"
+          - "8.5"
     steps:
       - uses: actions/checkout@v7
 
@@ -33,8 +41,8 @@ jobs:
       - name: Composer update
         run: make composer-update
 
-      - name: Run PHPStan
-        run: vendor/bin/phpstan
+      - name: Run PHPStan on PHP ${{ matrix.php }}
+        run: make -s "phpstan-php-${{ matrix.php }}"
 
   tests:
     runs-on: ubuntu-latest
