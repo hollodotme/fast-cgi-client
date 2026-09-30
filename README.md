@@ -1,7 +1,8 @@
 [![FastCGI Client CI PHP 8.0 - 8.5](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml/badge.svg)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
 [![Latest Stable Version](https://poser.pugx.org/hollodotme/fast-cgi-client/v/stable)](https://packagist.org/packages/hollodotme/fast-cgi-client)
 [![Total Downloads](https://poser.pugx.org/hollodotme/fast-cgi-client/downloads)](https://packagist.org/packages/hollodotme/fast-cgi-client)
-[![Compatible with Rust FastCGI server](https://img.shields.io/github/check-runs/hollodotme/fast-cgi-client/master?nameFilter=compatibility%20%28rust&label=Compatible%20with%20Rust%20FastCGI%20server)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
+[![Compatible with Rust FastCGI server](https://img.shields.io/github/check-runs/hollodotme/fast-cgi-client/master?nameFilter=compatibility%20%28rust%29&label=Compatible%20with%20Rust%20FastCGI%20server)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
+[![Compatible with Rust FastCGI server (tokio)](https://img.shields.io/github/check-runs/hollodotme/fast-cgi-client/master?nameFilter=compatibility%20%28rust-tokio%29&label=Compatible%20with%20Rust%20FastCGI%20server%20%28tokio%29)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
 
 # Fast CGI Client
 
