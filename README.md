@@ -1,6 +1,7 @@
 [![FastCGI Client CI PHP 8.0 - 8.5](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml/badge.svg)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
 [![Latest Stable Version](https://poser.pugx.org/hollodotme/fast-cgi-client/v/stable)](https://packagist.org/packages/hollodotme/fast-cgi-client)
 [![Total Downloads](https://poser.pugx.org/hollodotme/fast-cgi-client/downloads)](https://packagist.org/packages/hollodotme/fast-cgi-client)
+[![Compatible with Go FastCGI server](https://img.shields.io/github/check-runs/hollodotme/fast-cgi-client/master?nameFilter=compatibility%20%28go%29&label=Compatible%20with%20Go%20FastCGI%20server)](https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml)
 
 # Fast CGI Client
 
@@ -1225,6 +1226,14 @@ one of `make test-php-8.0` ... `make test-php-8.5`.
 This runs PHPStan on and for each PHP version from 8.0 to 8.5. To analyse the code for a single PHP version use one of
 `make phpstan-php-8.0` ... `make phpstan-php-8.5`. The PHP version PHPStan analyses for is set in the configuration
 files in [.phpstan](./.phpstan), which include the base configuration [phpstan.neon](./phpstan.neon).
+
+## Run compatibility tests
+
+    make test-compatibility
+
+This runs the tests in `tests/Compatibility` against FastCGI servers of other programming languages. Each server
+runs a small application in a docker container, see [.docker/compatibility](./.docker/compatibility/README.md).
+To check a single server use `make test-compatibility-<name>`, where `<name>` is a directory in `.docker/compatibility`.
 
 ## Check the coding standard
 

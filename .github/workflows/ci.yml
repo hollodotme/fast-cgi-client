@@ -100,6 +100,55 @@ jobs:
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
 
+  compatibility-servers:
+    runs-on: ubuntu-latest
+    outputs:
+      servers: ${{ steps.list.outputs.servers }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Every directory with a Dockerfile in .docker/compatibility is a FastCGI server to check
+      - name: List FastCGI servers
+        id: list
+        run: |
+          SERVERS=$(ls .docker/compatibility/*/Dockerfile | xargs -n1 dirname | xargs -n1 basename | jq -R . | jq -sc .)
+
+          echo $SERVERS
+          echo "servers=$SERVERS" >> "$GITHUB_OUTPUT"
+
+  # Runs parallel to the tests. The release does not depend on it.
+  compatibility:
+    needs:
+      - coding-standard
+      - static-analysis
+      - compatibility-servers
+
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        server: ${{ fromJson(needs.compatibility-servers.outputs.servers) }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Pull docker services
+        run: make dcpull
+
+      - name: Install tools
+        run: make install-composer
+
+      - name: Build environment
+        run: make composer-update
+
+      - name: Pull extension installer
+        run: make pull-extension-installer
+
+      - name: Run compatibility tests against FastCGI server ${{ matrix.server }}
+        run: make -s "test-compatibility-${{ matrix.server }}"
+        env:
+          COMPOSE_INTERACTIVE_NO_CLI: 1
+
   release:
     needs:
       - coding-standard
