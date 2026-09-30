@@ -6,7 +6,10 @@ use hollodotme\FastCGI\Encoders\PacketEncoder;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
+use function implode;
+use function str_repeat;
 use function strlen;
+use function substr;
 
 final class PacketEncoderTest extends TestCase
 {
@@ -69,6 +72,52 @@ final class PacketEncoderTest extends TestCase
 					'reserved'      => 0,
 				],
 			],
+		];
+	}
+
+	/**
+	 * @param int $contentLength
+	 * @param int $expectedRecordCount
+	 *
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @dataProvider contentLengthProvider
+	 */
+	public function testContentLongerThanOneRecordIsSplit( int $contentLength, int $expectedRecordCount ) : void
+	{
+		$packetEncoder = new PacketEncoder();
+		$content       = str_repeat( 'x', $contentLength );
+		$packets       = $packetEncoder->encodePacket( 5, $content, 123 );
+
+		$contents = [];
+		$offset   = 0;
+
+		while ( $offset < strlen( $packets ) )
+		{
+			$header = $packetEncoder->decodeHeader( substr( $packets, $offset, 8 ) );
+
+			self::assertSame( 5, $header['type'] );
+			self::assertSame( 123, $header['requestId'] );
+			self::assertLessThanOrEqual( 65535, $header['contentLength'] );
+
+			$contents[] = substr( $packets, $offset + 8, $header['contentLength'] );
+			$offset     += 8 + $header['contentLength'];
+		}
+
+		self::assertCount( $expectedRecordCount, $contents );
+		self::assertSame( $content, implode( '', $contents ) );
+	}
+
+	/**
+	 * @return array<string, array<int, int>>
+	 */
+	public function contentLengthProvider() : array
+	{
+		return [
+			'empty content'                 => [0, 1],
+			'largest content of one record' => [65535, 1],
+			'one byte more'                 => [65536, 2],
+			'multiple records'              => [200000, 4],
 		];
 	}
 }

@@ -82,6 +82,8 @@ final class Socket
 
 	private const REQ_MAX_CONTENT_SIZE = 65535;
 
+	private const WRITE_CHUNK_SIZE     = 65536;
+
 	/** @var null|resource */
 	private $resource;
 
@@ -172,6 +174,9 @@ final class Socket
 
 		$this->connect();
 
+		# A read timeout that was passed to fetchResponse() for the previous request must not apply to this one
+		$this->setStreamTimeout( $this->connection->getReadWriteTimeout() );
+
 		$requestPackets = $this->getRequestPackets( $request );
 
 		$this->write( $requestPackets );
@@ -185,9 +190,14 @@ final class Socket
 	 */
 	private function guardSocketIsUsable() : void
 	{
-		if ( !$this->isIdle() || !$this->isUsable() )
+		if ( !$this->isIdle() )
 		{
-			throw new ConnectException( 'Trying to connect to a socket that is not idle.' );
+			throw new ConnectException( 'Trying to send a request to a socket that is not idle.' );
+		}
+
+		if ( !$this->isUsable() )
+		{
+			throw new ConnectException( 'Trying to send a request to a socket that is not usable anymore.' );
 		}
 	}
 
@@ -346,40 +356,72 @@ final class Socket
 			$this->getRequestId()
 		);
 
-		$paramsRequest = $this->nameValuePairEncoder->encodePairs( $request->getParams() );
+		$params  = $request->getParams();
+		$content = null;
 
-		if ( $paramsRequest )
+		if ( null !== $request->getContent() )
+		{
+			# The announced length must match the content that is sent, even if composing it again gives another result
+			$content                  = $request->getContent()->getContent();
+			$params['CONTENT_LENGTH'] = strlen( $content );
+		}
+
+		foreach ( $this->getParamsRecordContents( $params ) as $paramsRecordContent )
 		{
 			$requestPackets .= $this->packetEncoder->encodePacket(
 				self::PARAMS,
-				$paramsRequest,
+				$paramsRecordContent,
 				$this->getRequestId()
 			);
 		}
 
 		$requestPackets .= $this->packetEncoder->encodePacket( self::PARAMS, '', $this->getRequestId() );
 
-		if ( $request->getContent() !== null )
+		# The packet encoder splits content that is longer than one record
+		if ( null !== $content && '' !== $content )
 		{
-			# The content is composed only once per request
-			$content = $request->getContent()->getContent();
-			$length  = strlen( $content );
-			$offset  = 0;
-			do
-			{
-				$requestPackets .= $this->packetEncoder->encodePacket(
-					self::STDIN,
-					substr( $content, $offset, self::REQ_MAX_CONTENT_SIZE ),
-					$this->getRequestId()
-				);
-				$offset         += self::REQ_MAX_CONTENT_SIZE;
-			}
-			while ( $offset < $length );
+			$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, $content, $this->getRequestId() );
 		}
 
 		$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, '', $this->getRequestId() );
 
 		return $requestPackets;
+	}
+
+	/**
+	 * Distributes the encoded params to records of at most 65535 bytes without splitting a name-value pair,
+	 * because php-fpm decodes the params of each record separately and closes the connection otherwise.
+	 * A single pair that is longer than one record is split by the packet encoder, as the FastCGI specification
+	 * allows. php-fpm cannot receive such a pair, other servers can.
+	 *
+	 * @param array<string, mixed> $params
+	 *
+	 * @return array<int, string>
+	 */
+	private function getParamsRecordContents( array $params ) : array
+	{
+		$recordContents = [];
+		$recordContent  = '';
+
+		foreach ( $params as $name => $value )
+		{
+			$pair = $this->nameValuePairEncoder->encodePair( (string)$name, (string)$value );
+
+			if ( '' !== $recordContent && strlen( $recordContent ) + strlen( $pair ) > self::REQ_MAX_CONTENT_SIZE )
+			{
+				$recordContents[] = $recordContent;
+				$recordContent    = '';
+			}
+
+			$recordContent .= $pair;
+		}
+
+		if ( '' !== $recordContent )
+		{
+			$recordContents[] = $recordContent;
+		}
+
+		return $recordContents;
 	}
 
 	/**
@@ -393,10 +435,25 @@ final class Socket
 			throw new WriteFailedException( 'Failed to write request to socket [broken pipe]' );
 		}
 
-		$writeResult = @fwrite( $this->resource, $data );
+		$length  = strlen( $data );
+		$written = 0;
+
+		# fwrite() writes only a part of the data, if the peer does not read fast enough before the timeout
+		while ( $written < $length )
+		{
+			$bytes = @fwrite( $this->resource, substr( $data, $written, self::WRITE_CHUNK_SIZE ) );
+
+			if ( false === $bytes || 0 === $bytes )
+			{
+				break;
+			}
+
+			$written += $bytes;
+		}
+
 		$flushResult = @fflush( $this->resource );
 
-		if ( $writeResult === false || !$flushResult )
+		if ( $written < $length || !$flushResult )
 		{
 			if ( stream_get_meta_data( $this->resource )['timed_out'] )
 			{

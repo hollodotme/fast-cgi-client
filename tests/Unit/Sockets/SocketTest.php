@@ -197,7 +197,7 @@ final class SocketTest extends TestCase
 		$socket->sendRequest( $request );
 
 		$this->expectException( ConnectException::class );
-		$this->expectExceptionMessage( 'Trying to connect to a socket that is not idle.' );
+		$this->expectExceptionMessage( 'Trying to send a request to a socket that is not idle.' );
 
 		$socket->sendRequest( $request );
 
