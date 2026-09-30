@@ -1,0 +1,7 @@
+[package]
+name = "fastcgi-server"
+version = "1.0.0"
+edition = "2021"
+
+[dependencies]
+fastcgi = "1.0.0"
