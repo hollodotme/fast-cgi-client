@@ -1,6 +1,6 @@
 ---
 title: API reference
-sidebar_position: 5
+sidebar_position: 6
 ---
 
 The full API reference of all public classes, interfaces and methods is generated from the source code

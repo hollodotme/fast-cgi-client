@@ -1,5 +1,5 @@
 // Generates website pages from files of the repository root, so they have a single source of truth.
-import {readFileSync, writeFileSync} from 'node:fs';
+import {mkdirSync, readFileSync, writeFileSync} from 'node:fs';
 import {dirname, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
@@ -42,3 +42,31 @@ title: Contribution guide
 
 ${contributing}`,
 );
+
+// The changelogs of all major versions, with links pointing to the generated pages
+const changelogs = {
+  '4.x': 'CHANGELOG.md',
+  '3.x': 'docs/changelog/3.x.md',
+  '2.x': 'docs/changelog/2.x.md',
+  '1.x': 'docs/changelog/1.x.md',
+};
+
+mkdirSync(resolve(website, 'src/pages/changelog'), {recursive: true});
+
+for (const [version, file] of Object.entries(changelogs)) {
+  const changelog = readFileSync(resolve(root, file), 'utf8')
+    .replace(/^# .*\n/, '')
+    .replace(/\]\((?:\.\.\/\.\.\/|\.\/)CHANGELOG\.md\)/g, '](/changelog/4.x)')
+    .replace(/\]\(\.\/(?:docs\/changelog\/)?(\d\.x)\.md(#[^)]*)?\)/g, '](/changelog/$1$2)')
+    .replace(/\]\(\.\/LICENSE\)/g, '](/license)');
+
+  writeFileSync(
+    resolve(website, `src/pages/changelog/${version}.md`),
+    `---
+title: Changelog ${version}
+---
+
+# Changelog ${version}
+${changelog}`,
+  );
+}

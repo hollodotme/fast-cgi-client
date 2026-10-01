@@ -111,7 +111,8 @@ const config: Config = {
           items: [
             {label: 'Contribution guide', to: '/contributing'},
             {label: 'License', to: '/license'},
-            {label: 'Changelog', href: `${repository}/blob/4.x-dev/CHANGELOG.md`},
+            {label: 'Changelog', to: '/changelog/4.x'},
+            {label: 'Migrating from 3.x', to: '/docs/migration'},
           ],
         },
         {

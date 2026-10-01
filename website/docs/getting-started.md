@@ -61,4 +61,5 @@ If PHP-FPM listens on a unix domain socket instead, use
 * [Multiple requests](./usage/multiple-requests.mdx) — send in parallel and react to responses as they arrive
 * [Requests](./usage/requests.mdx) — request methods, custom variables and request contents
 * [Responses](./usage/responses.md) — headers, body, errors and durations
+* [Migration guide](./migration.md) — upgrading from version 3.x
 * [API reference](./api-reference.md) — all classes and methods

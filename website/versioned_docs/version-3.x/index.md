@@ -9,7 +9,7 @@ slug: /
 :::info
 
 This is the documentation of version 3.x (latest release [v3.1.7](https://github.com/hollodotme/fast-cgi-client/releases/tag/v3.1.7)), which requires PHP >= 7.1.
-The [current version is 4.x](/docs/).
+The [current version is 4.x](/docs/), see the [migration guide](/docs/migration) for upgrading.
 
 :::
 

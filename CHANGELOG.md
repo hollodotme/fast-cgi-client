@@ -92,6 +92,8 @@ This file covers the 4.x releases. For previous major versions see:
   asynchronously and in parallel, with callbacks, pass-through callbacks and retries, how sockets are reused and
   how a request is sent as FastCGI records — next to the example code and its output.
 * The pass-through callback example prints the output and the error output only if the callback receives them.
+* A migration guide in the documentation shows what to change in your code when upgrading from 3.x, and the
+  changelogs of all major versions are part of the documentation website.
 * The development environment uses the `docker compose` plugin instead of the standalone `docker-compose` binary.
 
 ### Fixed

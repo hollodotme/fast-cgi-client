@@ -10,6 +10,33 @@
       "href": "/contributing"
     },
     {
+      "type": "category",
+      "label": "Changelog",
+      "collapsed": true,
+      "items": [
+        {
+          "type": "link",
+          "label": "4.x",
+          "href": "/changelog/4.x"
+        },
+        {
+          "type": "link",
+          "label": "3.x",
+          "href": "/changelog/3.x"
+        },
+        {
+          "type": "link",
+          "label": "2.x",
+          "href": "/changelog/2.x"
+        },
+        {
+          "type": "link",
+          "label": "1.x",
+          "href": "/changelog/1.x"
+        }
+      ]
+    },
+    {
       "type": "link",
       "label": "License",
       "href": "/license"

@@ -1,6 +1,6 @@
 {
   "label": "Use cases & examples",
-  "position": 4,
+  "position": 5,
   "link": {
     "type": "generated-index",
     "description": "How to connect to a FastCGI server, send requests alone or in parallel, and work with their responses."
