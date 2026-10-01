@@ -91,7 +91,10 @@ foreach ([1, 2, 3, 4] as $key)                                //@setup
     const failAt = timeline.now + 0.2 + TRAVEL / 2;
     timeline
       .note(second, 'terminated', failAt - 0.05, Infinity)
-      .say('The idle socket looks fine, but its worker is terminated just while the fourth request is written.')
+      .say(
+        'The idle socket looks fine, but writing the fourth request fails, e.g. because its worker is terminated ' +
+          'while a large request is written.',
+      )
       .show('setup')
       .do('setup', 0.2)
       .show('send')

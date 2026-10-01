@@ -44,6 +44,7 @@ foreach ($client->readResponses(3000, ...$socketIds) as $response)
 
 ```
 # prints
+Sent requests with IDs: 23417, 8091, 51602
 1
 2
 3
@@ -130,10 +131,12 @@ while ( $client->hasUnhandledResponses() )
 ```
 
 ```
-# prints
-...............................................3
-...............................................2
-...............................................1
+# prints, the loop waits up to 200 ms per round for responses (stream select timeout)
+Sent requests with IDs: 23417, 8091, 51602
+....3
+.....2
+.....1
+.
 ```
 
 ### See it in action
@@ -161,7 +164,7 @@ $connection = new NetworkSocket('127.0.0.1', 9000);
 
 $responseCallback = static function( ProvidesResponseData $response )
 {
-	echo $response->getBody();	
+	echo $response->getBody() . "\n";
 };
 
 $failureCallback = static function ( Throwable $throwable )
@@ -192,17 +195,18 @@ echo 'Sent requests with IDs: ' . implode( ', ', $socketIds ) . "\n";
 
 # Do something else here in the meanwhile
 
-# Blocking call until all responses were received and all callbacks notified
-$client->waitForResponses(3000);
+# Blocking call until all responses were received and all callbacks notified.
+# Requests without a response after 5 seconds notify their failure callbacks with a TimedoutException.
+$client->waitForResponses(5000);
 
-# ... is the same as
+# ... is the same as, apart from the overall timeout of 5 seconds
 
 while ( $client->hasUnhandledResponses() )
 {
 	$client->handleReadyResponses(3000);
 }
 
-# ... is the same as
+# ... is the same as, apart from the overall timeout
 
 while ( $client->hasUnhandledResponses() )
 {
@@ -215,7 +219,7 @@ while ( $client->hasUnhandledResponses() )
 	}
 }
 
-# ... is the same as
+# ... is the same as, apart from the overall timeout
 
 while ( $client->hasUnhandledResponses() )
 {
@@ -227,6 +231,7 @@ while ( $client->hasUnhandledResponses() )
 
 ```
 # prints
+Sent requests with IDs: 23417, 8091, 51602
 3
 2
 1
@@ -241,9 +246,10 @@ to see the failure callback of a request that takes too long:
 
 ## Reading output buffer from worker script using pass through callbacks
 
-It may be useful to see the progression of a requested script by having access to the flushed output of that script. The
-php.ini default output buffering for php-fpm is 4096 bytes and is (hard-coded) disabled for CLI
-mode. ([See documentation](http://php.net/manual/en/outcontrol.configuration.php#ini.output-buffering))
+It may be useful to see the progression of a requested script by having access to the flushed output of that script.
+The `output_buffering` setting of the php.ini files `php.ini-production` and `php.ini-development` is 4096 bytes, so
+PHP-FPM may collect the output before sending it; without a php.ini it is off, and it is always off for the CLI.
+([See documentation](http://php.net/manual/en/outcontrol.configuration.php#ini.output-buffering))
 Calling `ob_implicit_flush()` causes every call to `echo` or `print` to immediately be flushed.
 
 The callee script could look like this:
@@ -268,7 +274,7 @@ error_log("Oh oh!\n");
 echo 'End';
 ```
 
-The caller than could look like this:
+The caller then could look like this:
 
 ```php
 <?php declare(strict_types=1);
@@ -304,7 +310,7 @@ $client->waitForResponses();
 ```
 
 ```
-# prints immediately
+# prints immediately (preceded by an X-Powered-By header, if expose_php is enabled)
 Output: Content-type: text/html; charset=UTF-8
 
 One
@@ -313,7 +319,7 @@ Output: Two
 # sleeps 1 sec
 Output: Three
 # sleeps 1 sec
-Error: Oh oh!
+Error: PHP message: Oh oh!
 Output: End
 ```
 

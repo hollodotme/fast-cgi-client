@@ -89,7 +89,7 @@ $request    = new PostRequest('/path/to/target/script.php', $content);
 
 $socketId = $client->sendAsyncRequest($connection, $request);
 
-echo "Request sent, got ID: {$socketId}";
+echo "Request sent, got ID: {$socketId}\n";
 
 # Do something else here in the meanwhile
 
@@ -105,6 +105,7 @@ echo $response->getBody();
 
 ```
 # prints
+Request sent, got ID: 23417
 value
 ```
 
@@ -155,7 +156,7 @@ $request->addFailureCallbacks(
 
 $socketId = $client->sendAsyncRequest($connection, $request);
 
-echo "Request sent, got ID: {$socketId}";
+echo "Request sent, got ID: {$socketId}\n";
 
 # Do something else here in the meanwhile
 
@@ -168,10 +169,19 @@ $client->waitForResponse(
 	3000            # Optional timeout to wait for response,
 					# defaults to read/write timeout in milliseconds set in connection
 );
+```
 
-# ... is the same as, apart from the timeout while waiting for the response
+```
+# prints
+Request sent, got ID: 23417
+value
+```
 
-while(true)
+Instead of `waitForResponse()` you can also check for the response yourself and let the client notify the callbacks
+with `handleResponse()`. Unlike `waitForResponse()`, this loop has no timeout while waiting for the response:
+
+```php
+while (true)
 {
 	if ($client->hasResponse($socketId))
 	{
@@ -181,10 +191,7 @@ while(true)
 }
 ```
 
-```
-# prints
-value
-```
+Both ways remove the socket after the callbacks were notified, so a socket ID can only be handled once.
 
 ## Retry sending a request
 
@@ -192,7 +199,8 @@ The client keeps its sockets open and reuses them for subsequent requests to the
 Sockets that were closed in the meantime, e.g. because their php-fpm child process was terminated, are detected
 and replaced by new ones before a request is sent.
 
-If writing a request to a socket still fails, `sendRequest()` and `sendAsyncRequest()` throw a `WriteFailedException`.
+If writing a request to a socket still fails, `sendRequest()` and `sendAsyncRequest()` throw a `WriteFailedException`,
+or a `TimedoutException` if the server did not read the request within the read/write timeout.
 If you want the client to send the request again on another socket instead, use the following methods:
 
 ```php
@@ -220,6 +228,7 @@ $socketId = $client->tryAsyncRequest($connection, $request, 3);
 Please note:
 
 * Each try uses another socket, because a socket is discarded when writing to it failed.
+* Only a `WriteFailedException` leads to another try. A `TimedoutException` while writing is thrown right away.
 * If the last try fails too, its `WriteFailedException` is thrown.
 * The maximum number of tries must be at least 1, otherwise an `InvalidArgumentException` is thrown.
 * Only sending the request is retried. If reading the response fails, the request is not sent again,

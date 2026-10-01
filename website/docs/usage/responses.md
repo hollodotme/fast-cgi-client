@@ -50,6 +50,8 @@ Hello World
 **Please note:**
 
 * All headers sent by your script will precede the response body
+* If `expose_php` is enabled in the php.ini of PHP-FPM (the default without a php.ini), PHP also sends an
+  `X-Powered-By: PHP/<version>` header first. It is left out in the examples on this page.
 * The headers are separated from the body by the first blank line. If the output does not start with headers
   followed by a blank line, the whole output is the body.
 * The status of a response is sent as `Status` header, if the script sets one. There is no HTTP status line like
@@ -62,8 +64,9 @@ Custom headers will also be part of the response:
 <?php declare(strict_types=1);
 
 header('X-Custom: Header');
-header('Set-Cookie: yummy_cookie=choco');
-header('Set-Cookie: tasty_cookie=strawberry');
+# false adds the header instead of replacing the previous one with the same name
+header('Set-Cookie: yummy_cookie=choco', false);
+header('Set-Cookie: tasty_cookie=strawberry', false);
 
 echo 'Hello World';
 error_log('Some error');
@@ -123,9 +126,9 @@ $response->getOutput();
 // 
 // Hello World'
 
-# Get the raw response from STDERR stream
+# Get the raw response from STDERR stream, php-fpm prefixes messages of error_log() with "PHP message: "
 $response->getError();
-// Some error
+// 'PHP message: Some error'
 
 # Get the duration
 $response->getDuration(); 

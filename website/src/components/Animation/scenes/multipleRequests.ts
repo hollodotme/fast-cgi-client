@@ -66,7 +66,7 @@ ${sendLines}
 
     if (settings.mode === 'ordered') {
       return php(`${head}
-foreach ($client->readResponses(3000, ...$socketIds) as $response) //@wait
+foreach ($client->readResponses(5000, ...$socketIds) as $response) //@wait
 {
     echo $response->getBody() . "\\n";                  //@read
 }
@@ -76,7 +76,7 @@ foreach ($client->readResponses(3000, ...$socketIds) as $response) //@wait
     return php(`${head}
 while ($client->hasUnhandledResponses())                 //@poll
 {
-    foreach ($client->readReadyResponses(3000) as $response) //@poll
+    foreach ($client->readReadyResponses(5000) as $response) //@poll
     {
         echo $response->getBody() . "\\n";              //@read
     }

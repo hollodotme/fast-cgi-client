@@ -21,12 +21,13 @@ The methods deal differently with exceptions that occur while reading a response
 * `waitForResponse()`, `waitForResponses()`, `handleResponse()`, `handleResponses()` and `handleReadyResponses()`
   pass them to the failure callbacks of the request instead of throwing them. `waitForResponse()` and
   `waitForResponses()` also notify the failure callbacks with a `TimedoutException`, if there is no response within
-  the timeout.
+  the timeout. They throw a `ReadFailedException` themselves only for an unknown socket ID, and `waitForResponses()`
+  if there are no pending requests at all.
 
 The client validates every packet it receives. A response is rejected with a `ReadFailedException`, if a packet
 
 * does not have the FastCGI protocol version 1, e.g. because the server is a HTTP server and not a FastCGI server,
-* is not a stdout, stderr or end-request record,
+* is not a stdout, stderr or end-request record (management records with request ID 0 are ignored),
 * belongs to another request than the one that was sent,
 * is an end-request record with an unexpected length.
 

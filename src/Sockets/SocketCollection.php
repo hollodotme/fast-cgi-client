@@ -71,11 +71,19 @@ final class SocketCollection implements Countable
 	 */
 	public function getSocketIdsByResources( array $resources ) : array
 	{
-		$socketIds = [];
+		$knownResources = $this->collectResources();
+		$socketIds      = [];
 
 		foreach ( $resources as $resource )
 		{
-			$socketIds[] = $this->getByResource( $resource )->getId();
+			$socketId = array_search( $resource, $knownResources, true );
+
+			if ( false === $socketId )
+			{
+				throw new ReadFailedException( 'Socket not found for resource' );
+			}
+
+			$socketIds[] = (int)$socketId;
 		}
 
 		return $socketIds;

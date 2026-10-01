@@ -454,13 +454,13 @@
   cursor: pointer;
 }
 
-.option[aria-checked='true'] {
+.option[aria-pressed='true'] {
   border-color: var(--ifm-color-primary);
   background: var(--ifm-color-primary);
   color: var(--ifm-color-white);
 }
 
-[data-theme='dark'] .option[aria-checked='true'] {
+[data-theme='dark'] .option[aria-pressed='true'] {
   color: #1b1b1d;
 }
 

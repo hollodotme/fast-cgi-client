@@ -146,6 +146,12 @@ echo $response->getBody();                                    //@print
         caption: 'The output of the script — headers and body — comes back in STDOUT records, errors in STDERR records.',
       },
       {
+        type: 'STDOUT',
+        length: 0,
+        note: 'end of the output',
+        caption: 'An empty STDOUT record ends the output.',
+      },
+      {
         type: 'END_REQUEST',
         length: 8,
         note: 'exit status 0',
@@ -156,12 +162,12 @@ echo $response->getBody();                                    //@print
     responses.forEach((record, index) => {
       const from = finish + index * GAP;
       timeline.doUntil('blocked', from).say(record.caption);
-      timeline.record(lane, record.type, 'in', from, RECORD_TRAVEL);
+      timeline.record(lane, record.length === 0 ? `${record.type} (empty)` : record.type, 'in', from, RECORD_TRAVEL);
       log('←', record, from + RECORD_TRAVEL);
     });
 
     timeline
-      .doUntil('blocked', finish + GAP + RECORD_TRAVEL)
+      .doUntil('blocked', finish + (responses.length - 1) * GAP + RECORD_TRAVEL)
       .show('print')
       .do('read', 0.4)
       .say('sendRequest() returns the response — your code never deals with records.');

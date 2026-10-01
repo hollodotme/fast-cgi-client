@@ -9,7 +9,7 @@ const flushes = [
   {after: 0, label: 'STDOUT One', output: 'Content-type: text/html; charset=UTF-8\n\nOne\n', text: 'One'},
   {after: 1, label: 'STDOUT Two', output: 'Two\n', text: 'Two'},
   {after: 2, label: 'STDOUT Three', output: 'Three\n', text: 'Three'},
-  {after: 3, label: 'STDERR', error: 'Oh oh!\n', text: 'an error message'},
+  {after: 3, label: 'STDERR', error: 'PHP message: Oh oh!\n', text: 'an error message'},
   {after: 3.15, label: 'STDOUT End', output: 'End', text: 'End'},
 ];
 const RUNTIME = 3.3;
@@ -107,7 +107,8 @@ echo 'Error: ' . $response->getError();                               //@print
       timeline
         .say(
           flush.error !== undefined
-            ? 'The script writes an error message, PHP-FPM sends it as STDERR. The callback prints it as error.'
+            ? 'The script logs an error with error_log(), PHP-FPM sends it as STDERR with the prefix "PHP message: ". ' +
+              'The callback prints it as error.'
             : flush.after === 0
               ? 'The script flushes "One" (after the headers) and PHP-FPM sends it right away. ' +
                   'The pass-through callback prints it immediately.'
@@ -128,9 +129,10 @@ echo 'Error: ' . $response->getError();                               //@print
       );
 
     if (passThrough) {
-      timeline.read(request);
+      // waitForResponses() removes the socket after the request was handled, readResponse() keeps it for reuse
+      timeline.read(request).close(request.lane, 'socket closed');
     } else {
-      timeline.show('print').read(request, 'One\nTwo\nThree\nEnd\nError: Oh oh!\n');
+      timeline.show('print').read(request, 'One\nTwo\nThree\nEnd\nError: PHP message: Oh oh!');
     }
 
     return timeline.build();

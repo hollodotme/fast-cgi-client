@@ -34,16 +34,18 @@ If you need to stay on PHP 7.1 - 7.4, keep using version 3.x. It still gets bug 
 
 ## Request content
 
-In 3.x, the content of a request was a string, and you had to set the matching content type yourself.
-In 4.x, the content is an object implementing `ComposesRequestContent`. It composes the content and determines its
-content type, so you pass it as the optional second argument of the constructor or to `setContent()`.
+In 3.x, the constructor of a request and `setContent()` took the content as a string, and you had to set the matching
+content type yourself. The content classes `UrlEncodedFormData`, `JsonData` and `MultipartFormData` already existed
+since 3.1.0, but could only be used with the named constructor [`newWithRequestContent()`](#named-constructor).
+In 4.x, the content is always an object implementing `ComposesRequestContent`. It composes the content and determines
+its content type, so you pass it as the optional second argument of the constructor or to `setContent()`.
 
 | Content in 3.x                                             | Content object in 4.x                 | Content type                        |
 |------------------------------------------------------------|---------------------------------------|-------------------------------------|
 | `http_build_query( $data )`                                | `new UrlEncodedFormData( $data )`     | `application/x-www-form-urlencoded` |
 | `json_encode( $data )` with `setContentType()`             | `new JsonData( $data )`               | `application/json`                  |
-| Multipart body built yourself with `setContentType()`      | `new MultipartFormData( $data, $files )` | `multipart/form-data; boundary=…`   |
-| Plain string with `setContentType( 'text/plain' )`         | `new PlainText( $text )`              | `text/plain`                        |
+| `newWithRequestContent()` with `MultipartFormData`         | `new MultipartFormData( $data, $files )` | `multipart/form-data; boundary=…`   |
+| Plain string with `setContentType( 'text/plain' )`         | `new PlainText( $text )` (new in 4.x) | `text/plain`                        |
 | Empty string `''`                                          | no content: omit the argument         | `application/x-www-form-urlencoded` |
 
 ### URL encoded form data
@@ -129,6 +131,7 @@ For content types that are not covered by the classes in `hollodotme\FastCGI\Req
 
 ```php
 use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
+use hollodotme\FastCGI\Requests\PostRequest;
 
 final class XmlData implements ComposesRequestContent
 {
@@ -233,6 +236,9 @@ If you implement interfaces of the library yourself, e.g. in test doubles, add t
 | `ProvidesRequestData`        | `getContent() : ?ComposesRequestContent` instead of `string` |
 
 ```php
+use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
+use hollodotme\FastCGI\SocketConnections\Defaults;
+
 final class MyConnection implements ConfiguresSocketConnection
 {
 	# ...

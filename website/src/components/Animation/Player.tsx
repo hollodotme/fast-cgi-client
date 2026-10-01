@@ -81,6 +81,9 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
     seeking.current = null;
   };
 
+  // Stop a running seek animation when the player is removed
+  useEffect(() => () => seeking.current?.stop(), []);
+
   const seek = (target: number, smooth = true) => {
     stopSeeking();
     setPlaying(false);
@@ -192,14 +195,13 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
         <fieldset className={styles.settings}>
           <legend>Try it: change the example</legend>
           {scene.choices.map((choice) => (
-            <div key={choice.id} className={styles.choice} role="radiogroup" aria-label={choice.label}>
+            <div key={choice.id} className={styles.choice} role="group" aria-label={choice.label}>
               <span>{choice.label}</span>
               {choice.options.map((option) => (
                 <button
                   key={option.value}
                   type="button"
-                  role="radio"
-                  aria-checked={settings[choice.id] === option.value}
+                  aria-pressed={settings[choice.id] === option.value}
                   className={styles.option}
                   onClick={() => change(choice.id, option.value)}>
                   {option.label}
