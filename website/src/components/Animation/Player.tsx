@@ -13,6 +13,7 @@ import {
 import CodeBlock from '@theme/CodeBlock';
 import {defaultSettings, type Scene, type Settings} from './scene';
 import {captionAt, codeAt, highlightMetastring, outputAt, stepsOf} from './timeline';
+import Icon from './Icon';
 import Stage from './Stage';
 import Gantt, {legendOf} from './Gantt';
 import styles from './styles.module.css';
@@ -145,20 +146,20 @@ export default function Player({scene, settings: initial = {}, minimal = false}:
 
       <div className={styles.controls}>
         <button type="button" className={styles.button} onClick={() => seek(0, false)} aria-label="Restart">
-          ⏮
+          <Icon name="restart" />
         </button>
         <button type="button" className={styles.button} onClick={previousStep} aria-label="Previous step">
-          ◀
+          <Icon name="previous" />
         </button>
         <button
           type="button"
           className={`${styles.button} ${styles.play}`}
           onClick={togglePlaying}
           aria-label={playing ? 'Pause' : 'Play'}>
-          {playing ? '❚❚' : '▶'}
+          <Icon name={playing ? 'pause' : 'play'} />
         </button>
         <button type="button" className={styles.button} onClick={nextStep} aria-label="Next step">
-          ▶︎|
+          <Icon name="next" />
         </button>
         <input
           className={styles.scrubber}
@@ -171,17 +172,16 @@ export default function Player({scene, settings: initial = {}, minimal = false}:
           aria-label="Time"
         />
         <span className={styles.clock}>{time.toFixed(1)} s</span>
-        <select
-          className={styles.speed}
-          value={speed}
-          onChange={(event) => setSpeed(Number(event.target.value))}
-          aria-label="Speed">
-          {SPEEDS.map((value) => (
-            <option key={value} value={value}>
-              {value}×
-            </option>
-          ))}
-        </select>
+        <span className={styles.speed}>
+          <select value={speed} onChange={(event) => setSpeed(Number(event.target.value))} aria-label="Speed">
+            {SPEEDS.map((value) => (
+              <option key={value} value={value}>
+                {value}×
+              </option>
+            ))}
+          </select>
+          <Icon name="chevron" className={styles.speedChevron} />
+        </span>
       </div>
 
       {!minimal && (
