@@ -139,7 +139,7 @@ final class SignaledWorkersTest extends TestCase
 			{
 				preg_match( '#^(\d+)\s.+$#', trim( $item ), $matches );
 
-				return (int)$matches[1];
+				return (int)($matches[1] ?? 0);
 			},
 			explode( "\n", trim( $list ) )
 		);
