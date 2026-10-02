@@ -8,10 +8,12 @@ on:
 
   pull_request:
 
+  # Started daily by docs-refresh.yml on the default branch, to refresh the numbers on the homepage
   workflow_dispatch:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: docs-${{ github.ref }}
@@ -29,6 +31,9 @@ jobs:
 
       - name: Build documentation website
         run: make -s docs-build
+        env:
+          # Avoids the rate limit of the GitHub API when fetching contributors and workflow results
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v5

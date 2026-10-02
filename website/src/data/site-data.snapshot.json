@@ -1,0 +1,536 @@
+{
+  "fetchedAt": "2026-10-02T08:05:45.332Z",
+  "downloads": {
+    "total": 29582502,
+    "monthly": 1151067,
+    "daily": [
+      {
+        "date": "2026-07-03",
+        "downloads": 26492
+      },
+      {
+        "date": "2026-07-04",
+        "downloads": 6747
+      },
+      {
+        "date": "2026-07-05",
+        "downloads": 7032
+      },
+      {
+        "date": "2026-07-06",
+        "downloads": 38796
+      },
+      {
+        "date": "2026-07-07",
+        "downloads": 40200
+      },
+      {
+        "date": "2026-07-08",
+        "downloads": 39187
+      },
+      {
+        "date": "2026-07-09",
+        "downloads": 36692
+      },
+      {
+        "date": "2026-07-10",
+        "downloads": 34225
+      },
+      {
+        "date": "2026-07-11",
+        "downloads": 8362
+      },
+      {
+        "date": "2026-07-12",
+        "downloads": 9755
+      },
+      {
+        "date": "2026-07-13",
+        "downloads": 38609
+      },
+      {
+        "date": "2026-07-14",
+        "downloads": 40425
+      },
+      {
+        "date": "2026-07-15",
+        "downloads": 44253
+      },
+      {
+        "date": "2026-07-16",
+        "downloads": 38898
+      },
+      {
+        "date": "2026-07-17",
+        "downloads": 34476
+      },
+      {
+        "date": "2026-07-18",
+        "downloads": 10542
+      },
+      {
+        "date": "2026-07-19",
+        "downloads": 8248
+      },
+      {
+        "date": "2026-07-20",
+        "downloads": 40075
+      },
+      {
+        "date": "2026-07-21",
+        "downloads": 41263
+      },
+      {
+        "date": "2026-07-22",
+        "downloads": 40999
+      },
+      {
+        "date": "2026-07-23",
+        "downloads": 40930
+      },
+      {
+        "date": "2026-07-24",
+        "downloads": 34522
+      },
+      {
+        "date": "2026-07-25",
+        "downloads": 7504
+      },
+      {
+        "date": "2026-07-26",
+        "downloads": 8581
+      },
+      {
+        "date": "2026-07-27",
+        "downloads": 41230
+      },
+      {
+        "date": "2026-07-28",
+        "downloads": 42970
+      },
+      {
+        "date": "2026-07-29",
+        "downloads": 42638
+      },
+      {
+        "date": "2026-07-30",
+        "downloads": 41697
+      },
+      {
+        "date": "2026-07-31",
+        "downloads": 34591
+      },
+      {
+        "date": "2026-08-01",
+        "downloads": 9815
+      },
+      {
+        "date": "2026-08-02",
+        "downloads": 9520
+      },
+      {
+        "date": "2026-08-03",
+        "downloads": 42700
+      },
+      {
+        "date": "2026-08-04",
+        "downloads": 44539
+      },
+      {
+        "date": "2026-08-05",
+        "downloads": 42283
+      },
+      {
+        "date": "2026-08-06",
+        "downloads": 32649
+      },
+      {
+        "date": "2026-08-07",
+        "downloads": 39495
+      },
+      {
+        "date": "2026-08-08",
+        "downloads": 10365
+      },
+      {
+        "date": "2026-08-09",
+        "downloads": 10147
+      },
+      {
+        "date": "2026-08-10",
+        "downloads": 41018
+      },
+      {
+        "date": "2026-08-11",
+        "downloads": 43798
+      },
+      {
+        "date": "2026-08-12",
+        "downloads": 45325
+      },
+      {
+        "date": "2026-08-13",
+        "downloads": 41519
+      },
+      {
+        "date": "2026-08-14",
+        "downloads": 35697
+      },
+      {
+        "date": "2026-08-15",
+        "downloads": 10203
+      },
+      {
+        "date": "2026-08-16",
+        "downloads": 9333
+      },
+      {
+        "date": "2026-08-17",
+        "downloads": 35885
+      },
+      {
+        "date": "2026-08-18",
+        "downloads": 47754
+      },
+      {
+        "date": "2026-08-19",
+        "downloads": 41370
+      },
+      {
+        "date": "2026-08-20",
+        "downloads": 38522
+      },
+      {
+        "date": "2026-08-21",
+        "downloads": 36962
+      },
+      {
+        "date": "2026-08-22",
+        "downloads": 9873
+      },
+      {
+        "date": "2026-08-23",
+        "downloads": 10350
+      },
+      {
+        "date": "2026-08-24",
+        "downloads": 43537
+      },
+      {
+        "date": "2026-08-25",
+        "downloads": 43375
+      },
+      {
+        "date": "2026-08-26",
+        "downloads": 44651
+      },
+      {
+        "date": "2026-08-27",
+        "downloads": 46958
+      },
+      {
+        "date": "2026-08-28",
+        "downloads": 39723
+      },
+      {
+        "date": "2026-08-29",
+        "downloads": 13073
+      },
+      {
+        "date": "2026-08-30",
+        "downloads": 11687
+      },
+      {
+        "date": "2026-08-31",
+        "downloads": 42271
+      },
+      {
+        "date": "2026-09-01",
+        "downloads": 47368
+      },
+      {
+        "date": "2026-09-02",
+        "downloads": 49299
+      },
+      {
+        "date": "2026-09-03",
+        "downloads": 50431
+      },
+      {
+        "date": "2026-09-04",
+        "downloads": 42943
+      },
+      {
+        "date": "2026-09-05",
+        "downloads": 13632
+      },
+      {
+        "date": "2026-09-06",
+        "downloads": 12642
+      },
+      {
+        "date": "2026-09-07",
+        "downloads": 40777
+      },
+      {
+        "date": "2026-09-08",
+        "downloads": 47721
+      },
+      {
+        "date": "2026-09-09",
+        "downloads": 51011
+      },
+      {
+        "date": "2026-09-10",
+        "downloads": 46898
+      },
+      {
+        "date": "2026-09-11",
+        "downloads": 39535
+      },
+      {
+        "date": "2026-09-12",
+        "downloads": 11936
+      },
+      {
+        "date": "2026-09-13",
+        "downloads": 12572
+      },
+      {
+        "date": "2026-09-14",
+        "downloads": 49733
+      },
+      {
+        "date": "2026-09-15",
+        "downloads": 52296
+      },
+      {
+        "date": "2026-09-16",
+        "downloads": 48764
+      },
+      {
+        "date": "2026-09-17",
+        "downloads": 49853
+      },
+      {
+        "date": "2026-09-18",
+        "downloads": 41110
+      },
+      {
+        "date": "2026-09-19",
+        "downloads": 9719
+      },
+      {
+        "date": "2026-09-20",
+        "downloads": 10819
+      },
+      {
+        "date": "2026-09-21",
+        "downloads": 45348
+      },
+      {
+        "date": "2026-09-22",
+        "downloads": 46981
+      },
+      {
+        "date": "2026-09-23",
+        "downloads": 46295
+      },
+      {
+        "date": "2026-09-24",
+        "downloads": 45788
+      },
+      {
+        "date": "2026-09-25",
+        "downloads": 40060
+      },
+      {
+        "date": "2026-09-26",
+        "downloads": 15407
+      },
+      {
+        "date": "2026-09-27",
+        "downloads": 20541
+      },
+      {
+        "date": "2026-09-28",
+        "downloads": 59088
+      },
+      {
+        "date": "2026-09-29",
+        "downloads": 69023
+      },
+      {
+        "date": "2026-09-30",
+        "downloads": 64547
+      }
+    ],
+    "stars": 564,
+    "dependents": 25
+  },
+  "topDependents": [
+    {
+      "name": "laravel/vapor-core",
+      "downloads": 14630976
+    },
+    {
+      "name": "bref/bref",
+      "downloads": 11797673
+    },
+    {
+      "name": "gordalina/cachetool",
+      "downloads": 4043395
+    }
+  ],
+  "compatibility": [
+    {
+      "name": "PHP-FPM 8.0 – 8.5",
+      "workflow": "ci.yml",
+      "url": "https://github.com/hollodotme/fast-cgi-client/actions/workflows/ci.yml",
+      "passing": true,
+      "checkedAt": "2026-10-02T07:51:44Z"
+    },
+    {
+      "name": "Go",
+      "workflow": "compatibility-go.yml",
+      "url": "https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-go.yml",
+      "passing": true,
+      "checkedAt": "2026-10-02T07:49:51Z"
+    },
+    {
+      "name": "Rust",
+      "workflow": "compatibility-rust.yml",
+      "url": "https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-rust.yml",
+      "passing": true,
+      "checkedAt": "2026-10-02T07:49:56Z"
+    },
+    {
+      "name": "Rust (tokio)",
+      "workflow": "compatibility-rust-tokio.yml",
+      "url": "https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-rust-tokio.yml",
+      "passing": true,
+      "checkedAt": "2026-10-02T07:50:10Z"
+    },
+    {
+      "name": "C#",
+      "workflow": "compatibility-csharp.yml",
+      "url": "https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-csharp.yml",
+      "passing": true,
+      "checkedAt": "2026-10-02T07:49:47Z"
+    },
+    {
+      "name": "Java",
+      "workflow": "compatibility-java.yml",
+      "url": "https://github.com/hollodotme/fast-cgi-client/actions/workflows/compatibility-java.yml",
+      "passing": true,
+      "checkedAt": "2026-10-02T07:49:46Z"
+    }
+  ],
+  "contributors": [
+    {
+      "login": "hollodotme",
+      "name": "Holger Woltersdorf",
+      "role": "Maintainer",
+      "commits": 363,
+      "avatar": "/img/contributors/hollodotme.png"
+    },
+    {
+      "login": "adoy",
+      "name": "Pierrick Charron",
+      "role": "Original author",
+      "commits": 0,
+      "avatar": "/img/contributors/adoy.png"
+    },
+    {
+      "login": "dugwood",
+      "name": "Yvan Taviaud",
+      "role": "Contributor",
+      "commits": 1,
+      "avatar": "/img/contributors/dugwood.png"
+    },
+    {
+      "login": "zackse",
+      "name": "Evan Zacks",
+      "role": "Contributor",
+      "commits": 1,
+      "avatar": "/img/contributors/zackse.png"
+    },
+    {
+      "login": "themsaid",
+      "name": "Mohamed Said",
+      "role": "Contributor",
+      "commits": 1,
+      "avatar": "/img/contributors/themsaid.png"
+    },
+    {
+      "login": "teanooki",
+      "name": "Markus",
+      "role": "Contributor",
+      "commits": 1,
+      "avatar": "/img/contributors/teanooki.png"
+    },
+    {
+      "login": "jdreesen",
+      "name": "Jacob Dreesen",
+      "role": "Contributor",
+      "commits": 1,
+      "avatar": "/img/contributors/jdreesen.png"
+    },
+    {
+      "login": "rbro",
+      "name": "Ryan Brothers",
+      "role": "Contributor",
+      "commits": 0,
+      "avatar": "/img/contributors/rbro.png"
+    },
+    {
+      "login": "theseer",
+      "name": "Arne Blankerts",
+      "role": "Contributor",
+      "commits": 0,
+      "avatar": "/img/contributors/theseer.png"
+    },
+    {
+      "login": "andybee",
+      "name": "Andy Buckingham",
+      "role": "Contributor",
+      "commits": 0,
+      "avatar": "/img/contributors/andybee.png"
+    },
+    {
+      "login": "mnapoli",
+      "name": "Matthieu Napoli",
+      "role": "Contributor",
+      "commits": 1,
+      "avatar": "/img/contributors/mnapoli.png"
+    },
+    {
+      "login": "holtkamp",
+      "name": "Menno Holtkamp",
+      "role": "Contributor",
+      "commits": 1,
+      "avatar": "/img/contributors/holtkamp.png"
+    },
+    {
+      "login": "krsriq",
+      "name": "Daniel Schmelz",
+      "role": "Contributor",
+      "commits": 1,
+      "avatar": "/img/contributors/krsriq.png"
+    },
+    {
+      "login": "sanderdlm",
+      "name": "Sander De la Marche",
+      "role": "Contributor",
+      "commits": 0,
+      "avatar": "/img/contributors/sanderdlm.png"
+    },
+    {
+      "login": "rcanavan",
+      "name": "Rainer M. Canavan",
+      "role": "Contributor",
+      "commits": 0,
+      "avatar": "/img/contributors/rcanavan.png"
+    }
+  ]
+}

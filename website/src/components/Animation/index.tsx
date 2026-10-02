@@ -25,6 +25,8 @@ type Props = {
   scene: keyof typeof scenes;
   /** Settings that differ from the defaults of the scene, e.g. {mode: 'reactive'} */
   settings?: Settings;
+  /** Leaves out the timeline chart and the settings */
+  minimal?: boolean;
 };
 
 /**
@@ -32,6 +34,6 @@ type Props = {
  *
  * <Animation scene="multipleRequests" settings={{mode: 'reactive'}} />
  */
-export default function Animation({scene, settings}: Props): ReactNode {
-  return <Player scene={scenes[scene]} settings={settings} />;
+export default function Animation({scene, settings, minimal}: Props): ReactNode {
+  return <Player scene={scenes[scene]} settings={settings} minimal={minimal} />;
 }

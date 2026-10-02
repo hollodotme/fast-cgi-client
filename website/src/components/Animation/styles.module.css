@@ -239,14 +239,16 @@
 }
 
 .button {
-  min-width: 2.25rem;
+  display: inline-grid;
+  width: 2.25rem;
   height: 2.25rem;
-  padding: 0 0.5rem;
+  flex: none;
+  place-items: center;
+  padding: 0;
   border: 1px solid var(--anim-border);
-  border-radius: 1.2rem;
+  border-radius: 50%;
   background: var(--anim-surface);
   color: var(--ifm-font-color-base);
-  font-size: 0.9rem;
   cursor: pointer;
 }
 
@@ -255,7 +257,8 @@
 }
 
 .play {
-  min-width: 3rem;
+  width: 3rem;
+  border-radius: 1.125rem;
   border-color: var(--ifm-color-primary);
   background: var(--ifm-color-primary);
   color: var(--ifm-color-white);
@@ -280,12 +283,36 @@
 }
 
 .speed {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.speed select {
   height: 2.25rem;
-  padding: 0 0.25rem;
+  padding: 0 2rem 0 0.75rem;
   border: 1px solid var(--anim-border);
-  border-radius: var(--ifm-global-radius);
+  border-radius: 1.125rem;
   background: var(--anim-surface);
   color: var(--ifm-font-color-base);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  appearance: none;
+}
+
+.speed select:hover {
+  border-color: var(--ifm-color-primary);
+}
+
+.speedChevron {
+  position: absolute;
+  top: 50%;
+  right: 0.7rem;
+  width: 12px;
+  height: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
 }
 
 /* Timeline chart */

@@ -13,6 +13,7 @@ import {
 import CodeBlock from '@theme/CodeBlock';
 import {defaultSettings, type Scene, type Settings} from './scene';
 import {captionAt, codeAt, highlightMetastring, outputAt, stepsOf} from './timeline';
+import Icon from './Icon';
 import Stage from './Stage';
 import Gantt, {legendOf} from './Gantt';
 import styles from './styles.module.css';
@@ -23,10 +24,12 @@ type Props = {
   scene: Scene;
   /** Settings that differ from the defaults of the scene */
   settings?: Settings;
+  /** Leaves out the timeline chart and the settings, e.g. on the homepage */
+  minimal?: boolean;
 };
 
 /** Plays a scene: the stage, a caption per step, controls, the timeline chart, the example code and its output */
-export default function Player({scene, settings: initial = {}}: Props): ReactNode {
+export default function Player({scene, settings: initial = {}, minimal = false}: Props): ReactNode {
   const [settings, setSettings] = useState<Settings>(() => ({...defaultSettings(scene), ...initial}));
   const timeline = useMemo(() => scene.build(settings), [scene, settings]);
   const code = useMemo(() => scene.code(settings), [scene, settings]);
@@ -143,20 +146,20 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
 
       <div className={styles.controls}>
         <button type="button" className={styles.button} onClick={() => seek(0, false)} aria-label="Restart">
-          ⏮
+          <Icon name="restart" />
         </button>
         <button type="button" className={styles.button} onClick={previousStep} aria-label="Previous step">
-          ◀
+          <Icon name="previous" />
         </button>
         <button
           type="button"
           className={`${styles.button} ${styles.play}`}
           onClick={togglePlaying}
           aria-label={playing ? 'Pause' : 'Play'}>
-          {playing ? '❚❚' : '▶'}
+          <Icon name={playing ? 'pause' : 'play'} />
         </button>
         <button type="button" className={styles.button} onClick={nextStep} aria-label="Next step">
-          ▶︎|
+          <Icon name="next" />
         </button>
         <input
           className={styles.scrubber}
@@ -169,19 +172,20 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
           aria-label="Time"
         />
         <span className={styles.clock}>{time.toFixed(1)} s</span>
-        <select
-          className={styles.speed}
-          value={speed}
-          onChange={(event) => setSpeed(Number(event.target.value))}
-          aria-label="Speed">
-          {SPEEDS.map((value) => (
-            <option key={value} value={value}>
-              {value}×
-            </option>
-          ))}
-        </select>
+        <span className={styles.speed}>
+          <select value={speed} onChange={(event) => setSpeed(Number(event.target.value))} aria-label="Speed">
+            {SPEEDS.map((value) => (
+              <option key={value} value={value}>
+                {value}×
+              </option>
+            ))}
+          </select>
+          <Icon name="chevron" className={styles.speedChevron} />
+        </span>
       </div>
 
+      {!minimal && (
+        <>
       <Gantt timeline={timeline} time={time} onSeek={(target) => seek(target)} compact={compact} />
       <ul className={styles.legend}>
         {legend.map((entry) => (
@@ -225,6 +229,8 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
             </label>
           ))}
         </fieldset>
+      )}
+        </>
       )}
 
       <div className={styles.panels}>
