@@ -248,69 +248,111 @@
   text-decoration: none;
 }
 
-/* Stats at the bottom of the hero */
+/* Stats at the bottom of the hero: two sizes only, large for numbers and small for text */
 
 .stats {
-  display: grid;
-  grid-template-columns: 1.2fr 1.5fr 0.8fr 1.3fr;
-  gap: 2rem;
+  --stat-large: clamp(2.25rem, 3.6vw, 2.9rem);
+  --stat-small: 0.9rem;
+  --stat-muted: rgb(174, 179, 214);
+
   margin-top: 4.5rem;
-  padding-top: 1.75rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .stats p {
   margin: 0;
 }
 
+.statsRow {
+  display: grid;
+  align-items: center;
+  gap: 2rem;
+  padding: 1.75rem 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.statsRow[data-row='packagist'] {
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr);
+}
+
+.statsRow[data-row='usage'] {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .statValue {
+  display: block;
   color: #ffffff;
-  font-size: 2.25rem;
+  font-size: var(--stat-large);
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1.05;
   letter-spacing: -0.02em;
 }
 
-.statHero .statValue {
-  font-size: clamp(3rem, 5vw, 3.75rem);
-  font-weight: 800;
-  line-height: 1;
+.statText {
+  display: block;
+  margin-top: 0.3rem !important;
+  color: var(--stat-muted);
+  font-size: var(--stat-small);
+  font-weight: 400;
+  line-height: 1.4;
 }
 
-.statLabel {
-  margin-top: 0.35rem !important;
-  color: #aeb3d6;
-  font-size: 0.95rem;
+.stats a {
+  color: inherit;
+  text-decoration: none;
 }
 
-.dependents {
-  margin: 0.35rem 0 0;
-  padding: 0;
-  list-style: none;
-  font-size: 0.9rem;
+.stats a:hover .statText,
+.stats a .statText:hover {
+  color: #ffffff;
+  text-decoration: underline;
 }
 
-.dependents a,
-.statSource a {
+.statText a {
   color: #b9c0eb;
+  text-decoration: underline !important;
 }
 
-.statSource {
-  grid-column: 1 / -1;
-  color: #8e94bf;
-  font-size: 0.85rem;
+/* Logos are masks, so they all take the muted color */
+.logo {
+  display: block;
+  height: 44px;
+  background-color: var(--stat-muted);
+  mask-position: center;
+  mask-repeat: no-repeat;
+  mask-size: contain;
+}
+
+.statLogo .logo {
+  height: 64px;
+}
+
+.statWithLogo {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.dependent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.dependent .logo {
+  max-width: 100%;
+  height: 36px;
 }
 
 .sparkline {
   position: relative;
-  max-width: 260px;
-  margin-top: 0.75rem;
+  min-width: 0;
 }
 
 .sparkline svg {
   display: block;
   width: 100%;
-  height: 56px;
+  height: 64px;
   overflow: visible;
   cursor: crosshair;
 }
@@ -348,14 +390,22 @@
 
 .sparkReading {
   min-height: 1.4em;
-  margin-top: 0.35rem !important;
-  color: #aeb3d6;
-  font-size: 0.85rem;
+  margin-top: 0.3rem !important;
+  color: var(--stat-muted);
+  font-size: var(--stat-small);
   font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 996px) {
-  .stats {
+  .statsRow[data-row='packagist'] {
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .statsRow[data-row='packagist'] .sparkline {
+    grid-column: 1 / -1;
+  }
+
+  .statsRow[data-row='usage'] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -365,9 +415,16 @@
     padding-top: 3.5rem;
   }
 
-  .stats {
-    grid-template-columns: minmax(0, 1fr);
+  .statsRow {
     gap: 1.5rem;
+  }
+
+  .statsRow[data-row='packagist'] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .statsRow[data-row='packagist'] .statLogo {
+    grid-column: 1 / -1;
   }
 }
 

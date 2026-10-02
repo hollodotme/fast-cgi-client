@@ -74,6 +74,36 @@ function Sparkline({days}: {days: Day[]}): ReactNode {
   );
 }
 
+/** A logo in the muted text color of the hero, drawn as a mask so that any logo can take that color */
+function Logo({src, ratio, label}: {src: string; ratio: number; label: string}): ReactNode {
+  return (
+    <span
+      className={styles.logo}
+      role="img"
+      aria-label={label}
+      style={{maskImage: `url(${src})`, WebkitMaskImage: `url(${src})`, aspectRatio: String(ratio)}}
+    />
+  );
+}
+
+/** Logos of known dependents, others are shown with their name */
+const dependentLogos: Record<string, {src: string; ratio: number; label: string}> = {
+  'laravel/vapor-core': {src: '/img/logos/laravel-vapor.svg', ratio: 494 / 352, label: 'Laravel Vapor'},
+  'bref/bref': {src: '/img/logos/bref.svg', ratio: 643 / 194, label: 'Bref'},
+  // CacheTool has no logo, the file is a wordmark of its name
+  'gordalina/cachetool': {src: '/img/logos/cachetool.svg', ratio: 300 / 52, label: 'CacheTool'},
+};
+
+function Dependent({name}: {name: string}): ReactNode {
+  const logo = dependentLogos[name];
+  return (
+    <a className={styles.dependent} href={`https://packagist.org/packages/${name}`}>
+      {logo !== undefined ? <Logo {...logo} /> : <span className={styles.statValue}>{name.split('/')[1]}</span>}
+      <span className={styles.statText}>{name}</span>
+    </a>
+  );
+}
+
 /** Downloads, stars and dependents, fetched from Packagist and GitHub when the website is built */
 export default function Stats(): ReactNode {
   const {downloads, topDependents} = data;
@@ -86,37 +116,41 @@ export default function Stats(): ReactNode {
 
   return (
     <section className={styles.stats} aria-label="Usage of the library">
-      <div className={styles.statHero}>
-        <p className={styles.statValue}>{compact.format(downloads.total)}</p>
-        <p className={styles.statLabel}>Downloads on Packagist</p>
-      </div>
-
-      {latest !== undefined && days.length > 1 && (
-        <div className={styles.stat}>
-          <p className={styles.statValue}>{compact.format(latest.downloads)}</p>
-          <p className={styles.statLabel}>Downloads on {day.format(new Date(latest.date))}</p>
-          <Sparkline days={days} />
+      <div className={styles.statsRow} data-row="packagist">
+        <a className={styles.statLogo} href="https://packagist.org/packages/hollodotme/fast-cgi-client/stats">
+          <Logo src="/img/logos/packagist.svg" ratio={1} label="Packagist" />
+        </a>
+        <div>
+          <p className={styles.statValue}>{compact.format(downloads.total)}</p>
+          <p className={styles.statText}>Downloads in total</p>
         </div>
-      )}
-
-      <div className={styles.stat}>
-        <p className={styles.statValue}>{exact.format(downloads.stars)}</p>
-        <p className={styles.statLabel}>Stars on GitHub</p>
+        {latest !== undefined && (
+          <div>
+            <p className={styles.statValue}>{compact.format(latest.downloads)}</p>
+            <p className={styles.statText}>Downloads on {day.format(new Date(latest.date))}</p>
+          </div>
+        )}
+        {days.length > 1 && <Sparkline days={days} />}
       </div>
 
-      <div className={styles.stat}>
-        <p className={styles.statValue}>{downloads.dependents}</p>
-        <p className={styles.statLabel}>Packages built on it, like</p>
-        <ul className={styles.dependents}>
-          {topDependents.map((dependent) => (
-            <li key={dependent.name}>
-              <a href={`https://packagist.org/packages/${dependent.name}`}>{dependent.name}</a>
-            </li>
-          ))}
-        </ul>
+      <div className={styles.statsRow} data-row="usage">
+        <a className={styles.statWithLogo} href="https://github.com/hollodotme/fast-cgi-client/stargazers">
+          <Logo src="/img/logos/github.svg" ratio={1} label="GitHub" />
+          <span>
+            <span className={styles.statValue}>{exact.format(downloads.stars)}</span>
+            <span className={styles.statText}>Stars on GitHub</span>
+          </span>
+        </a>
+        <div>
+          <p className={styles.statValue}>{downloads.dependents}</p>
+          <p className={styles.statText}>Packages built on it, like</p>
+        </div>
+        {topDependents.map((dependent) => (
+          <Dependent key={dependent.name} name={dependent.name} />
+        ))}
       </div>
 
-      <p className={styles.statSource}>
+      <p className={styles.statText}>
         Numbers from <a href="https://packagist.org/packages/hollodotme/fast-cgi-client/stats">Packagist</a> and
         GitHub, updated daily
       </p>
