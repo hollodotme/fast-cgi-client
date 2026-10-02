@@ -1,0 +1,24 @@
+name: Refresh documentation website
+
+# Scheduled workflows only run on the default branch. This one builds and deploys the documentation website
+# from the branch of the current major version every day, so the download numbers, contributors and test results
+# on its homepage stay current.
+
+on:
+  schedule:
+    - cron: "23 5 * * *"
+
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run the documentation workflow of 4.x-dev
+        run: gh workflow run docs.yml --ref 4.x-dev --repo "${{ github.repository }}"
+        env:
+          GH_TOKEN: ${{ github.token }}
