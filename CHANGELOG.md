@@ -97,7 +97,8 @@ This file covers the 4.x releases. For previous major versions see:
 * A migration guide in the documentation shows what to change in your code when upgrading from 3.x, and the
   changelogs of all major versions are part of the documentation website.
 * New design of the documentation website with self-hosted fonts and a homepage showing the download numbers from
-  Packagist, the packages depending on the library, the results of the compatibility tests and all contributors.
+  Packagist, the packages depending on the library, the results of the compatibility tests, all contributors and
+  the GitHub Sponsors card of the maintainer.
 * The development environment uses the `docker compose` plugin instead of the standalone `docker-compose` binary.
 
 ### Fixed

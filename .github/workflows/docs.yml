@@ -8,11 +8,8 @@ on:
 
   pull_request:
 
+  # Started daily by docs-refresh.yml on the default branch, to refresh the numbers on the homepage
   workflow_dispatch:
-
-  # Refreshes the download numbers, contributors and test results on the homepage
-  schedule:
-    - cron: "23 5 * * *"
 
 permissions:
   contents: read

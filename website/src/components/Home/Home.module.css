@@ -553,3 +553,31 @@
 .tabPanel > div:last-child {
   max-width: 920px;
 }
+
+/* Sponsoring */
+
+/* The card is rendered by GitHub, the frame matches its background in both color modes */
+.sponsorFrame {
+  max-width: 640px;
+  padding: 1.25rem;
+  border: 1px solid var(--fcc-hairline);
+  border-radius: var(--ifm-global-radius);
+  background: #ffffff;
+}
+
+[data-theme='dark'] .sponsorFrame {
+  background: #0d1117;
+}
+
+.sponsorCard {
+  display: block;
+  width: 100%;
+  height: 90px;
+  border: 0;
+}
+
+@media (max-width: 600px) {
+  .sponsorCard {
+    height: 140px;
+  }
+}

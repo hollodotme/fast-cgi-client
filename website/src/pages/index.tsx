@@ -5,6 +5,7 @@ import Hero from '@site/src/components/Home/Hero';
 import UseCases from '@site/src/components/Home/UseCases';
 import Compatibility from '@site/src/components/Home/Compatibility';
 import Contributors from '@site/src/components/Home/Contributors';
+import Sponsor from '@site/src/components/Home/Sponsor';
 
 export default function Home(): ReactNode {
   const {siteConfig} = useDocusaurusContext();
@@ -15,6 +16,7 @@ export default function Home(): ReactNode {
         <UseCases />
         <Compatibility />
         <Contributors />
+        <Sponsor />
       </main>
     </Layout>
   );
