@@ -243,6 +243,7 @@ Array
                 )
 
         )
+
 )
 ```
 
@@ -288,7 +289,8 @@ $postRequest = new PostRequest( '/path/to/target/script.php', $multipartContent 
 $response = $client->sendRequest( $connection, $postRequest );
 ```
 
-This example produces the following `$_POST` and `$_FILES` array at the target script:
+This example produces the following `$_POST` and `$_FILES` array at the target script. The entry `full_path` exists
+since PHP 8.1, and the type of this PHP file is detected as `text/x-php`:
 
 ```
 # $_POST
@@ -314,7 +316,8 @@ Array
     [file1] => Array
         (
             [name] => multipart.php
-            [type] => application/octet-stream
+            [full_path] => multipart.php
+            [type] => text/x-php
             [tmp_name] => /tmp/phpiIdCNM
             [error] => 0
             [size] => 1086
@@ -328,10 +331,16 @@ Array
                     [three] => multipart.php
                 )
 
+            [full_path] => Array
+                (
+                    [1] => multipart.php
+                    [three] => multipart.php
+                )
+
             [type] => Array
                 (
-                    [1] => application/octet-stream
-                    [three] => application/octet-stream
+                    [1] => text/x-php
+                    [three] => text/x-php
                 )
 
             [tmp_name] => Array
@@ -390,13 +399,5 @@ $response = $client->sendRequest( $connection, $postRequest );
 This example produces the following content for `php://input` at the target script:
 
 ```json
-{
-  "nested": {
-    "0": "one",
-    "two": "value2",
-    "three": [
-      "value3"
-    ]
-  }
-}
+{"nested":{"0":"one","two":"value2","three":["value3"]}}
 ```

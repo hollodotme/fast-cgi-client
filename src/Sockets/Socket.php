@@ -136,6 +136,13 @@ final class Socket
 
 	public function hasResponse() : bool
 	{
+		# Only a busy socket waits for a response. An idle socket has its response already, its stream becomes
+		# readable when the server closes the connection, which is no new response.
+		if ( !$this->isBusy() )
+		{
+			return null !== $this->response;
+		}
+
 		if ( !is_resource( $this->resource ) )
 		{
 			return false;
@@ -683,7 +690,12 @@ final class Socket
 	 */
 	private function handleNullPacket( ?array $packet ) : void
 	{
-		if ( $packet === null && is_resource( $this->resource ) )
+		if ( null !== $packet )
+		{
+			return;
+		}
+
+		if ( is_resource( $this->resource ) )
 		{
 			$info = stream_get_meta_data( $this->resource );
 
@@ -696,9 +708,9 @@ final class Socket
 			{
 				throw new ReadFailedException( 'Stream got blocked, or terminated.' );
 			}
-
-			throw new ReadFailedException( 'Read failed' );
 		}
+
+		throw new ReadFailedException( 'Read failed' );
 	}
 
 	/**

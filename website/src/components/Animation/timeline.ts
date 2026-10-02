@@ -253,7 +253,10 @@ export class TimelineBuilder {
 
   /** The response of the request is never sent, e.g. because the client closed the socket before */
   drop(request: Request): this {
-    this.packets.splice(this.packets.indexOf(request.response), 1);
+    const index = this.packets.indexOf(request.response);
+    if (index >= 0) {
+      this.packets.splice(index, 1);
+    }
     return this;
   }
 

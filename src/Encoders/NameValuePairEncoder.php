@@ -6,6 +6,7 @@ use hollodotme\FastCGI\Interfaces\EncodesNameValuePair;
 use function chr;
 use function ord;
 use function strlen;
+use function substr;
 
 /**
  * Class NameValuePairEncoder

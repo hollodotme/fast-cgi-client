@@ -102,6 +102,47 @@ final class ReadyResponsesTest extends TestCase
 	}
 
 	/**
+	 * The response of an idle socket was already read. It stays available, also after the server closed the
+	 * connection, so waiting for it notifies the response callbacks once, without waiting for a timeout.
+	 *
+	 * @throws Throwable
+	 */
+	public function testIdleSocketHasItsReadResponse() : void
+	{
+		$client  = new Client();
+		$request = new GetRequest( 'script.php' );
+		$bodies  = [];
+		$request->addResponseCallbacks(
+			static function ( ProvidesResponseData $response ) use ( &$bodies ) : void
+			{
+				$bodies[] = $response->getBody();
+			}
+		);
+		$request->addFailureCallbacks(
+			static function ( Throwable $throwable ) : void
+			{
+				self::fail( 'Unexpected failure: ' . $throwable->getMessage() );
+			}
+		);
+
+		$socketId   = $client->sendAsyncRequest( $this->getConnection( 1000 ), $request );
+		$connection = $this->accept();
+		$this->respond( $connection, $socketId, 'first' );
+
+		self::assertSame( 'first', $client->readResponse( $socketId )->getBody() );
+		self::assertTrue( $client->hasResponse( $socketId ) );
+
+		fclose( $connection );
+
+		self::assertTrue( $client->hasResponse( $socketId ) );
+
+		$client->waitForResponse( $socketId, 500 );
+
+		self::assertSame( ['first'], $bodies );
+		self::assertFalse( $client->hasUnhandledResponses() );
+	}
+
+	/**
 	 * Connections with different read/write timeouts are not equal, so each request gets its own socket.
 	 */
 	private function getConnection( int $readWriteTimeout ) : NetworkSocket

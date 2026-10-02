@@ -91,7 +91,9 @@ This file covers the 4.x releases. For previous major versions see:
 * Interactive animations in the documentation show step by step what happens when sending requests synchronously,
   asynchronously and in parallel, with callbacks, pass-through callbacks and retries, how sockets are reused and
   how a request is sent as FastCGI records — next to the example code and its output.
-* The pass-through callback example prints the output and the error output only if the callback receives them.
+* Code examples and their printed output in the documentation were checked against the library by running them,
+  and corrected where they differed, e.g. the pass-through callback example prints the output and the error output
+  only if the callback receives them.
 * A migration guide in the documentation shows what to change in your code when upgrading from 3.x, and the
   changelogs of all major versions are part of the documentation website.
 * The development environment uses the `docker compose` plugin instead of the standalone `docker-compose` binary.
@@ -122,6 +124,10 @@ This file covers the 4.x releases. For previous major versions see:
 * An idle socket was reported as having a response, when the server closed its connection. Its response was then
   returned again by `readReadyResponses()`, and its callbacks were notified again by `handleReadyResponses()` and
   `waitForResponses()`.
+* `Client#hasResponse()` and `Client#waitForResponse()` checked the stream of a socket whose response was already read
+  with `readResponse()`. `hasResponse()` returned `false`, and `true` once the server closed the idle connection.
+  `waitForResponse()` then waited until the timeout and notified the failure callbacks, or notified the response
+  callbacks with the response again. Such a socket has its response now.
 
 ### Removed
 
