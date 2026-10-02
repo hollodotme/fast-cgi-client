@@ -1,26 +1,147 @@
 /**
- * Global styles, infima variables: https://infima.dev
+ * Global styles of the website. The palette follows the wire: indigo for requests, teal for responses,
+ * amber for things that are live. Infima variables: https://infima.dev
  */
 
 :root {
-  --ifm-color-primary: #4f5b93;
-  --ifm-color-primary-dark: #475284;
-  --ifm-color-primary-darker: #434e7d;
-  --ifm-color-primary-darkest: #374067;
-  --ifm-color-primary-light: #5864a2;
-  --ifm-color-primary-lighter: #5f6ba7;
-  --ifm-color-primary-lightest: #737eb3;
-  --ifm-code-font-size: 95%;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+  /* Brand */
+  --fcc-ink: #1a1e3c;
+  --fcc-ink-raised: #242a52;
+  --fcc-paper: #f5f6fa;
+  --fcc-indigo: #5b67b8;
+  --fcc-teal: #1fa39a;
+  --fcc-amber: #f0a03c;
+  --fcc-hairline: rgba(26, 30, 60, 0.12);
+
+  --ifm-color-primary: #4b57a6;
+  --ifm-color-primary-dark: #444e95;
+  --ifm-color-primary-darker: #404a8d;
+  --ifm-color-primary-darkest: #353d74;
+  --ifm-color-primary-light: #5662b2;
+  --ifm-color-primary-lighter: #5f6ab6;
+  --ifm-color-primary-lightest: #7983c3;
+  --ifm-color-success: #168a82;
+
+  --ifm-background-color: #fbfbfd;
+  --ifm-background-surface-color: #ffffff;
+  --ifm-font-color-base: #1c2036;
+  --ifm-heading-color: #161a33;
+  --ifm-color-emphasis-300: #d7d9e6;
+
+  --ifm-font-family-base: 'Schibsted Grotesk Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ifm-heading-font-family: var(--ifm-font-family-base);
+  --ifm-font-family-monospace: 'Fira Code Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --ifm-line-height-base: 1.65;
+  --ifm-heading-font-weight: 700;
+  --ifm-code-font-size: 92%;
+  --ifm-code-border-radius: 8px;
+  --ifm-global-radius: 10px;
+  --ifm-navbar-height: 4rem;
+
+  --ifm-footer-background-color: var(--fcc-ink);
+  --docusaurus-highlighted-code-line-bg: rgba(75, 87, 166, 0.12);
 }
 
 [data-theme='dark'] {
-  --ifm-color-primary: #8f98d0;
-  --ifm-color-primary-dark: #7a84c6;
-  --ifm-color-primary-darker: #6f7ac1;
-  --ifm-color-primary-darkest: #505cae;
-  --ifm-color-primary-light: #a4acda;
-  --ifm-color-primary-lighter: #afb6df;
-  --ifm-color-primary-lightest: #d0d4ec;
-  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+  --fcc-hairline: rgba(220, 224, 255, 0.12);
+
+  --ifm-color-primary: #9aa3e0;
+  --ifm-color-primary-dark: #858fd8;
+  --ifm-color-primary-darker: #7b86d4;
+  --ifm-color-primary-darkest: #5b68c8;
+  --ifm-color-primary-light: #afb6e8;
+  --ifm-color-primary-lighter: #b9c0eb;
+  --ifm-color-primary-lightest: #d9ddf5;
+  --ifm-color-success: #3cc4ba;
+
+  --ifm-background-color: #12152b;
+  --ifm-background-surface-color: var(--fcc-ink);
+  --ifm-font-color-base: #e3e5f2;
+  --ifm-heading-color: #f3f4fb;
+  --ifm-color-emphasis-300: #343a63;
+
+  --ifm-footer-background-color: #0d1022;
+  --docusaurus-highlighted-code-line-bg: rgba(154, 163, 224, 0.16);
+}
+
+/* Type */
+
+h1,
+h2 {
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-weight: 800;
+}
+
+code,
+pre,
+kbd {
+  font-variant-ligatures: contextual common-ligatures;
+  font-feature-settings: 'calt' 1, 'liga' 1;
+}
+
+.markdown > p,
+.markdown li {
+  max-width: 72ch;
+}
+
+/* Navbar and footer */
+
+.navbar {
+  border-bottom: 1px solid var(--fcc-hairline);
+  box-shadow: none;
+}
+
+.navbar__title {
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.footer--dark {
+  --ifm-footer-link-color: #c3c8e8;
+  --ifm-footer-title-color: #ffffff;
+}
+
+/* Code blocks */
+
+.theme-code-block {
+  border: 1px solid var(--fcc-hairline);
+  box-shadow: none;
+}
+
+/* Callouts: a colored rule at the start instead of a tinted card */
+
+.theme-admonition {
+  border: 1px solid var(--fcc-hairline);
+  border-left-width: 4px;
+  background: var(--ifm-background-surface-color);
+  box-shadow: none;
+}
+
+.theme-admonition.alert--info {
+  border-left-color: var(--fcc-indigo);
+}
+
+.theme-admonition.alert--success,
+.theme-admonition.alert--secondary {
+  border-left-color: var(--fcc-teal);
+}
+
+.theme-admonition.alert--warning,
+.theme-admonition.alert--danger {
+  border-left-color: var(--fcc-amber);
+}
+
+/* Keyboard focus is always visible */
+
+:focus-visible {
+  outline: 2px solid var(--fcc-amber);
+  outline-offset: 2px;
+}
+
+.theme-admonition [class*='admonitionHeading'] {
+  font-size: 0.95rem;
+  text-transform: none;
 }

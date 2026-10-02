@@ -35,6 +35,8 @@ const config: Config = {
     locales: ['en'],
   },
 
+  clientModules: ['./src/fonts.ts'],
+
   presets: [
     [
       'classic',
@@ -58,6 +60,7 @@ const config: Config = {
   ],
 
   themeConfig: {
+    image: 'img/social-card.png',
     colorMode: {
       respectPrefersColorScheme: true,
     },
@@ -126,8 +129,8 @@ const config: Config = {
       copyright: `Copyright © 2016-${new Date().getFullYear()} Holger Woltersdorf & Contributors. MIT licensed.`,
     },
     prism: {
-      theme: prismThemes.github,
-      darkTheme: prismThemes.dracula,
+      theme: {...prismThemes.oneLight, plain: {...prismThemes.oneLight.plain, backgroundColor: '#f3f4f9'}},
+      darkTheme: {...prismThemes.oneDark, plain: {...prismThemes.oneDark.plain, backgroundColor: '#161a33'}},
       additionalLanguages: ['php', 'bash', 'json', 'nginx'],
     },
   } satisfies Preset.ThemeConfig,

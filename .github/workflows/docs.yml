@@ -10,8 +10,13 @@ on:
 
   workflow_dispatch:
 
+  # Refreshes the download numbers, contributors and test results on the homepage
+  schedule:
+    - cron: "23 5 * * *"
+
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: docs-${{ github.ref }}
@@ -29,6 +34,9 @@ jobs:
 
       - name: Build documentation website
         run: make -s docs-build
+        env:
+          # Avoids the rate limit of the GitHub API when fetching contributors and workflow results
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload pages artifact
         uses: actions/upload-pages-artifact@v5

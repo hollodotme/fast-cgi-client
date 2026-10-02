@@ -23,10 +23,12 @@ type Props = {
   scene: Scene;
   /** Settings that differ from the defaults of the scene */
   settings?: Settings;
+  /** Leaves out the timeline chart and the settings, e.g. on the homepage */
+  minimal?: boolean;
 };
 
 /** Plays a scene: the stage, a caption per step, controls, the timeline chart, the example code and its output */
-export default function Player({scene, settings: initial = {}}: Props): ReactNode {
+export default function Player({scene, settings: initial = {}, minimal = false}: Props): ReactNode {
   const [settings, setSettings] = useState<Settings>(() => ({...defaultSettings(scene), ...initial}));
   const timeline = useMemo(() => scene.build(settings), [scene, settings]);
   const code = useMemo(() => scene.code(settings), [scene, settings]);
@@ -182,6 +184,8 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
         </select>
       </div>
 
+      {!minimal && (
+        <>
       <Gantt timeline={timeline} time={time} onSeek={(target) => seek(target)} compact={compact} />
       <ul className={styles.legend}>
         {legend.map((entry) => (
@@ -225,6 +229,8 @@ export default function Player({scene, settings: initial = {}}: Props): ReactNod
             </label>
           ))}
         </fieldset>
+      )}
+        </>
       )}
 
       <div className={styles.panels}>

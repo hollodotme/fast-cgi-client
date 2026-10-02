@@ -231,7 +231,7 @@ test-compatibility-%: dcdown
 	$(COMPATIBILITY_COMPOSE_COMMAND) down
 
 # The docs containers write into the working copy, so they run with the user and group of the host
-DOCS_RUN_COMMAND = $(DOCKER_COMPOSE_BASE_COMMAND) run --rm --user "$(shell id -u):$(shell id -g)" -e HOME=/tmp -e NPM_CONFIG_UPDATE_NOTIFIER=false
+DOCS_RUN_COMMAND = $(DOCKER_COMPOSE_BASE_COMMAND) run --rm --user "$(shell id -u):$(shell id -g)" -e HOME=/tmp -e NPM_CONFIG_UPDATE_NOTIFIER=false -e GITHUB_TOKEN
 
 ## Install the dependencies of the documentation website
 docs-install:

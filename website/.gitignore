@@ -27,3 +27,7 @@ yarn-error.log*
 /static/api
 /.doctum-cache
 /src/pages/changelog
+
+# Fetched when the website is built, see scripts/fetch-data.mjs
+/src/data/site-data.json
+/static/img/contributors
