@@ -613,28 +613,61 @@
 
 /* Sponsoring */
 
-/* The card is rendered by GitHub, the frame matches its background in both color modes */
-.sponsorFrame {
-  max-width: 640px;
-  padding: 1.25rem;
-  border: 1px solid var(--fcc-hairline);
-  border-radius: var(--ifm-global-radius);
-  background: #ffffff;
-}
-
-[data-theme='dark'] .sponsorFrame {
-  background: #0d1117;
-}
-
 .sponsorCard {
-  display: block;
-  width: 100%;
-  height: 90px;
+  display: flex;
+  max-width: 640px;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  border: 1px solid var(--fcc-hairline);
+  border-left: 4px solid var(--fcc-amber);
+  border-radius: var(--ifm-global-radius);
+  background: var(--ifm-background-color);
+}
+
+.sponsorAvatar {
+  flex: none;
+  width: 72px;
+  height: 72px;
+  border: 2px solid var(--fcc-amber);
+  border-radius: 50%;
+}
+
+.sponsorText {
+  flex: 1;
+  min-width: 0;
+}
+
+.sponsorText p {
+  margin: 0;
+}
+
+.sponsorName {
+  color: var(--ifm-heading-color);
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.sponsorRole {
+  color: var(--ifm-color-emphasis-700);
+  font-size: 0.95rem;
+}
+
+/* The button is rendered by GitHub */
+.sponsorButton {
+  flex: none;
+  width: 114px;
+  height: 32px;
   border: 0;
+  border-radius: 6px;
 }
 
 @media (max-width: 600px) {
   .sponsorCard {
-    height: 140px;
+    flex-wrap: wrap;
+  }
+
+  .sponsorButton {
+    margin-left: calc(72px + 1.25rem);
   }
 }
