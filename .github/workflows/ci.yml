@@ -5,6 +5,8 @@ on:
     branches:
       - master
       - development
+      - '3.x-dev'
+      - '3.x-stable'
 
     tags:
       - 'v*.*.*'
@@ -19,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
 
       - name: Pull docker services
         run: make dcpull
@@ -51,7 +53,7 @@ jobs:
           - "8.0"
           - "8.1"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v7
 
       - name: Pull docker services
         run: make dcpull
@@ -84,7 +86,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v7
 
       - name: Extract version
         id: data

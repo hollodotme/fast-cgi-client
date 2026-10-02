@@ -24,10 +24,15 @@
 namespace hollodotme\FastCGI\Responses;
 
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
-use function array_slice;
+use function count;
 use function implode;
+use function preg_match;
+use function preg_split;
+use function strlen;
 use function strtolower;
+use function substr;
 use function trim;
+use const PREG_OFFSET_CAPTURE;
 
 /**
  * Class Response
@@ -35,7 +40,11 @@ use function trim;
  */
 class Response implements ProvidesResponseData
 {
-	private const HEADER_PATTERN = '#^([^\:]+):(.*)$#';
+	private const HEADER_PATTERN     = '#^([^:\s][^:]*):(.*)$#';
+
+	private const LINE_BREAK_PATTERN = '#\r?\n#';
+
+	private const BLANK_LINE_PATTERN = '#\r?\n\r?\n#';
 
 	/** @var array<string, array<int, string>> */
 	private $normalizedHeaders;
@@ -67,28 +76,71 @@ class Response implements ProvidesResponseData
 		$this->parseHeadersAndBody();
 	}
 
+	/**
+	 * The headers are separated from the body by the first blank line, independent of the line endings.
+	 * If the output does not start with a block of headers, the whole output is the body.
+	 */
 	private function parseHeadersAndBody() : void
 	{
-		$lines  = explode( PHP_EOL, $this->output );
-		$offset = 0;
+		$this->body = $this->output;
 
-		foreach ( $lines as $i => $line )
+		if ( 1 !== preg_match( self::BLANK_LINE_PATTERN, $this->output, $matches, PREG_OFFSET_CAPTURE ) )
 		{
-			$matches = [];
-			if ( !preg_match( self::HEADER_PATTERN, $line, $matches ) )
-			{
-				break;
-			}
+			return;
+		}
 
-			$offset      = $i;
-			$headerKey   = trim( $matches[1] );
-			$headerValue = trim( $matches[2] );
+		$blankLinePosition = $matches[0][1];
+		$headers           = $this->parseHeaderBlock( (string)substr( $this->output, 0, $blankLinePosition ) );
 
+		if ( null === $headers )
+		{
+			return;
+		}
+
+		foreach ( $headers as [$headerKey, $headerValue] )
+		{
 			$this->addRawHeader( $headerKey, $headerValue );
 			$this->addNormalizedHeader( $headerKey, $headerValue );
 		}
 
-		$this->body = implode( PHP_EOL, array_slice( $lines, $offset + 2 ) );
+		$this->body = (string)substr( $this->output, $blankLinePosition + strlen( $matches[0][0] ) );
+	}
+
+	/**
+	 * @param string $headerBlock
+	 *
+	 * @return array<int, array{0: string, 1: string}>|null NULL, if the block contains a line that is not a header
+	 */
+	private function parseHeaderBlock( string $headerBlock ) : ?array
+	{
+		$headers = [];
+
+		if ( '' === $headerBlock )
+		{
+			return $headers;
+		}
+
+		foreach ( (array)preg_split( self::LINE_BREAK_PATTERN, $headerBlock ) as $line )
+		{
+			$line = (string)$line;
+
+			# A line starting with whitespace continues the value of the previous header (obsolete line folding)
+			if ( [] !== $headers && ('' !== $line && ($line[0] === ' ' || $line[0] === "\t")) )
+			{
+				$lastIndex                = count( $headers ) - 1;
+				$headers[ $lastIndex ][1] = trim( $headers[ $lastIndex ][1] . ' ' . trim( $line ) );
+				continue;
+			}
+
+			if ( 1 !== preg_match( self::HEADER_PATTERN, $line, $matches ) )
+			{
+				return null;
+			}
+
+			$headers[] = [trim( $matches[1] ), trim( $matches[2] )];
+		}
+
+		return $headers;
 	}
 
 	private function addRawHeader( string $headerKey, string $headerValue ) : void
