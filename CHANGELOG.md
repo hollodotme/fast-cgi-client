@@ -3,7 +3,7 @@
 All notable changes to this project will be documented in this file. This project adheres
 to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
-## [3.1.8] - Unreleased
+## [3.1.8] - 2026-10-05
 
 Backport of fixes from version 4.0.0.
 
@@ -43,6 +43,22 @@ Backport of fixes from version 4.0.0.
 
 ### Changed
 
+These changes of the behaviour are fixes, but you may notice them:
+
+* A timeout passed to `Client#waitForResponse()` and `Client#waitForResponses()` ends the waiting. The failure
+  callbacks of requests without response are notified with a `TimedoutException` then. Without a timeout, both
+  methods wait until the responses are received, as before.
+* `Client#hasResponse()` returns `true` for a socket whose response was already read with `readResponse()`.
+  Before, it returned `false` until the server closed the connection, and `true` afterwards.
+* `Client#getSocketIdsHavingResponse()`, `readReadyResponses()` and `handleReadyResponses()` only consider sockets
+  that wait for a response. Idle sockets are not reported anymore.
+* Exceptions are thrown in situations that hung, returned an empty response or treated a request as sent before:
+  a connection closed while the response is received or a HTTP server instead of a FastCGI server
+  (`ReadFailedException`), a response that is not completed within the read/write timeout (`TimedoutException`),
+  a partly written request (`TimedoutException` or `WriteFailedException`) and an end-request record without
+  protocol status (`ReadFailedException`).
+* `PacketEncoder#encodePacket()` returns several records for content that is longer than 65535 bytes, instead of one
+  record with a wrong length.
 * Output that consists of header lines without a blank line after them is the body of the response now, without
   headers. The headers of a response are separated from its body by a blank line, which php-fpm always sends.
 * The CI uses the `docker compose` plugin, downloads its tools directly instead of using Phive and re-enables
@@ -459,7 +475,7 @@ on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](https://gi
   socket connection)
 * Method `Client->getValues()`
 
-[3.1.8]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.7...3.x-dev
+[3.1.8]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.7...v3.1.8
 
 [3.1.7]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.6...v3.1.7
 
