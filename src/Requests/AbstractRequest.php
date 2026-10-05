@@ -1,31 +1,17 @@
 <?php declare(strict_types=1);
-/*
- * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 namespace hollodotme\FastCGI\Requests;
 
 use hollodotme\FastCGI\Constants\ServerProtocol;
+use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
 use hollodotme\FastCGI\Interfaces\ProvidesRequestData;
+use function http_build_query;
+use function str_contains;
+use function str_ends_with;
 use function strlen;
+use function strpos;
+use function substr;
+use const PHP_QUERY_RFC3986;
 
 /**
  * Class AbstractRequest
@@ -33,61 +19,55 @@ use function strlen;
  */
 abstract class AbstractRequest implements ProvidesRequestData
 {
-	/** @var string */
-	private $gatewayInterface = 'FastCGI/1.0';
+	private const DEFAULT_CONTENT_TYPE = 'application/x-www-form-urlencoded';
 
-	/** @var string */
-	private $scriptFilename;
+	private string $gatewayInterface = 'FastCGI/1.0';
 
-	/** @var string */
-	private $serverSoftware = 'hollodotme/fast-cgi-client';
+	private string $scriptFilename;
 
-	/** @var string */
-	private $remoteAddress = '192.168.0.1';
+	private string $serverSoftware = 'hollodotme/fast-cgi-client';
 
-	/** @var int */
-	private $remotePort = 9985;
+	private string $remoteAddress = '192.168.0.1';
 
-	/** @var string */
-	private $serverAddress = '127.0.0.1';
+	private int $remotePort = 9985;
 
-	/** @var int */
-	private $serverPort = 80;
+	private string $serverAddress = '127.0.0.1';
 
-	/** @var string */
-	private $serverName = 'localhost';
+	private int $serverPort = 80;
 
-	/** @var string */
-	private $serverProtocol = ServerProtocol::HTTP_1_1;
+	private string $serverName = 'localhost';
 
-	/** @var string */
-	private $contentType = 'application/x-www-form-urlencoded';
+	private string $serverProtocol = ServerProtocol::HTTP_1_1;
 
-	/** @var int */
-	private $contentLength = 0;
+	private ?string $contentType = null;
 
-	/** @var string */
-	private $content;
+	private ?ComposesRequestContent $content = null;
 
 	/** @var array<string, mixed> */
-	private $customVars = [];
+	private array $customVars = [];
 
-	/** @var string */
-	private $requestUri = '';
+	private string $requestUri = '';
 
-	/** @var array<callable> */
-	private $responseCallbacks = [];
-
-	/** @var array<callable> */
-	private $failureCallbacks = [];
+	/** @var array<int|string, mixed> */
+	private array $queryParams = [];
 
 	/** @var array<callable> */
-	private $passThroughCallbacks = [];
+	private array $responseCallbacks = [];
 
-	public function __construct( string $scriptFilename, string $content )
+	/** @var array<callable> */
+	private array $failureCallbacks = [];
+
+	/** @var array<callable> */
+	private array $passThroughCallbacks = [];
+
+	public function __construct( string $scriptFilename, ?ComposesRequestContent $content = null )
 	{
 		$this->scriptFilename = $scriptFilename;
-		$this->setContent( $content );
+
+		if ( null !== $content )
+		{
+			$this->setContent( $content );
+		}
 	}
 
 	public function getServerSoftware() : string
@@ -160,9 +140,12 @@ abstract class AbstractRequest implements ProvidesRequestData
 		$this->serverProtocol = $serverProtocol;
 	}
 
+	/**
+	 * Returns the content type that was set explicitly, otherwise the content type of the request content.
+	 */
 	public function getContentType() : string
 	{
-		return $this->contentType;
+		return $this->contentType ?? $this->content?->getContentType() ?? self::DEFAULT_CONTENT_TYPE;
 	}
 
 	public function setContentType( string $contentType ) : void
@@ -170,22 +153,18 @@ abstract class AbstractRequest implements ProvidesRequestData
 		$this->contentType = $contentType;
 	}
 
-	public function getContent() : string
+	public function getContent() : ?ComposesRequestContent
 	{
 		return $this->content;
 	}
 
-	public function setContent( string $content ) : void
+	public function setContent( ComposesRequestContent $content ) : void
 	{
-		$this->content       = $content;
-		$this->contentLength = strlen( $content );
+		$this->content     = $content;
+		$this->contentType = null;
 	}
 
-	/**
-	 * @param string $key
-	 * @param mixed  $value
-	 */
-	public function setCustomVar( string $key, $value ) : void
+	public function setCustomVar( string $key, mixed $value ) : void
 	{
 		$this->customVars[ $key ] = $value;
 	}
@@ -221,9 +200,13 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->scriptFilename;
 	}
 
+	/**
+	 * The length is determined from the current state of the request content on every call,
+	 * so it is still correct if the content object was changed after it was passed to the request.
+	 */
 	public function getContentLength() : int
 	{
-		return $this->contentLength;
+		return null === $this->content ? 0 : strlen( $this->content->getContent() );
 	}
 
 	/**
@@ -231,7 +214,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 	 */
 	public function getParams() : array
 	{
-		return array_merge(
+		$params = array_merge(
 			$this->customVars,
 			[
 				'GATEWAY_INTERFACE' => $this->getGatewayInterface(),
@@ -249,6 +232,56 @@ abstract class AbstractRequest implements ProvidesRequestData
 				'CONTENT_LENGTH'    => $this->getContentLength(),
 			]
 		);
+
+		$queryString = $this->getQueryString();
+
+		if ( '' === $queryString )
+		{
+			return $params;
+		}
+
+		$requestUri = $this->getRequestUri() . $this->getQueryStringSeparator() . $queryString;
+
+		$params['REQUEST_URI']  = $requestUri;
+		$params['QUERY_STRING'] = substr( $requestUri, (int)strpos( $requestUri, '?' ) + 1 );
+
+		return $params;
+	}
+
+	private function getQueryStringSeparator() : string
+	{
+		if ( !str_contains( $this->requestUri, '?' ) )
+		{
+			return '?';
+		}
+
+		if ( str_ends_with( $this->requestUri, '?' ) || str_ends_with( $this->requestUri, '&' ) )
+		{
+			return '';
+		}
+
+		return '&';
+	}
+
+	/**
+	 * @return array<int|string, mixed>
+	 */
+	public function getQueryParams() : array
+	{
+		return $this->queryParams;
+	}
+
+	/**
+	 * @param array<int|string, mixed> $queryParams
+	 */
+	public function setQueryParams( array $queryParams ) : void
+	{
+		$this->queryParams = $queryParams;
+	}
+
+	public function getQueryString() : string
+	{
+		return http_build_query( $this->queryParams, '', '&', PHP_QUERY_RFC3986 );
 	}
 
 	public function getRequestUri() : string
@@ -282,7 +315,7 @@ abstract class AbstractRequest implements ProvidesRequestData
 		return $this->failureCallbacks;
 	}
 
-	public function addFailureCallbacks( callable  ...$callbacks ) : void
+	public function addFailureCallbacks( callable ...$callbacks ) : void
 	{
 		$this->failureCallbacks = array_merge( $this->failureCallbacks, $callbacks );
 	}

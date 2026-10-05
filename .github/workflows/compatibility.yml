@@ -1,0 +1,35 @@
+name: Compatibility check
+
+# Runs the compatibility tests against the FastCGI server in .docker/compatibility/<server>.
+# It is called by the workflows compatibility-<server>.yml, one per server, which provide the badges.
+on:
+  workflow_call:
+    inputs:
+      server:
+        description: Name of the directory in .docker/compatibility
+        required: true
+        type: string
+
+jobs:
+  compatibility:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Pull docker services
+        run: make dcpull
+
+      - name: Install tools
+        run: make install-composer
+
+      - name: Build environment
+        run: make composer-update
+
+      - name: Pull extension installer
+        run: make pull-extension-installer
+
+      - name: Run compatibility tests against FastCGI server ${{ inputs.server }}
+        run: make -s "test-compatibility-${{ inputs.server }}"
+        env:
+          COMPOSE_INTERACTIVE_NO_CLI: 1

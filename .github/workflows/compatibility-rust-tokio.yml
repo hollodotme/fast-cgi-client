@@ -1,0 +1,21 @@
+name: Compatible with Rust FastCGI server (tokio)
+
+on:
+  push:
+    branches:
+      - master
+      - development
+      - '*.x-dev'
+
+  pull_request:
+
+  schedule:
+    - cron: "15 7 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  compatibility:
+    uses: ./.github/workflows/compatibility.yml
+    with:
+      server: rust-tokio

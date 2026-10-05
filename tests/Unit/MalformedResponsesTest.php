@@ -1,25 +1,4 @@
 <?php declare(strict_types=1);
-/*
- * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 namespace hollodotme\FastCGI\Tests\Unit;
 
@@ -29,7 +8,6 @@ use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Throwable;
 use function chr;
 use function explode;
@@ -50,15 +28,17 @@ use function substr;
  */
 final class MalformedResponsesTest extends TestCase
 {
-	private const END_REQUEST  = 3;
+	private const END_REQUEST       = 3;
 
-	private const STDOUT       = 6;
+	private const PARAMS            = 4;
 
-	private const STDERR       = 7;
+	private const STDOUT            = 6;
 
-	private const UNKNOWN_TYPE = 11;
+	private const STDERR            = 7;
 
-	private const READ_TIMEOUT = 200;
+	private const UNKNOWN_TYPE      = 11;
+
+	private const READ_TIMEOUT      = 200;
 
 	/** @var resource */
 	private $server;
@@ -66,8 +46,7 @@ final class MalformedResponsesTest extends TestCase
 	/** @var resource|null */
 	private $connectionToClient;
 
-	/** @var Client */
-	private $client;
+	private Client $client;
 
 	protected function setUp() : void
 	{
@@ -75,7 +54,7 @@ final class MalformedResponsesTest extends TestCase
 
 		if ( false === $server )
 		{
-			throw new RuntimeException( 'Could not start server.' );
+			self::fail( 'Could not start server.' );
 		}
 
 		$this->server = $server;
@@ -93,6 +72,75 @@ final class MalformedResponsesTest extends TestCase
 	}
 
 	/**
+	 * @param callable(int) : string $response
+	 * @param string                 $expectedMessage
+	 *
+	 * @throws Throwable
+	 * @dataProvider invalidPacketProvider
+	 */
+	public function testInvalidPacketsAreRejected( callable $response, string $expectedMessage ) : void
+	{
+		$socketId = $this->sendRequestAndRespond( $response );
+
+		try
+		{
+			$this->client->readResponse( $socketId );
+
+			self::fail( 'Expected ReadFailedException to be thrown.' );
+		}
+		catch ( ReadFailedException $e )
+		{
+			self::assertMatchesRegularExpression( $expectedMessage, $e->getMessage() );
+			self::assertFalse( $this->client->hasUnhandledResponses() );
+		}
+	}
+
+	/**
+	 * @return array<string, array<int, callable|string>>
+	 */
+	public function invalidPacketProvider() : array
+	{
+		return [
+			'response of a HTTP server'                    => [
+				static fn( int $id ) : string => "HTTP/1.1 400 Bad Request\r\nContent-Length: 11\r\n\r\nBad Request",
+				'#^Not a FastCGI packet: unsupported protocol version 72$#',
+			],
+			'unsupported protocol version'                 => [
+				fn( int $id ) : string => $this->header( self::STDOUT, $id, 0, 0, 2 ),
+				'#^Not a FastCGI packet: unsupported protocol version 2$#',
+			],
+			'record type that does not exist'              => [
+				fn( int $id ) : string => $this->record( 0, $id, 'unit' ),
+				'#^Invalid FastCGI packet: unexpected record type 0$#',
+			],
+			'record type above the maximum type'           => [
+				fn( int $id ) : string => $this->record( 12, $id, 'unit' ),
+				'#^Invalid FastCGI packet: unexpected record type 12$#',
+			],
+			'record type only sent by web servers'         => [
+				fn( int $id ) : string => $this->record( self::PARAMS, $id, 'unit' ),
+				'#^Invalid FastCGI packet: unexpected record type 4$#',
+			],
+			'stdout record of another request'             => [
+				fn( int $id ) : string => $this->record( self::STDOUT, $id + 1, 'unit' ),
+				'#^Invalid FastCGI packet: expected request ID \d+, got \d+$#',
+			],
+			'end-request record of another request'        => [
+				fn( int $id ) : string => $this->record( self::STDOUT, $id, 'unit' ) . $this->endRequest( $id + 1 ),
+				'#^Invalid FastCGI packet: expected request ID \d+, got \d+$#',
+			],
+			'management record with a request ID'          => [
+				fn( int $id ) : string => $this->record( self::UNKNOWN_TYPE, $id, str_repeat( chr( 0 ), 8 ) ),
+				'#^Invalid FastCGI packet: management record with request ID \d+$#',
+			],
+			'end-request record with unexpected length'    => [
+				fn( int $id ) : string => $this->record( self::END_REQUEST, $id, str_repeat( chr( 0 ), 4 ) ),
+				'#^Invalid FastCGI packet: unexpected length of end-request record 4$#',
+			],
+		];
+	}
+
+	/**
 	 * These cases ended up in an endless loop, because reading from a closed connection was repeated forever.
 	 *
 	 * @param callable(int) : string $response
@@ -104,17 +152,10 @@ final class MalformedResponsesTest extends TestCase
 	{
 		$socketId = $this->sendRequestAndRespond( $response );
 
-		try
-		{
-			/** @noinspection UnusedFunctionResultInspection */
-			$this->client->readResponse( $socketId );
+		$this->expectException( ReadFailedException::class );
 
-			self::fail( 'Expected ReadFailedException to be thrown.' );
-		}
-		catch ( ReadFailedException $e )
-		{
-			self::assertFalse( $this->client->hasUnhandledResponses() );
-		}
+		/** @noinspection UnusedFunctionResultInspection */
+		$this->client->readResponse( $socketId );
 	}
 
 	/**
@@ -124,73 +165,25 @@ final class MalformedResponsesTest extends TestCase
 	{
 		return [
 			'no response at all'          => [
-				static function ( int $id ) : string
-				{
-					return '';
-				},
-			],
-			# The header of the HTTP response is decoded to a content length that is never sent
-			'response of a HTTP server'   => [
-				static function ( int $id ) : string
-				{
-					return "HTTP/1.1 400 Bad Request\r\nContent-Length: 11\r\n\r\nBad Request";
-				},
+				static fn( int $id ) : string => '',
 			],
 			'incomplete header'           => [
-				function ( int $id ) : string
-				{
-					return substr( $this->header( self::STDOUT, $id, 100 ), 0, 4 );
-				},
+				fn( int $id ) : string => substr( $this->header( self::STDOUT, $id, 100 ), 0, 4 ),
 			],
 			'incomplete content'          => [
-				function ( int $id ) : string
-				{
-					return $this->header( self::STDOUT, $id, 100 ) . 'only 10 by';
-				},
+				fn( int $id ) : string => $this->header( self::STDOUT, $id, 100 ) . 'only 10 by',
 			],
 			'missing padding'             => [
-				function ( int $id ) : string
-				{
-					return $this->header( self::STDOUT, $id, 4, 5 ) . 'unit';
-				},
+				fn( int $id ) : string => $this->header( self::STDOUT, $id, 4, 5 ) . 'unit',
 			],
 			'missing end-request record'  => [
-				function ( int $id ) : string
-				{
-					return $this->record( self::STDOUT, $id, 'unit' );
-				},
+				fn( int $id ) : string => $this->record( self::STDOUT, $id, 'unit' ),
 			],
 			'incomplete end-request body' => [
-				function ( int $id ) : string
-				{
-					return $this->record( self::STDOUT, $id, 'unit' )
-						   . $this->header( self::END_REQUEST, $id, 8 ) . chr( 0 );
-				},
+				fn( int $id ) : string => $this->record( self::STDOUT, $id, 'unit' )
+										  . $this->header( self::END_REQUEST, $id, 8 ) . chr( 0 ),
 			],
 		];
-	}
-
-	/**
-	 * The protocol status is the fifth byte of an end-request record. Before, a shorter record caused an
-	 * "Uninitialized string offset" notice and was treated as a completed request.
-	 *
-	 * @throws Throwable
-	 */
-	public function testEndRequestRecordWithoutProtocolStatusFails() : void
-	{
-		$socketId = $this->sendRequestAndRespond(
-			function ( int $id ) : string
-			{
-				return $this->record( self::STDOUT, $id, 'unit' )
-					   . $this->record( self::END_REQUEST, $id, str_repeat( chr( 0 ), 3 ) );
-			}
-		);
-
-		$this->expectException( ReadFailedException::class );
-		$this->expectExceptionMessage( 'Invalid end-request record: missing protocol status' );
-
-		/** @noinspection UnusedFunctionResultInspection */
-		$this->client->readResponse( $socketId );
 	}
 
 	/**
@@ -199,10 +192,7 @@ final class MalformedResponsesTest extends TestCase
 	public function testReadingTimesOutIfResponseIsNotCompleted() : void
 	{
 		$socketId = $this->sendRequestAndRespond(
-			function ( int $id ) : string
-			{
-				return $this->header( self::STDOUT, $id, 100 ) . 'only 10 by';
-			},
+			fn( int $id ) : string => $this->header( self::STDOUT, $id, 100 ) . 'only 10 by',
 			false
 		);
 
@@ -210,7 +200,6 @@ final class MalformedResponsesTest extends TestCase
 
 		try
 		{
-			/** @noinspection UnusedFunctionResultInspection */
 			$this->client->readResponse( $socketId );
 
 			self::fail( 'Expected TimedoutException to be thrown.' );
@@ -233,10 +222,8 @@ final class MalformedResponsesTest extends TestCase
 	public function testValidResponseIsRead() : void
 	{
 		$socketId = $this->sendRequestAndRespond(
-			function ( int $id ) : string
-			{
-				return $this->record( self::STDOUT, $id, "X-Unit: Test\r\n\r\nunit" ) . $this->endRequest( $id );
-			}
+			fn( int $id ) : string => $this->record( self::STDOUT, $id, "X-Unit: Test\r\n\r\nunit" )
+									  . $this->endRequest( $id )
 		);
 
 		$response = $this->client->readResponse( $socketId );
@@ -252,14 +239,11 @@ final class MalformedResponsesTest extends TestCase
 	public function testPaddingAndManagementRecordsAreSkipped() : void
 	{
 		$socketId = $this->sendRequestAndRespond(
-			function ( int $id ) : string
-			{
-				return $this->record( self::STDOUT, $id, "X-Unit: Test\r\n\r\n", 3 )
-					   . $this->record( self::UNKNOWN_TYPE, 0, str_repeat( chr( 0 ), 8 ) )
-					   . $this->record( self::STDERR, $id, 'error', 7 )
-					   . $this->record( self::STDOUT, $id, 'unit', 4 )
-					   . $this->endRequest( $id );
-			}
+			fn( int $id ) : string => $this->record( self::STDOUT, $id, "X-Unit: Test\r\n\r\n", 3 )
+									  . $this->record( self::UNKNOWN_TYPE, 0, str_repeat( chr( 0 ), 8 ) )
+									  . $this->record( self::STDERR, $id, 'error', 7 )
+									  . $this->record( self::STDOUT, $id, 'unit', 4 )
+									  . $this->endRequest( $id )
 		);
 
 		$response = $this->client->readResponse( $socketId );
@@ -283,14 +267,14 @@ final class MalformedResponsesTest extends TestCase
 
 		$socketId = $this->client->sendAsyncRequest(
 			new NetworkSocket( $host, (int)$port, self::READ_TIMEOUT, self::READ_TIMEOUT ),
-			new PostRequest( '/path/to/script.php', '' )
+			new PostRequest( '/path/to/script.php' )
 		);
 
 		$connectionToClient = stream_socket_accept( $this->server, 1 );
 
 		if ( false === $connectionToClient )
 		{
-			throw new RuntimeException( 'Client did not connect to server.' );
+			self::fail( 'Client did not connect to server.' );
 		}
 
 		# The client derives the ID of the request from the ID of the socket

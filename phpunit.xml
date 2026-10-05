@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+
+<phpunit bootstrap="vendor/autoload.php"
+         verbose="true"
+         beStrictAboutOutputDuringTests="true"
+         colors="true">
+  <php>
+    <env name="network-socket-host" value="127.0.0.1"/>
+    <env name="network-socket-port" value="9001"/>
+    <env name="unix-domain-socket" value="/var/run/php-uds.sock"/>
+    <env name="restricted-unix-domain-socket" value="/var/run/php-ruds.sock"/>
+    <env name="non-existing-unix-domain-socket" value="/tmp/not/existing.sock"/>
+    <env name="invalid-unix-domain-socket" value="/Fixtures/test.sock"/>
+    <env name="compatibility-server-host" value="fastcgi-server"/>
+    <env name="compatibility-server-port" value="9000"/>
+  </php>
+
+  <testsuites>
+    <testsuite name="Unit">
+      <directory>tests/Unit</directory>
+    </testsuite>
+    <testsuite name="Async-Integration">
+      <directory>tests/Integration/Async</directory>
+    </testsuite>
+    <testsuite name="FileUpload-Integration">
+      <directory>tests/Integration/FileUpload</directory>
+    </testsuite>
+    <testsuite name="NetworkSocket-Integration">
+      <directory>tests/Integration/NetworkSocket</directory>
+    </testsuite>
+    <testsuite name="UnixDomainSocket-Integration">
+      <directory>tests/Integration/UnixDomainSocket</directory>
+    </testsuite>
+    <testsuite name="Signals-Integration">
+      <directory>tests/Integration/Signals</directory>
+    </testsuite>
+    <testsuite name="Compatibility">
+      <directory>tests/Compatibility</directory>
+    </testsuite>
+  </testsuites>
+  <coverage processUncoveredFiles="true">
+    <include>
+      <directory suffix=".php">../src</directory>
+    </include>
+  </coverage>
+</phpunit>

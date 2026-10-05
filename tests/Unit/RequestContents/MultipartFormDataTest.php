@@ -24,17 +24,17 @@ final class MultipartFormDataTest extends TestCase
 		$multipartFormData->addFile( 'image', __DIR__ . '/_files/php-logo.png' );
 
 		$expectedContent = "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
-		                   . "Content-Disposition: form-data; name=\"unit\"\r\n\r\n"
-		                   . "test\r\n"
-		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
-		                   . "Content-Disposition: form-data; name=\"textFile\"; filename=\"TestFile.txt\"\r\n"
-		                   . "Content-Type: text/plain\r\n\r\n"
-		                   . "This is a testfile\r\n"
-		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
-		                   . "Content-Disposition: form-data; name=\"image\"; filename=\"php-logo.png\"\r\n"
-		                   . "Content-Type: image/png\r\n\r\n"
-		                   . file_get_contents( __DIR__ . '/_files/php-logo.png' ) . "\r\n"
-		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__--\r\n\r\n";
+						   . "Content-Disposition: form-data; name=\"unit\"\r\n\r\n"
+						   . "test\r\n"
+						   . "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
+						   . "Content-Disposition: form-data; name=\"textFile\"; filename=\"TestFile.txt\"\r\n"
+						   . "Content-Type: text/plain\r\n\r\n"
+						   . "This is a testfile\r\n"
+						   . "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
+						   . "Content-Disposition: form-data; name=\"image\"; filename=\"php-logo.png\"\r\n"
+						   . "Content-Type: image/png\r\n\r\n"
+						   . file_get_contents( __DIR__ . '/_files/php-logo.png' ) . "\r\n"
+						   . "--__X_FASTCGI_CLIENT_BOUNDARY__--\r\n\r\n";
 
 		self::assertSame( $expectedContent, $multipartFormData->getContent() );
 	}
@@ -55,17 +55,35 @@ final class MultipartFormDataTest extends TestCase
 		$multipartFormData = new MultipartFormData( $formData, $files );
 
 		$expectedContent = "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
-		                   . "Content-Disposition: form-data; name=\"unit\"\r\n\r\n"
-		                   . "test\r\n"
-		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
-		                   . "Content-Disposition: form-data; name=\"textFile\"; filename=\"TestFile.txt\"\r\n"
-		                   . "Content-Type: text/plain\r\n\r\n"
-		                   . "This is a testfile\r\n"
-		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
-		                   . "Content-Disposition: form-data; name=\"image\"; filename=\"php-logo.png\"\r\n"
-		                   . "Content-Type: image/png\r\n\r\n"
-		                   . file_get_contents( __DIR__ . '/_files/php-logo.png' ) . "\r\n"
-		                   . "--__X_FASTCGI_CLIENT_BOUNDARY__--\r\n\r\n";
+						   . "Content-Disposition: form-data; name=\"unit\"\r\n\r\n"
+						   . "test\r\n"
+						   . "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
+						   . "Content-Disposition: form-data; name=\"textFile\"; filename=\"TestFile.txt\"\r\n"
+						   . "Content-Type: text/plain\r\n\r\n"
+						   . "This is a testfile\r\n"
+						   . "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
+						   . "Content-Disposition: form-data; name=\"image\"; filename=\"php-logo.png\"\r\n"
+						   . "Content-Type: image/png\r\n\r\n"
+						   . file_get_contents( __DIR__ . '/_files/php-logo.png' ) . "\r\n"
+						   . "--__X_FASTCGI_CLIENT_BOUNDARY__--\r\n\r\n";
+
+		self::assertSame( $expectedContent, $multipartFormData->getContent() );
+	}
+
+	/**
+	 * @throws \InvalidArgumentException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testFileOfUnknownTypeIsSentAsOctetStream() : void
+	{
+		$multipartFormData = new MultipartFormData( [], ['binary' => __DIR__ . '/_files/unknown.bin'] );
+
+		$expectedContent = "--__X_FASTCGI_CLIENT_BOUNDARY__\r\n"
+						   . "Content-Disposition: form-data; name=\"binary\"; filename=\"unknown.bin\"\r\n"
+						   . "Content-Type: application/octet-stream\r\n\r\n"
+						   . file_get_contents( __DIR__ . '/_files/unknown.bin' ) . "\r\n"
+						   . "--__X_FASTCGI_CLIENT_BOUNDARY__--\r\n\r\n";
 
 		self::assertSame( $expectedContent, $multipartFormData->getContent() );
 	}

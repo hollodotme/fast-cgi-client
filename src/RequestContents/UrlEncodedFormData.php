@@ -7,15 +7,11 @@ use function http_build_query;
 
 final class UrlEncodedFormData implements ComposesRequestContent
 {
-	/** @var array<string, mixed> */
-	private $formData;
-
 	/**
 	 * @param array<string, mixed> $formData
 	 */
-	public function __construct( array $formData )
+	public function __construct( private array $formData )
 	{
-		$this->formData = $formData;
 	}
 
 	public function getContentType() : string

@@ -1,0 +1,63 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - master
+      - '4.x-dev'
+
+  pull_request:
+
+  # Started daily by docs-refresh.yml on the default branch, to refresh the numbers on the homepage
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Doctum builds the API reference of older major versions from their tags
+          fetch-depth: 0
+
+      - name: Build documentation website
+        run: make -s docs-build
+        env:
+          # Avoids the rate limit of the GitHub API when fetching contributors and workflow results
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: website/build
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

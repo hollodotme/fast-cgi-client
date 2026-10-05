@@ -1,12 +1,11 @@
-name: FastCGI Client CI PHP 7.1 - 8.1
+name: FastCGI Client CI PHP 8.0 - 8.5
 
 on:
   push:
     branches:
       - master
       - development
-      - '3.x-dev'
-      - '3.x-stable'
+      - '*.x-dev'
 
     tags:
       - 'v*.*.*'
@@ -17,7 +16,7 @@ on:
     - cron: "7 7 * * *"
 
 jobs:
-  static-analysis:
+  coding-standard:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,7 +26,33 @@ jobs:
         run: make dcpull
 
       - name: Install tools
-        run: make install-tools
+        run: make install-composer
+
+      - name: Composer update
+        run: make composer-update
+
+      - name: Run PHP_CodeSniffer
+        run: make -s phpcs
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php:
+          - "8.0"
+          - "8.1"
+          - "8.2"
+          - "8.3"
+          - "8.4"
+          - "8.5"
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Pull docker services
+        run: make dcpull
+
+      - name: Install tools
+        run: make install-composer
 
       - name: Composer validate
         run: make composer-validate
@@ -35,23 +60,24 @@ jobs:
       - name: Composer update
         run: make composer-update
 
-      - name: PHP linting
-        run: make phplint
-
-      - name: Run PHPStan
-        run: make phpstan
+      - name: Run PHPStan on PHP ${{ matrix.php }}
+        run: make -s "phpstan-php-${{ matrix.php }}"
 
   tests:
+    needs:
+      - coding-standard
+      - static-analysis
+
     runs-on: ubuntu-latest
     strategy:
       matrix:
         php:
-          - "7.1"
-          - "7.2"
-          - "7.3"
-          - "7.4"
           - "8.0"
           - "8.1"
+          - "8.2"
+          - "8.3"
+          - "8.4"
+          - "8.5"
     steps:
       - uses: actions/checkout@v7
 
@@ -59,7 +85,7 @@ jobs:
         run: make dcpull
 
       - name: Install tools
-        run: make install-tools
+        run: make install-composer
 
       - name: Build environment
         run: make composer-update
@@ -71,13 +97,13 @@ jobs:
         uses: mheap/phpunit-matcher-action@v1
 
       - name: Run unit tests on PHP ${{ matrix.php }}
-        run: make -s -e "PHPUNIT_OPTIONS=--teamcity" "test-php-${{ matrix.php }}"
+        run: make -s -e "test-php-${{ matrix.php }}"
         env:
           COMPOSE_INTERACTIVE_NO_CLI: 1
-          PHPUNIT_OPTIONS: "--teamcity"
 
   release:
     needs:
+      - coding-standard
       - static-analysis
       - tests
 
@@ -98,10 +124,10 @@ jobs:
           [[ "${{ github.ref }}" == "refs/tags/"* ]] && RELEASE_VERSION=$(echo $RELEASE_VERSION | sed -e 's/^v//')
 
           echo $RELEASE_VERSION
-          echo "##[set-output name=version;]$RELEASE_VERSION"
+          echo "version=$RELEASE_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Create release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         if: startsWith(github.ref, 'refs/tags/')
         with:
           name: Version ${{ steps.data.outputs.version }}

@@ -3,23 +3,129 @@
 All notable changes to this project will be documented in this file. This project adheres
 to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
-## [3.1.8] - 2026-10-05
+This file covers the 4.x releases. For previous major versions see:
+[3.x](./docs/changelog/3.x.md), [2.x](./docs/changelog/2.x.md), [1.x](./docs/changelog/1.x.md)
 
-Backport of fixes from version 4.0.0.
+## [4.0.0] - 2026-10-05
+
+### Backwards incompatible changes (BC breaks)
+
+* PHP >= 8.0 is required. Support for PHP 7.1 - 7.4 was dropped. Version 3.x keeps supporting these PHP versions
+  and still gets bug fixes, but no new features. - [#57]
+* The `fileinfo` extension is required. It is used to detect the MIME type of files in multipart form-data
+  requests. - [#81]
+* The content of a request is a `ComposesRequestContent` object instead of a string. - [#57]
+  * `AbstractRequest#__construct()` expects an optional content object as second argument:
+    `__construct( string $scriptFilename, ?ComposesRequestContent $content = null )`
+  * `AbstractRequest#setContent()` expects a `ComposesRequestContent` object and also sets the content type of the
+    request. A content type that was set before is overwritten.
+  * `ProvidesRequestData#getContent()` returns `?ComposesRequestContent` instead of `string`.
+  * The named constructor `newWithRequestContent()`, introduced in 3.1.0, was removed from all request classes.
+  * The content length and, unless it was set explicitly, the content type of a request are determined from the
+    content object when the request is sent, which composes the content twice: once for the `CONTENT_LENGTH`
+    parameter and once for the body. Changes to the content object after it was passed to the request are taken
+    into account. - [#76], [#97]
+
+  ```php
+  # Previous versions
+  $request = new PostRequest( '/path/to/script.php', http_build_query( ['key' => 'value'] ) );
+  $request = PostRequest::newWithRequestContent( '/path/to/script.php', new UrlEncodedFormData( ['key' => 'value'] ) );
+  $request = new PostRequest( '/path/to/script.php', 'plain text' );
+  $request->setContentType( 'text/plain' );
+  
+  # Since 4.0.0
+  $request = new PostRequest( '/path/to/script.php', new UrlEncodedFormData( ['key' => 'value'] ) );
+  $request = new PostRequest( '/path/to/script.php', new PlainText( 'plain text' ) );
+  ```
+
+  Content types that are not covered by the classes in `hollodotme\FastCGI\RequestContents` need an own implementation
+  of the `ComposesRequestContent` interface.
+* The interface `ConfiguresSocketConnection` has the new method `getStreamSelectTimeout() : int`, which must be added
+  to own implementations of this interface. - [#82]
+* `Client#readResponses()` and `Client#readReadyResponses()` throw the exception, if a response cannot be read,
+  e.g. a `TimedoutException`. Before, such responses were skipped silently. Unknown socket IDs are still skipped.
+* `Client#waitForResponse()` and `Client#waitForResponses()` time out after the read/write timeout of the connection,
+  if no timeout is passed. The failure callbacks of requests without response are notified with a `TimedoutException`
+  then. Before, both methods waited until the response was received, also for scripts that run longer than the
+  read/write timeout before they send output. Pass a timeout that is long enough for your scripts.
+* The interface `ProvidesResponseData` has the new method `getStatusCode() : int`, which must be added to own
+  implementations of this interface.
+* The public constant `Socket::STREAM_SELECT_USEC` was removed in favour of the configurable stream select timeout
+  of the socket connections. - [#82]
+* Classes that extend `AbstractRequest` or a request class must adapt overridden `setContent()` and `getContent()`
+  methods and calls of `parent::__construct()` to the content object. New public methods may collide with methods of
+  own subclasses: `Client#tryRequest()`, `Client#tryAsyncRequest()`, `AbstractRequest#setQueryParams()`,
+  `AbstractRequest#getQueryParams()`, `AbstractRequest#getQueryString()` and `Response#getStatusCode()`. - [#57]
+
+### Added
+
+* Method `Response#getStatusCode()`, which returns the status code of the `Status` header, or 200 if there is none.
+* Request content composer `PlainText` for content type `text/plain`.
+* Configurable stream select timeout as third timeout of the socket connections `NetworkSocket` and
+  `UnixDomainSocket`. It defines how long the client waits when checking for responses. The default is
+  `Defaults::STREAM_SELECT_TIMEOUT` (200 ms), which is the value used in previous versions. - [#82], [#18]
+* Query parameters can be passed as an array to all requests with `AbstractRequest#setQueryParams()`. They are sent
+  as `QUERY_STRING` and appended to the `REQUEST_URI`. `AbstractRequest#getQueryParams()` and
+  `AbstractRequest#getQueryString()` return the parameters and the encoded query string. - [#83]
+* Methods `Client#tryRequest()` and `Client#tryAsyncRequest()`, which send a request again on another socket, if
+  writing the request to a socket failed. - [#84]
+* Compatibility with PHP 8.2, 8.3, 8.4 and 8.5. All test suites run on PHP 8.0 - 8.5.
+* Validation of received packets according to the FastCGI specification. A `ReadFailedException` is thrown, if a
+  packet has an unsupported protocol version, an unexpected record type, the ID of another request or, in case of
+  an end-request record, an unexpected length. - [#78], [#95]
+
+### Improved
+
+* Idle sockets that were closed by the peer, e.g. because their php-fpm child process was terminated, are detected
+  and replaced before a request is sent. - [#84]
+* Use of PHP 8.0 language features like typed properties, constructor property promotion, `match` and `mixed`.
+  - [#70], [#85]
+* PHPStan (level 8) is part of the test pipeline and analyses the code on and for each supported PHP version.
+* Values passed to `chr()` when encoding packets are limited to one byte, because values out of this range are
+  deprecated in PHP 8.5.
+* A single PHPUnit version is used for all supported PHP versions.
+* Compatibility with FastCGI servers of other programming languages is checked continuously in a workflow per server,
+  independently of the CI workflow (`make test-compatibility`).
+* PHP_CodeSniffer is part of the test pipeline and checks the coding standard, PSR-12 with the adjustments listed
+  in the contribution guide (`make phpcs`, `make phpcbf`). - [#75], [#98]
+* Integration tests do not depend on fixed waiting times anymore. - [#86]
+* Documentation and changelog are split by major version. - [#87]
+* The documentation moved to a website at [fast-cgi-client.hollo.me](https://fast-cgi-client.hollo.me), with the
+  documentation of all major versions and their API reference. It is built with Docusaurus and Doctum
+  (`make docs-serve`, `make docs-build`) and deployed to GitHub Pages. The README gives a short overview.
+* Interactive animations in the documentation show step by step what happens when sending requests synchronously,
+  asynchronously and in parallel, with callbacks, pass-through callbacks and retries, how sockets are reused and
+  how a request is sent as FastCGI records — next to the example code and its output.
+* Code examples and their printed output in the documentation were checked against the library by running them,
+  and corrected where they differed, e.g. the pass-through callback example prints the output and the error output
+  only if the callback receives them.
+* A migration guide in the documentation shows what to change in your code when upgrading from 3.x, and the
+  changelogs of all major versions are part of the documentation website.
+* New design of the documentation website with self-hosted fonts and a homepage showing the download numbers from
+  Packagist, the packages depending on the library, the results of the compatibility tests, all contributors and
+  a card for sponsoring the maintainer on GitHub.
+* The development environment uses the `docker compose` plugin instead of the standalone `docker-compose` binary.
 
 ### Fixed
 
+Most of these fixes were also released for 3.x in version 3.1.8.
+
 * `Client#waitForResponse()` and `Client#waitForResponses()` did not return, if the server did not respond, even if a
-  timeout was passed. If a timeout is passed, the failure callbacks of the request are notified with a
-  `TimedoutException` after it now. Without a timeout, they still wait until the response is received.
+  timeout was passed. After the timeout the failure callbacks of the request are notified with a `TimedoutException`
+  now.
 * A socket that could not connect stayed in the collection of the client.
 * Endless loop when the connection was closed before a packet was received completely, e.g. when the process
   handling the request was terminated while it sent its response, or when the client was connected to a HTTP server
-  instead of a FastCGI server. A `ReadFailedException` is thrown now.
+  instead of a FastCGI server. A `ReadFailedException` is thrown now. - [#78], [#95]
 * Reading a response that was not completed by the server timed out after twice the read/write timeout.
 * Packet headers are read completely before they are decoded, also if they arrive in several parts.
 * `NameValuePairEncoder#decodePairs()` decoded names and values of 16 MiB and more with a wrong length.
 * The first two lines of a response were lost, if it did not start with a header.
+* Output that starts with header lines, but has no blank line after them, was split into headers and a body that
+  lost its first line. It is the body of the response now, without headers. The headers of a response are separated
+  from its body by a blank line, which php-fpm always sends.
+* A header value continued on the next line (obsolete line folding) ended the headers and was lost. It is appended
+  to the value of the header now.
 * Headers and body of a response are separated independently of the line endings of the platform the client runs on.
 * Request parameters longer than 65535 bytes in total corrupted the request, because the length of a record was cut
   to 2 bytes. They are sent in multiple records now, split between name-value pairs. `PacketEncoder#encodePacket()`
@@ -33,552 +139,49 @@ Backport of fixes from version 4.0.0.
   returned again by `readReadyResponses()`, and its callbacks were notified again by `handleReadyResponses()` and
   `waitForResponses()`.
 * `Client#hasResponse()` and `Client#waitForResponse()` checked the stream of a socket whose response was already read
-  with `readResponse()`. Such a socket has its response now.
-* A response without any packet was returned as an empty response, if the socket had no stream anymore.
+  with `readResponse()`. `hasResponse()` returned `false`, and `true` once the server closed the idle connection.
+  `waitForResponse()` blocked until then. Such a socket has its response now.
+* A response without any packet was returned as an empty response, if the socket had no stream anymore. A
+  `ReadFailedException` is thrown now.
 * `Client#getSocketIdsHavingResponse()` and the methods based on it could throw a `ValueError` on PHP 8, if the
   sockets of the client had no stream, e.g. after a failed connect.
-* A partly written request waited for the read/write timeout twice before a `TimedoutException` was thrown.
-* An end-request record without protocol status caused an "Uninitialized string offset" notice and was treated as
-  a completed request. A `ReadFailedException` is thrown now.
-
-### Changed
-
-These changes of the behaviour are fixes, but you may notice them:
-
-* A timeout passed to `Client#waitForResponse()` and `Client#waitForResponses()` ends the waiting. The failure
-  callbacks of requests without response are notified with a `TimedoutException` then. Without a timeout, both
-  methods wait until the responses are received, as before.
-* `Client#hasResponse()` returns `true` for a socket whose response was already read with `readResponse()`.
-  Before, it returned `false` until the server closed the connection, and `true` afterwards.
-* `Client#getSocketIdsHavingResponse()`, `readReadyResponses()` and `handleReadyResponses()` only consider sockets
-  that wait for a response. Idle sockets are not reported anymore.
-* Exceptions are thrown in situations that hung, returned an empty response or treated a request as sent before:
-  a connection closed while the response is received or a HTTP server instead of a FastCGI server
-  (`ReadFailedException`), a response that is not completed within the read/write timeout (`TimedoutException`),
-  a partly written request (`TimedoutException` or `WriteFailedException`) and an end-request record without
-  protocol status (`ReadFailedException`).
-* `PacketEncoder#encodePacket()` returns several records for content that is longer than 65535 bytes, instead of one
-  record with a wrong length.
-* Output that consists of header lines without a blank line after them is the body of the response now, without
-  headers. The headers of a response are separated from its body by a blank line, which php-fpm always sends.
-* The CI uses the `docker compose` plugin, downloads its tools directly instead of using Phive and re-enables
-  `fastcgi.logging` in the php-fpm images used for the tests.
-
-## [3.1.7] - 2021-12-07
-
-* Make sure length values are within valid bounds
-
-## [3.1.6] - 2021-09-23
-
-### Added
-
-* PHP 8.1 comaptibility
-
-## [3.1.5] - 2020-12-10
-
-### Fixed
-
-* Transfer of multipart/form-data blocks - [#64]
-  * Removes base64 encoding for contents of files to transfer
-  * Removes `Content-Transfer-Encoding: base64` header from multipart block for files
-  * Improves determination of file's MIME type via `mime_content_type()`, if available
-  * Adds tests for multipart transfer of files with binary content (images)
-
-## [3.1.4] - 2020-11-23
-
-### Added
-
-* PHP 8.1 compatibility
-* Makefile to run all tests based on docker-compose config
-
-### Fixed
-
-* TypeError on PHP 8 for a resource that is neither `null` nor a `resource`
-* Added ext-xdebug as dev-requirement in composer.json
-* Xdebug 3 coverage filter constant name for PHP 8
-
-### Replaced
-
-* Local shell script to run tests with Makefile
+* An end-request record without protocol status caused an "Uninitialized string offset" warning and was treated as
+  a completed request. A `ReadFailedException` is thrown now. - [#78], [#95]
 
 ### Removed
 
-* CI Builds on Circle-CI
+* License information from all PHP files. The [LICENSE](./LICENSE) file applies to the whole project. - [#57]
 
-## [3.1.3] - 2020-08-13
+[4.0.0]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.8...v4.0.0
 
-### Fixed
+[#18]: https://github.com/hollodotme/fast-cgi-client/issues/18
 
-* Remove broken sockets from socket collection if writing the request to stream fails - [#61]
-* Do not export `docker-compose.yml` with composer archives via `.gitattributes`
-* Stabilize unreliable tests with signaled pool processes
+[#57]: https://github.com/hollodotme/fast-cgi-client/issues/57
 
-## [3.1.2] - 2020-05-19
+[#70]: https://github.com/hollodotme/fast-cgi-client/pull/70
 
-### Added
+[#75]: https://github.com/hollodotme/fast-cgi-client/pull/75
 
-* `.gitattributes` file to exclude non-relevant files/directories from archives/releases installed by composer - [#58]
+[#76]: https://github.com/hollodotme/fast-cgi-client/pull/76
 
-### Fixed
+[#78]: https://github.com/hollodotme/fast-cgi-client/pull/78
 
-* Remove link to `bin/fcgiget` in `composer.json` as it is a potential security issue (because `bin/fcgiget` accepts any
-  accessible fastCGI endpoint and may be exposed in some setups)
+[#81]: https://github.com/hollodotme/fast-cgi-client/issues/81
 
-## [3.1.1] - 2020-05-06
+[#82]: https://github.com/hollodotme/fast-cgi-client/issues/82
 
-### Fixed
+[#83]: https://github.com/hollodotme/fast-cgi-client/issues/83
 
-* Backwards compatibility break in userland classes extending `AbstractRequest` due to a final constructor. - [#56]
-  See also: [#55]
+[#84]: https://github.com/hollodotme/fast-cgi-client/issues/84
 
-## [3.1.0] - 2020-05-06
+[#85]: https://github.com/hollodotme/fast-cgi-client/issues/85
 
-### Added
+[#86]: https://github.com/hollodotme/fast-cgi-client/issues/86
 
-* Interface for request content composers with implementations for URL encoded form-data, multipart form-data and JSON
-  data. This was inspired by - [#53]
-* Named constructor `newWithRequestContent` to all request classes in order to simplify the use of the new request
-  content type composers.
-* For more information and examples have a look at the documentation
-  section ["Request contents"](./README.md#request-contents).
+[#87]: https://github.com/hollodotme/fast-cgi-client/issues/87
 
-### Fixed
+[#95]: https://github.com/hollodotme/fast-cgi-client/pull/95
 
-* Inspection issues found by PHPStan
+[#97]: https://github.com/hollodotme/fast-cgi-client/pull/97
 
-### Updated
-
-* Test suites to cover PHP versions from 7.1 to 7.4
-* License dates
-* CI moved to GitHub actions
-
-## [3.0.1] - 2019-10-24
-
-### Added
-
-* PHP 7.4 CI pipeline and docker-compose environment
-* Explicitly set `error_reporting=-1` for CI and tests in order to capture deprecation warnings
-
-### Fixed
-
-* Replace usage of curly brace syntax for accessing string offsets, which is deprecated in PHP 7.4 - [#51]
-
-## [3.0.0] - 2019-07-29
-
-**Please take notice of the backwards incompatible changes (BC breaks) documented below in the changelog
-of [3.0.0-alpha](#300-alpha---2019-04-30) & [3.0.0-beta](#300-beta---2019-06-24).**
-
-### Added
-
-* Reserved private constant for ABORT_REQUEST instruction for future use
-* Socket ID is now represented and generated by a proper type class
-
-### Improved
-
-* Import of root namespace functions
-* Dependency injection for socket implementation
-
-## [3.0.0-beta] - 2019-06-24
-
-### Backwards incompatible changes (BC breaks)
-
-* The socket conection parameter was **moved** from the `Client`'s constructor to
-
-  * `Client#sendRequest(ConfiguresSocketConnection $connection, ProvidesRequestData $request) : ProvidesResponseData`
-    and
-  * `Client#sendAsyncRequest(ConfiguresSocketConnection $connection, ProvidesRequestData $request) : int`
-
-  in order to allow sending (equal) requests to different FastCGI servers using the same `Client` instance. - [#45]
-
-* Removed method `ProvidesResponseData#getRequestId() : int` and `Response#getRequestId() : int` respectively in order
-  to avoid confusion about the semantics of the term "request ID" and misusage by assuming it is a unique ID for each
-  request (which it is not). Also the first constructor parameter of the `Response` class was removed with this change.
-  - [#39]
-
-* Renamed all `$requestId(s)` parameters to `$socketId(s)` in order to reflect the correct semantics of the ID. - [#39]
-
-* Renamed method `Client#getRequestIdsHavingResponse() : array<int>`
-  to `Client#getSocketIdsHavingResponse() : array<int>` in order to reflect the correct semantics of the returned array
-  of IDs. - [#39]
-
-## [3.0.0-alpha] - 2019-04-30
-
-### Backwards incompatible changes (BC breaks)
-
-* Method `Response#getHeaders() : array` will now return a two-dimensional array with grouped values to support
-  multi-value headers. Previous versions returned a one-dimensional key-value array.
-  ```php
-  # Previous versions
-  [
-    'Status' => 'HTTP/2 200 OK',
-    'Set-Cookie' => 'tasty_cookie=strawberry',
-  ]
-
-  # Since 3.0.0-alpha
-  [
-    'Status' => [
-      'HTTP/2 200 OK',
-    ],
-    'Set-Cookie' => [
-      'yummy_cookie=choco',
-      'tasty_cookie=strawberry',
-    ],
-  ]
-  ```
-
-* Method `Response#getHeader(string $headerKey) : array` will now return an array containing all values for the given
-  header key to support multi-value headers. Previous versions returned the last value as a string.
-  ```php
-  echo $response->getHeader('Set-Cookie');
-  
-  # Previous versions
-  'tasty_cookie=strawberry'
-
-  # Since 3.0.0-alpha
-  [
-    'yummy_cookie=choco',
-    'tasty_cookie=strawberry'
-  ]
-  ```
-
-* Method `Response#getRawResponse() : string` is no longer available and its usage must be replaced
-  with `Response#getOutput()`. The method was deprecated since version [2.6.0](#260---2019-04-02).
-
-### Added
-
-* Method `Response#getHeaderLine(string $headerKey) : string` that returns all values, separated by comma, for the given
-  key. - [#35]
-* Header keys are now case-insensitive in `Response#getHeader(string $headerKey) : array`
-  and `Response#getHeaderLine(string $headerKey) : string`. - [#35]
-
-### Removed
-
-* Method `Response#getRawResponse() : string` that was deprecated in version [2.6.0](#260---2019-04-02) in favour
-  of `Response#getOutput() : string`. - [#36]
-
-## [2.7.2] - 2019-05-31
-
-### Improved
-
-* Handling of `stream_select` returning `false` in case of a system call interrupt. - [#41]
-
-### Fixed
-
-* Remove/close sockets after fetching their responses triggered async requests in order to prevent halt on further
-  request processing, if the number of requests exceeds php-fpm's `pm.max_children` setting. - [#40]
-
-## [2.7.1] - 2019-04-29
-
-### Fixed
-
-* Remove failed sockets from internal collection that errored out during reading of response in order to prevent
-  infinite tries/re-use of those failed connections. - [#37]
-
-## [2.7.0] - 2019-04-28
-
-### Added
-
-* Re-using of idle sockets for successive requests - [#33]
-
-## [2.6.0] - 2019-04-02
-
-### Added
-
-* Two new methods to Response class - [#27]
-  * `Response#getOutput()` which is identical to `Response#getRawResponse()` and will return the complete output from
-    the `STDOUT` stream of the response.
-  * `Response#getError()` which will return the complete output of the `STDERR` stream of the response.
-
-* Second parameter `$errorBuffer` in tha pass through callback signature - [#27]
-  ```php
-  $callback = function( string $outputBuffer, string $errorBuffer ) {};
-  ```
-  This parameter will contain the contents of the `STDERR` stream packets.
-
-### Deprecated
-
-* `Response#getRawResponse()` in favour of consistant naming. This method will be removed in `v3.0.0` - [#27]
-
-### Removed
-
-* `ProcessManagerException` that was introduced in `v2.5.0` - [#27]
-  Please read [this blog post](https://hollo.me/php/background-info-fast-cgi-client-v2.6.0.html) why this (BC breaking)
-  change was necessary and how to handle server-sent errors now.
-
-### Fixed
-
-* `bin/fcgiget` to accept full URL paths and print STDOUT and STDERR output
-
-### Improved
-
-* Documentation
-
-## [2.5.0] - 2019-01-29
-
-### Added
-
-* New `ProcessManagerException` in case the php-fpm responds with packages of type `STDERR`. This refers mainly to the
-  error `Primary script unknown` resp. the response `File not found.`.
-  - [#26]
-
-* CI builds for PHP 7.3
-
-## [2.4.3] - 2018-09-17
-
-### Fixes
-
-* Value of Client::STREAM_SELECT_USEC was to low with `20000` and was updated to `200000` as
-  [recommended in the official PHP documentation](http://php.net/stream_select#tv_sec). - [#20]
-
-## [2.4.2] - 2018-01-28
-
-### Fixes
-
-* Missing data in `php://input` on worker side when client sends content larger than 65535 bytes - [#15]
-
-## [2.4.1] - 2017-11-19
-
-### Fixes
-
-* PHP warning when trying to get ready request IDs - [#14]
-
-### Improves
-
-* Loop performance
-
-## [2.4.0] - 2017-09-28
-
-### Added
-
-* Ability to add pass through callbacks in order to access output buffer from a long running callee - [#11]  
-  See
-  an [example in the documentation](./README.md#reading-output-buffer-from-worker-script-using-pass-through-callbacks)
-  for further informaiton.
-
-## [2.3.0] - 2017-06-15
-
-### Changed
-
-* Replaced methods `getHost()` and `getPort()` with `getSocketAddress()` in
-  interface `hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection` - [#9]
-* The transport protocol `unix://` must be omitted for the first parameter
-  of `hollodotme\FastCGI\SocketConnections\UnixDomainSocket`  
-  Only the socket path must be passed. - [#9]
-* Replaced `fsockopen()` with `stream_socket_client()` for connecting to php-fpm. - [#9]
-
-## [2.2.0] - 2017-04-15
-
-### Added
-
-* Method `addResponseCallbacks(callable ...$callbacks)` to all request classes to enable response evaluation delegation
-  - [#6]
-* Method `addFailureCallbacks(callable ...$callbacks)` to all request classes to enable exception handling delegation
-* Method `readResponse(int $requestId, ?int $timeoutMs = null) : ProvidesResponseData` to read and retrieve a single
-  response
-* Method `readResponses(?int $imeoutMs = null, int ...$requestIds) : \Generator` to read and yield multiple responses
-* Method `readReadyResponses(?int $imeoutMs = null) : \Generator` to check for ready responses, read and yield them
-* Method `waitForResponses(?int $timeout = null)` to `Client` class for waiting for multiple responses and calling the
-  respective response callbacks - [#5]
-* Method `getRequestIdsHavingResponse() : array` to enable reactive read of responses as they occur
-* Method `hasUnhandledResponses() : bool` to check for outstanding responses
-* Method `handleResponse(int $requestId, ?int $timeoutMs = null)` to fetch a specific response and notify the respective
-  response callback
-* Method `handleResponses(?int $timeoutMs = null, int ...$requestIds)` to fetch a specific responses and notify the
-  respective response callbacks
-* Method `handleReadyResponses(?int $timeoutMs = null)` to check for ready responses, fetch them and notify the
-  respective response callbacks
-
-### Changed
-
-* Method `waitForResponse(int $requestId, ?int $timeoutMs = null)` is not returning a response anymore, but will call
-  the response callback  
-  Use `readResponse(int $requestId, ?int $timeoutMs = null): ProvidesResponseData` if you want to get the response
-  directly.
-
-### Removed
-
-* Optional flag to make a connection persistent (is now always disabled in favour of better timeout handling and FPM
-  pool-children-scalability)
-* Optional flag to keep the server-side connection alive (is now always enabled, affects only network sockets)
-
-### Improved
-
-* Code coverage by automated integration tests
-* Timeout handling on multiple requests
-
-## [2.1.0] - 2017-03-07
-
-### Changed
-
-* Methods `sendRequest` and `sendAsyncRequest` expect to get an object of
-  interface `hollodotme\FastCGI\Interfaces\ProvidesRequestData` - [#5]
-* Methods `sendRequest` and `waitForResponse` now return an object of
-  interface `hollodotme\FastCGI\Interfaces\ProvidesResponseData` - [#2]
-
-### Added
-
-* Public class constants for request methods `GET`, `POST`, `PUT`, `PATCH` and `DELETE`
-  in `hollodotme\FastCGI\Constants\RequestMethod` - [#5]
-* Public class constants for server protocols `HTTP/1.0` and `HTTP/1.1` in `hollodotme\FastCGI\Constants\ServerProtocol`
-  - [#5]
-* Abstract request class for implementing individual request methods, contains all request default values - [#5]
-* Request implementations: - [#5]
-  * `hollodotme\FastCGI\Requests\GetRequest`
-  * `hollodotme\FastCGI\Requests\PostRequest`
-  * `hollodotme\FastCGI\Requests\PutRequest`
-  * `hollodotme\FastCGI\Requests\PatchRequest`
-  * `hollodotme\FastCGI\Requests\DeleteRequest`
-* Response implementation - [#2]
-
-## [2.0.1] - 2017-02-23
-
-### Fixed
-
-- Erroneous response returned by Client::sendRequest() and Client::waitForResponse() - [#1]
-
-### Changed
-
-- Testsuite updated for PHPUnit >= 6
-
-## [2.0.0] - 2017-01-03
-
-### Changed
-
-* Class constant visibility to private in class `Client`
-* Class constant visibility to privare in class `Encoders\PacketEncoder`
-* Class constant visibility to public in class `SocketConnections\Defaults`
-* Composer requires php >= 7.1
-
-## [1.0.0] - 2017-01-03
-
-Based
-on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](https://github.com/adoy/PHP-FastCGI-Client/):
-
-### Added
-
-* Socket connection interface `ConfiguresSocketConnection`
-* Socket connection classes `UnixDomainSocket` and `NetworkSocket`
-* Base exception `FastCGIClientException`
-* Derived exceptions `ForbiddenException`, `ReadFailedException`, `TimeoutException`, `WriteFailedException`
-
-### Changed
-
-* Constructor of `Client` now expects a `ConfiguresSocketConnection` instance
-* Renamed `Client->request()` to `Client->sendRequest()`
-* Renamed `Client->async_request()` to `Client->sendAsyncRequest()`
-* Renamed `Client->wait_for_response()` to `Client->waitForResponse()`
-
-### Removed
-
-* Unused class constants from `Client`
-* Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the
-  socket connection)
-* Method `Client->getValues()`
-
-[3.1.8]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.7...v3.1.8
-
-[3.1.7]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.6...v3.1.7
-
-[3.1.6]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.5...v3.1.6
-
-[3.1.5]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.4...v3.1.5
-
-[3.1.4]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.3...v3.1.4
-
-[3.1.3]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.2...v3.1.3
-
-[3.1.2]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.1...v3.1.2
-
-[3.1.1]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.0...v3.1.1
-
-[3.1.0]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.1...v3.1.0
-
-[3.0.1]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0...v3.0.1
-
-[3.0.0]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0-beta...v3.0.0
-
-[3.0.0-beta]: https://github.com/hollodotme/fast-cgi-client/compare/v3.0.0-alpha...v3.0.0-beta
-
-[3.0.0-alpha]: https://github.com/hollodotme/fast-cgi-client/compare/v2.7.2...v3.0.0-alpha
-
-[2.7.2]: https://github.com/hollodotme/fast-cgi-client/compare/v2.7.1...v2.7.2
-
-[2.7.1]: https://github.com/hollodotme/fast-cgi-client/compare/v2.7.0...v2.7.1
-
-[2.7.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.6.0...v2.7.0
-
-[2.6.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.5.0...v2.6.0
-
-[2.5.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.3...v2.5.0
-
-[2.4.3]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.2...v2.4.3
-
-[2.4.2]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.1...v2.4.2
-
-[2.4.1]: https://github.com/hollodotme/fast-cgi-client/compare/v2.4.0...v2.4.1
-
-[2.4.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.3.0...v2.4.0
-
-[2.3.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.2.0...v2.3.0
-
-[2.2.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.1.0...v2.2.0
-
-[2.1.0]: https://github.com/hollodotme/fast-cgi-client/compare/v2.0.1...v2.1.0
-
-[2.0.1]: https://github.com/hollodotme/fast-cgi-client/compare/v2.0.0...v2.0.1
-
-[2.0.0]: https://github.com/hollodotme/fast-cgi-client/compare/v1.0.0...v2.0.0
-
-[1.0.0]: https://github.com/hollodotme/fast-cgi-client/tree/v1.0.0
-
-[#1]: https://github.com/hollodotme/fast-cgi-client/issues/1
-
-[#2]: https://github.com/hollodotme/fast-cgi-client/issues/2
-
-[#5]: https://github.com/hollodotme/fast-cgi-client/issues/5
-
-[#6]: https://github.com/hollodotme/fast-cgi-client/issues/6
-
-[#9]: https://github.com/hollodotme/fast-cgi-client/issues/9
-
-[#11]: https://github.com/hollodotme/fast-cgi-client/issues/11
-
-[#14]: https://github.com/hollodotme/fast-cgi-client/issues/14
-
-[#15]: https://github.com/hollodotme/fast-cgi-client/issues/15
-
-[#20]: https://github.com/hollodotme/fast-cgi-client/issues/20
-
-[#26]: https://github.com/hollodotme/fast-cgi-client/issues/26
-
-[#27]: https://github.com/hollodotme/fast-cgi-client/issues/27
-
-[#33]: https://github.com/hollodotme/fast-cgi-client/pull/33
-
-[#35]: https://github.com/hollodotme/fast-cgi-client/issues/35
-
-[#36]: https://github.com/hollodotme/fast-cgi-client/issues/36
-
-[#37]: https://github.com/hollodotme/fast-cgi-client/issues/37
-
-[#39]: https://github.com/hollodotme/fast-cgi-client/issues/39
-
-[#40]: https://github.com/hollodotme/fast-cgi-client/issues/40
-
-[#41]: https://github.com/hollodotme/fast-cgi-client/issues/41
-
-[#45]: https://github.com/hollodotme/fast-cgi-client/issues/45
-
-[#51]: https://github.com/hollodotme/fast-cgi-client/issues/51
-
-[#53]: https://github.com/hollodotme/fast-cgi-client/issues/53
-
-[#55]: https://github.com/hollodotme/fast-cgi-client/pull/55
-
-[#56]: https://github.com/hollodotme/fast-cgi-client/issues/56
-
-[#58]: https://github.com/hollodotme/fast-cgi-client/pull/58
-
-[#61]: https://github.com/hollodotme/fast-cgi-client/issues/61
-
-[#64]: https://github.com/hollodotme/fast-cgi-client/issues/64
+[#98]: https://github.com/hollodotme/fast-cgi-client/pull/98

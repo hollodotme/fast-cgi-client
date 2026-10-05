@@ -1,25 +1,4 @@
 <?php declare(strict_types=1);
-/*
- * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 namespace hollodotme\FastCGI\Tests\Unit\Responses;
 
@@ -37,13 +16,13 @@ final class ResponseTest extends TestCase
 	public function testCanGetHeaders() : void
 	{
 		$output = "X-Powered-By: PHP/7.3.0\r\n"
-		          . "X-Custom: Header\r\n"
-		          . "Set-Cookie: yummy_cookie=choco\r\n"
-		          . "Set-Cookie: tasty_cookie=strawberry\r\n"
-		          . "Set-cookie: delicious_cookie=cherry\r\n"
-		          . "Content-type: text/html; charset=UTF-8\r\n"
-		          . "\r\n"
-		          . 'unit';
+				  . "X-Custom: Header\r\n"
+				  . "Set-Cookie: yummy_cookie=choco\r\n"
+				  . "Set-Cookie: tasty_cookie=strawberry\r\n"
+				  . "Set-cookie: delicious_cookie=cherry\r\n"
+				  . "Content-type: text/html; charset=UTF-8\r\n"
+				  . "\r\n"
+				  . 'unit';
 
 		$error    = '';
 		$duration = 0.54321;
@@ -115,11 +94,11 @@ final class ResponseTest extends TestCase
 	public function testCanGetBody() : void
 	{
 		$output   = "X-Powered-By: PHP/7.1.0\r\n"
-		            . "X-Custom: Header\r\n"
-		            . "Content-type: text/html; charset=UTF-8\r\n"
-		            . "\r\n"
-		            . "unit\r\n"
-		            . 'test';
+					. "X-Custom: Header\r\n"
+					. "Content-type: text/html; charset=UTF-8\r\n"
+					. "\r\n"
+					. "unit\r\n"
+					. 'test';
 		$error    = '';
 		$duration = 0.54321;
 		$response = new Response( $output, $error, $duration );
@@ -136,11 +115,11 @@ final class ResponseTest extends TestCase
 	public function testCanGetOutput() : void
 	{
 		$output   = "X-Powered-By: PHP/7.1.0\r\n"
-		            . "X-Custom: Header\r\n"
-		            . "Content-type: text/html; charset=UTF-8\r\n"
-		            . "\r\n"
-		            . "unit\r\n"
-		            . 'test';
+					. "X-Custom: Header\r\n"
+					. "Content-type: text/html; charset=UTF-8\r\n"
+					. "\r\n"
+					. "unit\r\n"
+					. 'test';
 		$error    = '';
 		$duration = 0.54321;
 		$response = new Response( $output, $error, $duration );
@@ -156,11 +135,11 @@ final class ResponseTest extends TestCase
 	public function testCanGetError() : void
 	{
 		$output   = "Status: 404 Not Found\r\n"
-		            . "X-Powered-By: PHP/7.1.0\r\n"
-		            . "X-Custom: Header\r\n"
-		            . "Content-type: text/html; charset=UTF-8\r\n"
-		            . "\r\n"
-		            . 'File not found.';
+					. "X-Powered-By: PHP/7.1.0\r\n"
+					. "X-Custom: Header\r\n"
+					. "Content-type: text/html; charset=UTF-8\r\n"
+					. "\r\n"
+					. 'File not found.';
 		$error    = 'Primary script unknown';
 		$duration = 0.54321;
 		$response = new Response( $output, $error, $duration );
@@ -195,68 +174,116 @@ final class ResponseTest extends TestCase
 	public function outputProvider() : array
 	{
 		return [
-			'CGI headers'                      => [
+			'CGI headers'                           => [
 				'output'          => "Status: 404 Not Found\r\nContent-Type: text/plain\r\n\r\nLine 1\r\nLine 2",
 				'expectedHeaders' => ['Status' => ['404 Not Found'], 'Content-Type' => ['text/plain']],
 				'expectedBody'    => "Line 1\r\nLine 2",
 			],
 			# The status of a FastCGI response is a Status header, a HTTP status line is not a header
-			'HTTP status line'                 => [
+			'HTTP status line'                      => [
 				'output'          => "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nLine 1\r\nLine 2",
 				'expectedHeaders' => [],
 				'expectedBody'    => "HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\n\r\nLine 1\r\nLine 2",
 			],
-			# Before, the first two lines of an output without headers were lost
-			'no headers'                       => [
+			'no headers'                            => [
 				'output'          => "Line 1\nLine 2\nLine 3",
 				'expectedHeaders' => [],
 				'expectedBody'    => "Line 1\nLine 2\nLine 3",
 			],
-			'no headers, but a blank line'     => [
+			'no headers, but a blank line'          => [
 				'output'          => "Line 1\n\nLine 3",
 				'expectedHeaders' => [],
 				'expectedBody'    => "Line 1\n\nLine 3",
 			],
-			'headers without blank line'       => [
+			'headers without blank line'            => [
 				'output'          => 'Content-Type: text/plain',
 				'expectedHeaders' => [],
 				'expectedBody'    => 'Content-Type: text/plain',
 			],
-			'empty header block'               => [
+			'empty header block'                    => [
 				'output'          => "\r\n\r\nLine 1",
 				'expectedHeaders' => [],
 				'expectedBody'    => 'Line 1',
 			],
-			'headers only'                     => [
+			'headers only'                          => [
 				'output'          => "Content-Type: text/plain\r\n\r\n",
 				'expectedHeaders' => ['Content-Type' => ['text/plain']],
 				'expectedBody'    => '',
 			],
-			# Before, the line endings had to match PHP_EOL
-			'line feeds only'                  => [
+			'line feeds only'                       => [
 				'output'          => "Content-Type: text/plain\n\nLine 1\nLine 2",
 				'expectedHeaders' => ['Content-Type' => ['text/plain']],
 				'expectedBody'    => "Line 1\nLine 2",
 			],
-			'body with colons and blank lines' => [
+			'body with colons and blank lines'      => [
 				'output'          => "Content-Type: text/plain\r\n\r\nTime: 12:00\r\n\r\nX-Not: a header",
 				'expectedHeaders' => ['Content-Type' => ['text/plain']],
 				'expectedBody'    => "Time: 12:00\r\n\r\nX-Not: a header",
 			],
-			'binary body'                      => [
+			'binary body'                           => [
 				'output'          => "Content-Type: application/octet-stream\r\n\r\n\x00\x01\r\n\r\n\xff",
 				'expectedHeaders' => ['Content-Type' => ['application/octet-stream']],
 				'expectedBody'    => "\x00\x01\r\n\r\n\xff",
 			],
-			'folded header value'              => [
+			'folded header value'                   => [
 				'output'          => "X-Long: first part\r\n  second part\r\nContent-Type: text/plain\r\n\r\nLine 1",
 				'expectedHeaders' => ['X-Long' => ['first part second part'], 'Content-Type' => ['text/plain']],
 				'expectedBody'    => 'Line 1',
 			],
-			'header without value'             => [
+			'header without value'                  => [
 				'output'          => "X-Empty:\r\n\r\nLine 1",
 				'expectedHeaders' => ['X-Empty' => ['']],
 				'expectedBody'    => 'Line 1',
+			],
+		];
+	}
+
+	/**
+	 * @param string $output
+	 * @param int    $expectedStatusCode
+	 *
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @dataProvider statusCodeProvider
+	 */
+	public function testCanGetStatusCode( string $output, int $expectedStatusCode ) : void
+	{
+		self::assertSame( $expectedStatusCode, (new Response( $output, '', 0.1 ))->getStatusCode() );
+	}
+
+	/**
+	 * @return array<string, array<string, int|string>>
+	 */
+	public function statusCodeProvider() : array
+	{
+		return [
+			'Status header'                      => [
+				'output'             => "Status: 404 Not Found\r\n\r\n",
+				'expectedStatusCode' => 404,
+			],
+			'Status header in lower case'        => [
+				'output'             => "status: 500 Internal Server Error\r\n\r\n",
+				'expectedStatusCode' => 500,
+			],
+			'Status header without reason'       => [
+				'output'             => "Status: 201\r\n\r\n",
+				'expectedStatusCode' => 201,
+			],
+			'HTTP status line'                   => [
+				'output'             => "HTTP/1.1 302 Found\r\nLocation: /elsewhere\r\n\r\n",
+				'expectedStatusCode' => 200,
+			],
+			'no Status header'                   => [
+				'output'             => "Content-Type: text/plain\r\n\r\nLine 1",
+				'expectedStatusCode' => 200,
+			],
+			'no headers'                         => [
+				'output'             => 'Line 1',
+				'expectedStatusCode' => 200,
+			],
+			'invalid Status header'              => [
+				'output'             => "Status: unknown\r\n\r\n",
+				'expectedStatusCode' => 200,
 			],
 		];
 	}

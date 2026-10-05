@@ -1,29 +1,9 @@
 <?php declare(strict_types=1);
-/*
- * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 namespace hollodotme\FastCGI;
 
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 
@@ -59,7 +39,7 @@ $connection = new UnixDomainSocket( '/var/run/php-uds.sock' );
 
 $workerPath = __DIR__ . '/exampleWorker.php';
 
-$request = new PostRequest( $workerPath, '' );
+$request = new PostRequest( $workerPath );
 
 printLine( "\n" );
 printLine( 'hollodotme/fast-cgi-client examples', 'blue', true );
@@ -80,7 +60,7 @@ printLine( '# Sending one synchronous request... (worker sleeps 1 second)' );
 printLine( 'CODE: $client->sendRequest( $request );', 'red' );
 printLine( "\n" );
 
-$request->setContent( http_build_query( ['sleep' => 1, 'key' => 'single synchronous request'] ) );
+$request->setContent( new UrlEncodedFormData( ['sleep' => 1, 'key' => 'single synchronous request'] ) );
 
 sleep( 2 );
 
@@ -96,7 +76,7 @@ printLine( '# Sending one asynchronous request... (worker sleeps 1 second)' );
 printLine( 'CODE: $client->sendAsyncRequest( $request );', 'red' );
 printLine( "\n" );
 
-$request->setContent( http_build_query( ['sleep' => 1, 'key' => 'single asynchronous request'] ) );
+$request->setContent( new UrlEncodedFormData( ['sleep' => 1, 'key' => 'single asynchronous request'] ) );
 
 sleep( 2 );
 
@@ -130,7 +110,7 @@ printLine( '        }', 'red' );
 printLine( '      );', 'red' );
 printLine( "\n" );
 
-$request->setContent( http_build_query( ['sleep' => 1, 'key' => 'single asynchronous request with callback'] ) );
+$request->setContent( new UrlEncodedFormData( ['sleep' => 1, 'key' => 'single asynchronous request with callback'] ) );
 $request->addResponseCallbacks(
 	static function ( ProvidesResponseData $response )
 	{
@@ -177,9 +157,9 @@ printLine( '      $client->sendAsyncRequest( $request2 );', 'red' );
 printLine( '      $client->sendAsyncRequest( $request3 );', 'red' );
 printLine( "\n" );
 
-$request1 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 1'] ) );
-$request2 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 2'] ) );
-$request3 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 3'] ) );
+$request1 = new PostRequest( $workerPath, new UrlEncodedFormData( ['sleep' => 1, 'key' => 'Request 1'] ) );
+$request2 = new PostRequest( $workerPath, new UrlEncodedFormData( ['sleep' => 1, 'key' => 'Request 2'] ) );
+$request3 = new PostRequest( $workerPath, new UrlEncodedFormData( ['sleep' => 1, 'key' => 'Request 3'] ) );
 
 $socketIds = [];
 
@@ -220,9 +200,9 @@ printLine( '      $client->sendAsyncRequest( $request2 );', 'red' );
 printLine( '      $client->sendAsyncRequest( $request3 );', 'red' );
 printLine( "\n" );
 
-$request1 = new PostRequest( $workerPath, http_build_query( ['sleep' => 3, 'key' => 'Request 1'] ) );
-$request2 = new PostRequest( $workerPath, http_build_query( ['sleep' => 2, 'key' => 'Request 2'] ) );
-$request3 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 3'] ) );
+$request1 = new PostRequest( $workerPath, new UrlEncodedFormData( ['sleep' => 3, 'key' => 'Request 1'] ) );
+$request2 = new PostRequest( $workerPath, new UrlEncodedFormData( ['sleep' => 2, 'key' => 'Request 2'] ) );
+$request3 = new PostRequest( $workerPath, new UrlEncodedFormData( ['sleep' => 1, 'key' => 'Request 3'] ) );
 
 $socketIds = [];
 
@@ -281,9 +261,9 @@ $responseCallback = static function ( ProvidesResponseData $response )
 	printResponse( $response );
 };
 
-$request1 = new PostRequest( $workerPath, http_build_query( ['sleep' => 2, 'key' => 'Request 1'] ) );
-$request2 = new PostRequest( $workerPath, http_build_query( ['sleep' => 3, 'key' => 'Request 2'] ) );
-$request3 = new PostRequest( $workerPath, http_build_query( ['sleep' => 1, 'key' => 'Request 3'] ) );
+$request1 = new PostRequest( $workerPath, new UrlEncodedFormData( ['sleep' => 2, 'key' => 'Request 1'] ) );
+$request2 = new PostRequest( $workerPath, new UrlEncodedFormData( ['sleep' => 3, 'key' => 'Request 2'] ) );
+$request3 = new PostRequest( $workerPath, new UrlEncodedFormData( ['sleep' => 1, 'key' => 'Request 3'] ) );
 
 $request1->addResponseCallbacks( $responseCallback );
 $request2->addResponseCallbacks( $responseCallback );

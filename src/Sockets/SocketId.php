@@ -8,24 +8,15 @@ use function random_int;
 
 final class SocketId
 {
-	/** @var int */
-	private $id;
-
 	/**
-	 * @param int $id
-	 *
 	 * @throws InvalidArgumentException
 	 */
-	private function __construct( int $id )
+	private function __construct( private int $id )
 	{
 		$this->guardValueIsValid( $id );
-
-		$this->id = $id;
 	}
 
 	/**
-	 * @param int $value
-	 *
 	 * @throws InvalidArgumentException
 	 */
 	private function guardValueIsValid( int $value ) : void
@@ -37,7 +28,6 @@ final class SocketId
 	}
 
 	/**
-	 * @return SocketId
 	 * @throws InvalidArgumentException
 	 * @throws Exception
 	 */
@@ -47,9 +37,6 @@ final class SocketId
 	}
 
 	/**
-	 * @param int $id
-	 *
-	 * @return SocketId
 	 * @throws InvalidArgumentException
 	 */
 	public static function fromInt( int $id ) : self

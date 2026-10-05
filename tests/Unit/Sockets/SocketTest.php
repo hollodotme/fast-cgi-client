@@ -1,25 +1,4 @@
 <?php declare(strict_types=1);
-/*
- * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 namespace hollodotme\FastCGI\Tests\Unit\Sockets;
 
@@ -31,6 +10,7 @@ use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
@@ -47,7 +27,8 @@ use RuntimeException;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 use function dirname;
-use function http_build_query;
+use function get_resource_type;
+use const PHP_VERSION_ID;
 
 final class SocketTest extends TestCase
 {
@@ -67,13 +48,15 @@ final class SocketTest extends TestCase
 	/**
 	 * @param int $connectTimeout
 	 * @param int $readWriteTimeout
+	 * @param int $streamSelectTimeout
 	 *
 	 * @return Socket
 	 * @throws Exception
 	 */
 	private function getSocket(
 		int $connectTimeout = Defaults::CONNECT_TIMEOUT,
-		int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT
+		int $readWriteTimeout = Defaults::READ_WRITE_TIMEOUT,
+		int $streamSelectTimeout = Defaults::STREAM_SELECT_TIMEOUT
 	) : Socket
 	{
 		$nameValuePairEncoder = new NameValuePairEncoder();
@@ -81,7 +64,8 @@ final class SocketTest extends TestCase
 		$connection           = new UnixDomainSocket(
 			$this->getUnixDomainSocket(),
 			$connectTimeout,
-			$readWriteTimeout
+			$readWriteTimeout,
+			$streamSelectTimeout
 		);
 
 		return new Socket( SocketId::new(), $connection, $packetEncoder, $nameValuePairEncoder );
@@ -97,10 +81,9 @@ final class SocketTest extends TestCase
 	public function testCanSendRequestAndFetchResponse() : void
 	{
 		$socket  = $this->getSocket();
-		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
 			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
+			new UrlEncodedFormData( ['test-key' => 'unit'] )
 		);
 
 		$socket->sendRequest( $request );
@@ -126,10 +109,9 @@ final class SocketTest extends TestCase
 	{
 		$resources = [];
 		$socket    = $this->getSocket();
-		$data      = ['test-key' => 'unit'];
 		$request   = new PostRequest(
 			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
+			new UrlEncodedFormData( ['test-key' => 'unit'] )
 		);
 
 		$socket->collectResource( $resources );
@@ -140,7 +122,9 @@ final class SocketTest extends TestCase
 
 		$socket->collectResource( $resources );
 
-		self::assertIsResource( $resources[ $socket->getId() ] );
+		self::assertCount( 1, $resources );
+		self::assertArrayHasKey( $socket->getId(), $resources );
+		self::assertSame( 'stream', get_resource_type( $resources[ $socket->getId() ] ) );
 	}
 
 	/**
@@ -153,10 +137,9 @@ final class SocketTest extends TestCase
 	public function testCanNotifyResponseCallback() : void
 	{
 		$socket  = $this->getSocket();
-		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
 			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
+			new UrlEncodedFormData( ['test-key' => 'unit'] )
 		);
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response )
@@ -181,10 +164,9 @@ final class SocketTest extends TestCase
 	public function testCanNotifyFailureCallback() : void
 	{
 		$socket  = $this->getSocket();
-		$data    = ['test-key' => 'unit'];
 		$request = new PostRequest(
 			dirname( __DIR__, 2 ) . '/Integration/Workers/worker.php',
-			http_build_query( $data )
+			new UrlEncodedFormData( ['test-key' => 'unit'] )
 		);
 		$request->addFailureCallbacks(
 			static function ( Throwable $throwable )
@@ -210,12 +192,12 @@ final class SocketTest extends TestCase
 	public function testThrowsExceptionIfRequestIsSentToSocketThatIsNotIdle() : void
 	{
 		$socket  = $this->getSocket();
-		$request = new PostRequest( '/some/script.php', '' );
+		$request = new PostRequest( '/some/script.php' );
 
 		$socket->sendRequest( $request );
 
 		$this->expectException( ConnectException::class );
-		$this->expectExceptionMessage( 'Trying to connect to a socket that is not idle.' );
+		$this->expectExceptionMessage( 'Trying to send a request to a socket that is not idle.' );
 
 		$socket->sendRequest( $request );
 
@@ -223,9 +205,9 @@ final class SocketTest extends TestCase
 	}
 
 	/**
-	 * @param int    $flag
-	 * @param string $expectedException
-	 * @param string $expectedExceptionMessage
+	 * @param int                     $flag
+	 * @param class-string<Throwable> $expectedException
+	 * @param string                  $expectedExceptionMessage
 	 *
 	 * @throws AssertionFailedError
 	 * @throws ReflectionException
@@ -242,7 +224,10 @@ final class SocketTest extends TestCase
 		$socket = $this->getSocket();
 
 		$guardMethod = (new ReflectionClass( $socket ))->getMethod( 'guardRequestCompleted' );
-		$guardMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$guardMethod->setAccessible( true );
+		}
 
 		$this->expectException( $expectedException );
 		$this->expectExceptionMessage( $expectedExceptionMessage );
@@ -305,8 +290,10 @@ final class SocketTest extends TestCase
 	public function testIsNotUsableWhenTimedOut() : void
 	{
 		$socket  = $this->getSocket();
-		$content = http_build_query( ['sleep' => 1, 'test-key' => 'unit'] );
-		$request = new PostRequest( dirname( __DIR__, 2 ) . '/Integration/Workers/sleepWorker.php', $content );
+		$request = new PostRequest(
+			dirname( __DIR__, 2 ) . '/Integration/Workers/sleepWorker.php',
+			new UrlEncodedFormData( ['sleep' => 1, 'test-key' => 'unit'] )
+		);
 		$socket->sendRequest( $request );
 
 		try
@@ -332,14 +319,65 @@ final class SocketTest extends TestCase
 		$socket = $this->getSocket();
 
 		$connectMethod = (new ReflectionClass( $socket ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socket );
 
 		$disconnectMethod = (new ReflectionClass( $socket ))->getMethod( 'disconnect' );
-		$disconnectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$disconnectMethod->setAccessible( true );
+		}
 		$disconnectMethod->invoke( $socket );
 
 		self::assertFalse( $socket->isUsable() );
+	}
+
+	/**
+	 * @param int $configuredTimeout
+	 * @param int $expectedTimeout
+	 *
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws Exception
+	 * @dataProvider streamSelectTimeoutProvider
+	 */
+	public function testStreamSelectTimeoutIsTakenFromConnection( int $configuredTimeout, int $expectedTimeout ) : void
+	{
+		$socket = $this->getSocket(
+			Defaults::CONNECT_TIMEOUT,
+			Defaults::READ_WRITE_TIMEOUT,
+			$configuredTimeout
+		);
+
+		self::assertSame( $expectedTimeout, $socket->getStreamSelectTimeout() );
+	}
+
+	/**
+	 * @return array<array<string, int>>
+	 */
+	public function streamSelectTimeoutProvider() : array
+	{
+		return [
+			[
+				'configuredTimeout' => Defaults::STREAM_SELECT_TIMEOUT,
+				'expectedTimeout'   => 200,
+			],
+			[
+				'configuredTimeout' => 1500,
+				'expectedTimeout'   => 1500,
+			],
+			[
+				'configuredTimeout' => 0,
+				'expectedTimeout'   => 0,
+			],
+			[
+				'configuredTimeout' => -1,
+				'expectedTimeout'   => 0,
+			],
+		];
 	}
 
 	/**

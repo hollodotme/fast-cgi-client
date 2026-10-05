@@ -4,7 +4,7 @@ $lengths = [];
 
 foreach ( $_SERVER as $key => $value )
 {
-	if ( 0 === strpos( (string)$key, 'LARGE_PARAM_' ) )
+	if ( str_starts_with( (string)$key, 'LARGE_PARAM_' ) )
 	{
 		$lengths[ $key ] = strlen( (string)$value );
 	}

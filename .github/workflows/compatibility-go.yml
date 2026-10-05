@@ -1,0 +1,21 @@
+name: Compatible with Go FastCGI server
+
+on:
+  push:
+    branches:
+      - master
+      - development
+      - '*.x-dev'
+
+  pull_request:
+
+  schedule:
+    - cron: "11 7 * * *"
+
+  workflow_dispatch:
+
+jobs:
+  compatibility:
+    uses: ./.github/workflows/compatibility.yml
+    with:
+      server: go

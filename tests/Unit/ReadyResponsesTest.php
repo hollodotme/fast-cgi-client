@@ -1,25 +1,4 @@
 <?php declare(strict_types=1);
-/*
- * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 namespace hollodotme\FastCGI\Tests\Unit;
 
@@ -30,7 +9,6 @@ use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use Throwable;
 use function chr;
 use function explode;
@@ -54,11 +32,9 @@ final class ReadyResponsesTest extends TestCase
 	/** @var resource */
 	private $server;
 
-	/** @var string */
-	private $host;
+	private string $host;
 
-	/** @var int */
-	private $port;
+	private int $port;
 
 	protected function setUp() : void
 	{
@@ -66,7 +42,7 @@ final class ReadyResponsesTest extends TestCase
 
 		if ( false === $server )
 		{
-			throw new RuntimeException( 'Could not start server.' );
+			self::fail( 'Could not start server.' );
 		}
 
 		$this->server = $server;
@@ -90,14 +66,14 @@ final class ReadyResponsesTest extends TestCase
 		$client = new Client();
 
 		# First connection: the response is read, the socket becomes idle
-		$idleSocketId   = $client->sendAsyncRequest( $this->getConnection( 1000 ), new GetRequest( 'script.php', '' ) );
+		$idleSocketId   = $client->sendAsyncRequest( $this->getConnection( 1000 ), new GetRequest( 'script.php' ) );
 		$idleConnection = $this->accept();
 		$this->respond( $idleConnection, $idleSocketId, 'first' );
 
 		self::assertSame( 'first', $client->readResponse( $idleSocketId )->getBody() );
 
 		# Second connection: waits for its response
-		$request = new GetRequest( 'script.php', '' );
+		$request = new GetRequest( 'script.php' );
 		$bodies  = [];
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response ) use ( &$bodies ) : void
@@ -126,30 +102,6 @@ final class ReadyResponsesTest extends TestCase
 	}
 
 	/**
-	 * Before, stream_select() was called without streams to watch, which throws a ValueError on PHP 8.
-	 *
-	 * @throws Throwable
-	 */
-	public function testNoSocketHasResponseIfNoSocketIsBusy() : void
-	{
-		$client = new Client();
-
-		$socketId   = $client->sendAsyncRequest( $this->getConnection( 1000 ), new GetRequest( 'script.php', '' ) );
-		$connection = $this->accept();
-		$this->respond( $connection, $socketId, 'first' );
-
-		self::assertSame( 'first', $client->readResponse( $socketId )->getBody() );
-		self::assertFalse( $client->hasUnhandledResponses() );
-
-		fclose( $connection );
-
-		self::assertSame( [], $client->getSocketIdsHavingResponse() );
-		self::assertSame( [], iterator_to_array( $client->readReadyResponses() ) );
-
-		$client->handleReadyResponses();
-	}
-
-	/**
 	 * The response of an idle socket was already read. It stays available, also after the server closed the
 	 * connection, so waiting for it notifies the response callbacks once, without waiting for a timeout.
 	 *
@@ -158,7 +110,7 @@ final class ReadyResponsesTest extends TestCase
 	public function testIdleSocketHasItsReadResponse() : void
 	{
 		$client  = new Client();
-		$request = new GetRequest( 'script.php', '' );
+		$request = new GetRequest( 'script.php' );
 		$bodies  = [];
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response ) use ( &$bodies ) : void
@@ -191,15 +143,38 @@ final class ReadyResponsesTest extends TestCase
 	}
 
 	/**
+	 * Only busy sockets are watched for responses. Without a busy socket there is nothing to watch, which must not
+	 * pass empty arrays to stream_select(), it throws a ValueError then.
+	 *
+	 * @throws Throwable
+	 */
+	public function testNoSocketHasResponseIfNoSocketIsBusy() : void
+	{
+		$client = new Client();
+
+		$socketId   = $client->sendAsyncRequest( $this->getConnection( 1000 ), new GetRequest( 'script.php' ) );
+		$connection = $this->accept();
+		$this->respond( $connection, $socketId, 'first' );
+
+		self::assertSame( 'first', $client->readResponse( $socketId )->getBody() );
+		self::assertFalse( $client->hasUnhandledResponses() );
+
+		self::assertSame( [], $client->getSocketIdsHavingResponse() );
+		self::assertSame( [], iterator_to_array( $client->readReadyResponses() ) );
+
+		$client->handleReadyResponses();
+
+		fclose( $connection );
+
+		self::assertSame( [], $client->getSocketIdsHavingResponse() );
+	}
+
+	/**
 	 * Connections with different read/write timeouts are not equal, so each request gets its own socket.
-	 *
-	 * @param int $readWriteTimeout
-	 *
-	 * @return NetworkSocket
 	 */
 	private function getConnection( int $readWriteTimeout ) : NetworkSocket
 	{
-		return new NetworkSocket( $this->host, $this->port, Defaults::CONNECT_TIMEOUT, $readWriteTimeout );
+		return new NetworkSocket( $this->host, $this->port, Defaults::CONNECT_TIMEOUT, $readWriteTimeout, 50 );
 	}
 
 	/**
@@ -211,7 +186,7 @@ final class ReadyResponsesTest extends TestCase
 
 		if ( false === $connection )
 		{
-			throw new RuntimeException( 'Client did not connect.' );
+			self::fail( 'Client did not connect.' );
 		}
 
 		return $connection;

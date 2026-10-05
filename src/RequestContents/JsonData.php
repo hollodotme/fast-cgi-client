@@ -5,29 +5,19 @@ namespace hollodotme\FastCGI\RequestContents;
 use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
 use RuntimeException;
 use function json_encode;
-use const PHP_INT_MAX;
+use function max;
 
 final class JsonData implements ComposesRequestContent
 {
-	/** @var mixed */
-	private $data;
-
-	/** @var int */
-	private $encodingOptions;
-
 	/** @var int<1, max> */
-	private $encodingDepth;
+	private int $encodingDepth;
 
 	/**
-	 * @param mixed $data
-	 * @param int   $options
-	 * @param int<1, max>   $depth
+	 * @param int<1, max> $depth
 	 */
-	public function __construct( $data, int $options = 0, int $depth = 512 )
+	public function __construct( private mixed $data, private int $options = 0, int $depth = 512 )
 	{
-		$this->data            = $data;
-		$this->encodingOptions = $options;
-		$this->encodingDepth   = max( 1, min( $depth, PHP_INT_MAX ) );
+		$this->encodingDepth = max( 1, $depth );
 	}
 
 	public function getContentType() : string
@@ -36,12 +26,11 @@ final class JsonData implements ComposesRequestContent
 	}
 
 	/**
-	 * @return string
 	 * @throws RuntimeException
 	 */
 	public function getContent() : string
 	{
-		$json = json_encode( $this->data, $this->encodingOptions, $this->encodingDepth );
+		$json = json_encode( $this->data, $this->options, $this->encodingDepth );
 
 		if ( false === $json )
 		{

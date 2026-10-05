@@ -8,7 +8,6 @@ RUN set -ex && install-php-extensions xdebug-^3.1
 COPY network-socket.pool.conf ${PHP_CONF_DIR}/network-socket.pool.conf
 COPY restricted-unix-domain-socket.pool.conf ${PHP_CONF_DIR}/restricted-unix-domain-socket.pool.conf
 COPY unix-domain-socket.pool.conf ${PHP_CONF_DIR}/unix-domain-socket.pool.conf
-# The official images disable fastcgi.logging, tests assert on the error output of php-fpm
 COPY fastcgi-logging.ini /usr/local/etc/php/conf.d/zz-fastcgi-logging.ini
 
 WORKDIR /repo

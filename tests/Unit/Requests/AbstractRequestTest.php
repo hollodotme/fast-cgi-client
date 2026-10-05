@@ -1,32 +1,17 @@
 <?php declare(strict_types=1);
-/*
- * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 namespace hollodotme\FastCGI\Tests\Unit\Requests;
 
+use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
+use hollodotme\FastCGI\RequestContents\JsonData;
+use hollodotme\FastCGI\RequestContents\MultipartFormData;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\AbstractRequest;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
+use function dirname;
+use function strlen;
 
 final class AbstractRequestTest extends TestCase
 {
@@ -39,12 +24,12 @@ final class AbstractRequestTest extends TestCase
 	 */
 	public function testCanGetDefaultValues( string $requestMethod ) : void
 	{
-		$request = $this->getRequest( $requestMethod, '/path/to/script.php', 'Unit-Test' );
+		$request = $this->getRequest( $requestMethod, '/path/to/script.php' );
 
 		self::assertSame( 'FastCGI/1.0', $request->getGatewayInterface() );
 		self::assertSame( '/path/to/script.php', $request->getScriptFilename() );
-		self::assertSame( 'Unit-Test', $request->getContent() );
-		self::assertSame( 9, $request->getContentLength() );
+		self::assertSame( null, $request->getContent() );
+		self::assertSame( 0, $request->getContentLength() );
 		self::assertSame( '127.0.0.1', $request->getServerAddress() );
 		self::assertSame( 'localhost', $request->getServerName() );
 		self::assertSame( 'hollodotme/fast-cgi-client', $request->getServerSoftware() );
@@ -56,25 +41,25 @@ final class AbstractRequestTest extends TestCase
 		self::assertSame( 'application/x-www-form-urlencoded', $request->getContentType() );
 		self::assertSame( [], $request->getCustomVars() );
 		self::assertSame( '', $request->getRequestUri() );
+		self::assertSame( [], $request->getQueryParams() );
+		self::assertSame( '', $request->getQueryString() );
 	}
 
-	/**
-	 * @param string $requestMethod
-	 * @param string $scriptFilename
-	 * @param string $content
-	 *
-	 * @return AbstractRequest
-	 */
-	private function getRequest( string $requestMethod, string $scriptFilename, string $content ) : AbstractRequest
+	private function getRequest(
+		string $requestMethod,
+		string $scriptFilename,
+		?ComposesRequestContent $content = null
+	) : AbstractRequest
 	{
-		return new class($requestMethod, $scriptFilename, $content) extends AbstractRequest {
-			/** @var string */
-			private $requestMethod;
-
-			public function __construct( string $requestMethod, string $scriptFilename, string $content )
+		return new class ( $requestMethod, $scriptFilename, $content ) extends AbstractRequest
+		{
+			public function __construct(
+				private string $requestMethod,
+				string $scriptFilename,
+				?ComposesRequestContent $content = null
+			)
 			{
 				parent::__construct( $scriptFilename, $content );
-				$this->requestMethod = $requestMethod;
 			}
 
 			public function getRequestMethod() : string
@@ -117,7 +102,7 @@ final class AbstractRequestTest extends TestCase
 	 */
 	public function testCanGetParametersArray( string $requestMethod ) : void
 	{
-		$request = $this->getRequest( $requestMethod, '/path/to/script.php', 'Unit-Test' );
+		$request = $this->getRequest( $requestMethod, '/path/to/script.php' );
 		$request->setCustomVar( 'UNIT', 'Test' );
 		$request->setRequestUri( '/unit/test/' );
 
@@ -135,10 +120,126 @@ final class AbstractRequestTest extends TestCase
 			'SERVER_NAME'       => 'localhost',
 			'SERVER_PROTOCOL'   => 'HTTP/1.1',
 			'CONTENT_TYPE'      => 'application/x-www-form-urlencoded',
-			'CONTENT_LENGTH'    => 9,
+			'CONTENT_LENGTH'    => 0,
 		];
 
 		self::assertSame( $expectedParams, $request->getParams() );
+	}
+
+	/**
+	 * @param string               $requestUri
+	 * @param array<string, mixed> $queryParams
+	 * @param string               $expectedRequestUri
+	 * @param string               $expectedQueryString
+	 *
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @dataProvider queryParamsProvider
+	 */
+	public function testQueryParamsAreAddedToParametersArray(
+		string $requestUri,
+		array $queryParams,
+		string $expectedRequestUri,
+		string $expectedQueryString
+	) : void
+	{
+		$request = $this->getRequest( 'GET', '/path/to/script.php' );
+		$request->setRequestUri( $requestUri );
+		$request->setQueryParams( $queryParams );
+
+		$params = $request->getParams();
+
+		self::assertSame( $queryParams, $request->getQueryParams() );
+		self::assertSame( $requestUri, $request->getRequestUri() );
+		self::assertSame( $expectedRequestUri, $params['REQUEST_URI'] );
+		self::assertSame( $expectedQueryString, $params['QUERY_STRING'] );
+	}
+
+	/**
+	 * @return array<array<string, mixed>>
+	 */
+	public function queryParamsProvider() : array
+	{
+		return [
+			[
+				'requestUri'          => '/unit/test/',
+				'queryParams'         => ['unit' => 'test'],
+				'expectedRequestUri'  => '/unit/test/?unit=test',
+				'expectedQueryString' => 'unit=test',
+			],
+			[
+				'requestUri'          => '',
+				'queryParams'         => ['unit' => 'test', 'number' => 1],
+				'expectedRequestUri'  => '?unit=test&number=1',
+				'expectedQueryString' => 'unit=test&number=1',
+			],
+			[
+				'requestUri'          => '/unit/test/',
+				'queryParams'         => [
+					'text' => 'some text & more',
+					'list' => ['a', 'b'],
+					'map'  => ['key' => 'value'],
+				],
+				'expectedRequestUri'  => '/unit/test/?text=some%20text%20%26%20more'
+					. '&list%5B0%5D=a&list%5B1%5D=b&map%5Bkey%5D=value',
+				'expectedQueryString' => 'text=some%20text%20%26%20more'
+					. '&list%5B0%5D=a&list%5B1%5D=b&map%5Bkey%5D=value',
+			],
+			# Query params are appended to a query string that is already part of the request URI
+			[
+				'requestUri'          => '/unit/test/?existing=value',
+				'queryParams'         => ['unit' => 'test'],
+				'expectedRequestUri'  => '/unit/test/?existing=value&unit=test',
+				'expectedQueryString' => 'existing=value&unit=test',
+			],
+			[
+				'requestUri'          => '/unit/test/?',
+				'queryParams'         => ['unit' => 'test'],
+				'expectedRequestUri'  => '/unit/test/?unit=test',
+				'expectedQueryString' => 'unit=test',
+			],
+			[
+				'requestUri'          => '/unit/test/?existing=value&',
+				'queryParams'         => ['unit' => 'test'],
+				'expectedRequestUri'  => '/unit/test/?existing=value&unit=test',
+				'expectedQueryString' => 'existing=value&unit=test',
+			],
+		];
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testQueryParamsOverwriteQueryStringFromCustomVars() : void
+	{
+		$request = $this->getRequest( 'GET', '/path/to/script.php' );
+		$request->setCustomVar( 'QUERY_STRING', 'custom=var' );
+
+		self::assertSame( 'custom=var', $request->getParams()['QUERY_STRING'] );
+
+		$request->setQueryParams( ['unit' => 'test'] );
+
+		self::assertSame( 'unit=test', $request->getParams()['QUERY_STRING'] );
+
+		$request->setQueryParams( [] );
+
+		self::assertSame( 'custom=var', $request->getParams()['QUERY_STRING'] );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testParametersArrayHasNoQueryStringWithoutQueryParams() : void
+	{
+		$request = $this->getRequest( 'GET', '/path/to/script.php' );
+		$request->setRequestUri( '/unit/test/?existing=value' );
+
+		$params = $request->getParams();
+
+		self::assertSame( '/unit/test/?existing=value', $params['REQUEST_URI'] );
+		self::assertArrayNotHasKey( 'QUERY_STRING', $params );
 	}
 
 	/**
@@ -147,13 +248,113 @@ final class AbstractRequestTest extends TestCase
 	 */
 	public function testContentLengthChangesWithContent() : void
 	{
-		$request = $this->getRequest( 'GET', '/path/to/script.php', 'Some content' );
+		$request = $this->getRequest(
+			'GET',
+			'/path/to/script.php',
+			new UrlEncodedFormData( ['test' => 'some content'] )
+		);
 
-		self::assertSame( 12, $request->getContentLength() );
+		self::assertSame( 17, $request->getContentLength() );
 
-		$request->setContent( 'Some new content' );
+		$request->setContent( new UrlEncodedFormData( ['test' => 'some new content'] ) );
 
-		self::assertSame( 16, $request->getContentLength() );
+		self::assertSame( 21, $request->getContentLength() );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
+	 */
+	public function testContentLengthChangesIfContentObjectIsChangedAfterItWasSet() : void
+	{
+		$content = new MultipartFormData( ['test' => 'some content'], [] );
+		$request = $this->getRequest( 'POST', '/path/to/script.php', $content );
+
+		$lengthWithoutFile = strlen( $content->getContent() );
+
+		self::assertSame( $lengthWithoutFile, $request->getContentLength() );
+		self::assertSame( $lengthWithoutFile, $request->getParams()['CONTENT_LENGTH'] );
+
+		$content->addFile( 'textFile', dirname( __DIR__ ) . '/RequestContents/_files/TestFile.txt' );
+
+		$lengthWithFile = strlen( $content->getContent() );
+
+		self::assertGreaterThan( $lengthWithoutFile, $lengthWithFile );
+		self::assertSame( $lengthWithFile, $request->getContentLength() );
+		self::assertSame( $lengthWithFile, $request->getParams()['CONTENT_LENGTH'] );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testContentTypeChangesIfContentObjectIsChangedAfterItWasSet() : void
+	{
+		$content = new class implements ComposesRequestContent
+		{
+			public string $contentType = 'text/plain';
+
+			public function getContentType() : string
+			{
+				return $this->contentType;
+			}
+
+			public function getContent() : string
+			{
+				return 'unit';
+			}
+		};
+
+		$request = $this->getRequest( 'POST', '/path/to/script.php', $content );
+
+		self::assertSame( 'text/plain', $request->getContentType() );
+
+		$content->contentType = 'text/csv';
+
+		self::assertSame( 'text/csv', $request->getContentType() );
+		self::assertSame( 'text/csv', $request->getParams()['CONTENT_TYPE'] );
+
+		# A content type that was set explicitly takes precedence ...
+		$request->setContentType( 'text/html' );
+		$content->contentType = 'text/xml';
+
+		self::assertSame( 'text/html', $request->getContentType() );
+
+		# ... until the content is set again
+		$request->setContent( $content );
+
+		self::assertSame( 'text/xml', $request->getContentType() );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testSetContentUpdatesContentType() : void
+	{
+		$request = $this->getRequest( 'POST', '/path/to/script.php' );
+		$content = new JsonData( ['test' => 'some content'] );
+
+		$request->setContent( $content );
+
+		self::assertSame( $content, $request->getContent() );
+		self::assertSame( 'application/json', $request->getContentType() );
+		self::assertSame( 23, $request->getContentLength() );
+	}
+
+	/**
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 */
+	public function testCanOverwriteContentTypeAfterSettingContent() : void
+	{
+		$request = $this->getRequest( 'POST', '/path/to/script.php' );
+
+		$request->setContent( new JsonData( ['test' => 'some content'] ) );
+		$request->setContentType( 'application/vnd.test+json' );
+
+		self::assertSame( 'application/vnd.test+json', $request->getContentType() );
 	}
 
 	/**
@@ -162,7 +363,7 @@ final class AbstractRequestTest extends TestCase
 	 */
 	public function testCanOverwriteVars() : void
 	{
-		$request = $this->getRequest( 'POST', '/path/to/script.php', 'Unit-Test' );
+		$request = $this->getRequest( 'POST', '/path/to/script.php' );
 		$request->setRemoteAddress( '10.100.10.1' );
 		$request->setRemotePort( 8599 );
 		$request->setServerSoftware( 'unit/test' );
@@ -193,7 +394,7 @@ final class AbstractRequestTest extends TestCase
 			'SERVER_NAME'       => 'www.fast-cgi-client.de',
 			'SERVER_PROTOCOL'   => 'HTTP/1.0',
 			'CONTENT_TYPE'      => 'text/plain',
-			'CONTENT_LENGTH'    => 9,
+			'CONTENT_LENGTH'    => 0,
 		];
 
 		self::assertSame( $expectedParams, $request->getParams() );
@@ -205,7 +406,7 @@ final class AbstractRequestTest extends TestCase
 	 */
 	public function testCanResetCustomVars() : void
 	{
-		$request = $this->getRequest( 'POST', '/path/to/script.php', 'Unit-Test' );
+		$request = $this->getRequest( 'POST', '/path/to/script.php' );
 		$request->setCustomVar( 'UNIT', 'Test' );
 
 		self::assertSame( ['UNIT' => 'Test'], $request->getCustomVars() );

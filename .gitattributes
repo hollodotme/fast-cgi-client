@@ -2,10 +2,15 @@
 .docker/ export-ignore
 .github/ export-ignore
 .phive/ export-ignore
+.phpstan/ export-ignore
 .tools/ export-ignore
 bin/ export-ignore
 tests/ export-ignore
 Makefile export-ignore
 CHANGELOG.md export-ignore
+docs/ export-ignore
 docker-compose.yml export-ignore
+phpcs.xml export-ignore
 phpstan.neon export-ignore
+phpunit.xml export-ignore
+website/ export-ignore

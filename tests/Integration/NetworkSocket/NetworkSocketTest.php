@@ -1,25 +1,4 @@
 <?php declare(strict_types=1);
-/*
- * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 namespace hollodotme\FastCGI\Tests\Integration\NetworkSocket;
 
@@ -30,11 +9,14 @@ use hollodotme\FastCGI\Exceptions\ReadFailedException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\RequestContents\PlainText;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
 use hollodotme\FastCGI\Requests\GetRequest;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
+use hollodotme\FastCGI\Tests\Traits\Polling;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\Constraint\RegularExpression;
@@ -44,20 +26,19 @@ use ReflectionClass;
 use RuntimeException;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
-use function http_build_query;
 use function json_decode;
 use function preg_match;
 use function str_repeat;
+use const PHP_VERSION_ID;
 
 final class NetworkSocketTest extends TestCase
 {
 	use SocketDataProviding;
+	use Polling;
 
-	/** @var NetworkSocket */
-	private $connection;
+	private NetworkSocket $connection;
 
-	/** @var Client */
-	private $client;
+	private Client $client;
 
 	protected function setUp() : void
 	{
@@ -83,7 +64,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanSendAsyncRequestAndReceiveSocketId() : void
 	{
-		$content = http_build_query( ['test-key' => 'unit'] );
+		$content = new UrlEncodedFormData( ['test-key' => 'unit'] );
 		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
@@ -101,7 +82,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanSendAsyncRequestAndReadResponse() : void
 	{
-		$content          = http_build_query( ['test-key' => 'unit'] );
+		$content          = new UrlEncodedFormData( ['test-key' => 'unit'] );
 		$request          = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
@@ -123,7 +104,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanSendSyncRequestAndReceiveResponse() : void
 	{
-		$content          = http_build_query( ['test-key' => 'unit'] );
+		$content          = new UrlEncodedFormData( ['test-key' => 'unit'] );
 		$request          = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 		$expectedResponse =
 			"X-Powered-By: PHP/7.1.0\r\nX-Custom: Header\r\nContent-type: text/html; charset=UTF-8\r\n\r\nunit";
@@ -145,7 +126,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanReceiveResponseInCallback() : void
 	{
-		$content = http_build_query( ['test-key' => 'unit'] );
+		$content = new UrlEncodedFormData( ['test-key' => 'unit'] );
 		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$unitTest = $this;
@@ -171,7 +152,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanHandleExceptionsInFailureCallback() : void
 	{
-		$content = http_build_query( ['test-key' => 'unit'] );
+		$content = new UrlEncodedFormData( ['test-key' => 'unit'] );
 		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$unitTest = $this;
@@ -205,12 +186,12 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanCheckForSocketIdsHavingResponses() : void
 	{
-		$content = http_build_query( ['test-key' => 'unit'] );
+		$content = new UrlEncodedFormData( ['test-key' => 'unit'] );
 		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$socketId = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		usleep( 60000 );
+		$this->waitUntil( fn() : bool => $this->client->hasResponse( $socketId ) );
 
 		self::assertTrue( $this->client->hasResponse( $socketId ) );
 		self::assertEquals( [$socketId], $this->client->getSocketIdsHavingResponse() );
@@ -224,16 +205,18 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanReadResponses() : void
 	{
-		$content = http_build_query( ['test-key' => 'unit'] );
+		$content = new UrlEncodedFormData( ['test-key' => 'unit'] );
 		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$socketIdOne = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		$request->setContent( http_build_query( ['test-key' => 'test'] ) );
+		$request->setContent( new UrlEncodedFormData( ['test-key' => 'test'] ) );
 
 		$socketIdTwo = $this->client->sendAsyncRequest( $this->connection, $request );
 
-		usleep( 110000 );
+		$this->waitUntil(
+			fn() : bool => $this->client->hasResponse( $socketIdOne ) && $this->client->hasResponse( $socketIdTwo )
+		);
 
 		$socketIds = [$socketIdOne, $socketIdTwo];
 
@@ -263,14 +246,14 @@ final class NetworkSocketTest extends TestCase
 			Defaults::CONNECT_TIMEOUT,
 			100
 		);
-		$content    = http_build_query( ['test-key' => 'unit'] );
+		$content    = new UrlEncodedFormData( ['test-key' => 'unit'] );
 		$request    = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ), $content );
 
 		$response = $this->client->sendRequest( $connection, $request );
 
 		self::assertSame( 'unit - 0', $response->getBody() );
 
-		$content = http_build_query( ['sleep' => 1, 'test-key' => 'unit'] );
+		$content = new UrlEncodedFormData( ['sleep' => 1, 'test-key' => 'unit'] );
 		$request = new PostRequest( $this->getWorkerPath( 'sleepWorker.php' ), $content );
 
 		$this->expectException( TimedoutException::class );
@@ -288,7 +271,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanHandleReadyResponses() : void
 	{
-		$content = http_build_query( ['test-key' => 'unit'] );
+		$content = new UrlEncodedFormData( ['test-key' => 'unit'] );
 		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$unitTest = $this;
@@ -316,7 +299,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanReadReadyResponses() : void
 	{
-		$content = http_build_query( ['test-key' => 'unit'] );
+		$content = new UrlEncodedFormData( ['test-key' => 'unit'] );
 		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$this->client->sendAsyncRequest( $this->connection, $request );
@@ -341,7 +324,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanWaitForResponse() : void
 	{
-		$content = http_build_query( ['test-key' => 'unit'] );
+		$content = new UrlEncodedFormData( ['test-key' => 'unit'] );
 		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$unitTest = $this;
@@ -368,14 +351,12 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testReadResponsesSkipsUnknownSocketIds() : void
 	{
-		$content = http_build_query( ['test-key' => 'unit'] );
+		$content = new UrlEncodedFormData( ['test-key' => 'unit'] );
 		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$socketIds   = [];
 		$socketIds[] = $this->client->sendAsyncRequest( $this->connection, $request );
 		$socketIds[] = 12345;
-
-		sleep( 1 );
 
 		foreach ( $this->client->readResponses( null, ...$socketIds ) as $response )
 		{
@@ -402,7 +383,7 @@ final class NetworkSocketTest extends TestCase
 			'test-second-key' => 'test-second-key',
 			'test-third-key'  => str_repeat( 'test-third-key', 5000 ),
 		];
-		$content = http_build_query( $data );
+		$content = new UrlEncodedFormData( $data );
 		$request = new PostRequest( $this->getWorkerPath( 'worker.php' ), $content );
 
 		$unitTest    = $this;
@@ -441,7 +422,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanGetLengthOfSentContent( int $length ) : void
 	{
-		$content = str_repeat( 'a', $length );
+		$content = new PlainText( str_repeat( 'a', $length ) );
 		$request = new PostRequest( $this->getWorkerPath( 'lengthWorker.php' ), $content );
 		$request->setContentType( '*/*' );
 		$result = $this->client->sendRequest( $this->connection, $request );
@@ -503,51 +484,13 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testRequestingAnUnknownScriptPathThrowsException( string $scriptFilename ) : void
 	{
-		$request = new GetRequest( $scriptFilename, '' );
+		$request = new GetRequest( $scriptFilename );
 
 		$response = $this->client->sendRequest( $this->connection, $request );
 
 		self::assertSame( '404 Not Found', $response->getHeaderLine( 'Status' ) );
 		self::assertSame( "File not found.\n", $response->getBody() );
 		$this->assertMatchesRegExp( "#^Primary script unknown\n?$#", $response->getError() );
-	}
-
-	/**
-	 * Params longer than one FastCGI record are sent in multiple records, split between name-value pairs.
-	 *
-	 * @throws Throwable
-	 */
-	public function testParamsLongerThanOneRecordAreReceived() : void
-	{
-		$request         = new GetRequest( $this->getWorkerPath( 'paramsWorker.php' ), '' );
-		$expectedLengths = [];
-
-		for ( $i = 10; $i < 30; $i++ )
-		{
-			$request->setCustomVar( 'LARGE_PARAM_' . $i, str_repeat( 'p', 5000 ) );
-			$expectedLengths[ 'LARGE_PARAM_' . $i ] = 5000;
-		}
-
-		$response = $this->client->sendRequest( $this->connection, $request );
-
-		self::assertSame( $expectedLengths, json_decode( $response->getBody(), true ) );
-	}
-
-	/**
-	 * php-fpm cannot receive a single name-value pair that is longer than one record, and closes the connection.
-	 * Before, reading the response from the closed connection did not end.
-	 *
-	 * @throws Throwable
-	 */
-	public function testPhpFpmDoesNotAcceptParamLongerThanOneRecord() : void
-	{
-		$request = new GetRequest( $this->getWorkerPath( 'paramsWorker.php' ), '' );
-		$request->setCustomVar( 'LARGE_PARAM_1', str_repeat( 'p', 70000 ) );
-
-		$this->expectException( ReadFailedException::class );
-
-		/** @noinspection UnusedFunctionResultInspection */
-		$this->client->sendRequest( $this->connection, $request );
 	}
 
 	/**
@@ -589,7 +532,7 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testNotAllowedFileNameExtensionRespondsWithAccessDeniedHeader() : void
 	{
-		$request = new GetRequest( $this->getWorkerPath( 'worker.php7' ), '' );
+		$request = new GetRequest( $this->getWorkerPath( 'worker.php7' ) );
 
 		$response = $this->client->sendRequest( $this->connection, $request );
 
@@ -615,8 +558,10 @@ final class NetworkSocketTest extends TestCase
 
 		$this->makeFileUnaccessible( $scriptPath );
 
-		$request  = new GetRequest( $scriptPath, '' );
+		$request  = new GetRequest( $scriptPath );
 		$response = $this->client->sendRequest( $this->connection, $request );
+
+		$this->makeFileAccessible( $scriptPath );
 
 		$expectedStatus = [
 			'403 Forbidden',
@@ -643,8 +588,6 @@ final class NetworkSocketTest extends TestCase
 
 		self::assertTrue( $errorMatched );
 		self::assertContains( $response->getBody(), $expectedBodies );
-
-		$this->makeFileAccessible( $scriptPath );
 	}
 
 	private function makeFileUnaccessible( string $filepath ) : void
@@ -667,10 +610,9 @@ final class NetworkSocketTest extends TestCase
 	{
 		$expectecOutputRegExp = "#^ERROR: Primary script unknown\n?$#";
 
-		$request = new GetRequest( '/not/existing.php', '' );
+		$request = new GetRequest( '/not/existing.php' );
 		$request->addPassThroughCallbacks(
 			static function (
-				/** @noinspection PhpUnusedParameterInspection */
 				string $outputBuffer,
 				string $errorBuffer
 			)
@@ -698,7 +640,7 @@ final class NetworkSocketTest extends TestCase
 	{
 		$unitTest = $this;
 
-		$request = new GetRequest( '/not/existing.php', '' );
+		$request = new GetRequest( '/not/existing.php' );
 		$request->addResponseCallbacks(
 			static function ( ProvidesResponseData $response ) use ( $unitTest )
 			{
@@ -720,14 +662,15 @@ final class NetworkSocketTest extends TestCase
 	 */
 	public function testCanGetErrorOutputFromWorkerUsingErrorLog() : void
 	{
-		$request  = new GetRequest( $this->getWorkerPath( 'errorLogWorker.php' ), '' );
+		$request  = new GetRequest( $this->getWorkerPath( 'errorLogWorker.php' ) );
 		$response = $this->client->sendRequest( $this->connection, $request );
 
+		# Since PHP 8.2 php-fpm joins multiple log messages of one request with "; "
 		$expectedError = "#^PHP message: ERROR1\n\n?"
-		                 . "PHP message: ERROR2\n\n?"
-		                 . "PHP message: ERROR3\n\n?"
-		                 . "PHP message: ERROR4\n\n?"
-		                 . "PHP message: ERROR5\n\n?$#";
+						 . "(; )?PHP message: ERROR2\n\n?"
+						 . "(; )?PHP message: ERROR3\n\n?"
+						 . "(; )?PHP message: ERROR4\n\n?"
+						 . "(; )?PHP message: ERROR5\n\n?$#";
 
 		$this->assertMatchesRegExp( $expectedError, $response->getError() );
 	}
@@ -740,12 +683,85 @@ final class NetworkSocketTest extends TestCase
 	 * @throws WriteFailedException
 	 * @throws InvalidArgumentException
 	 */
+	public function testQueryParamsAreAvailableInTargetScript() : void
+	{
+		$queryParams = [
+			'unit' => 'test',
+			'text' => 'some text & more',
+			'list' => ['a', 'b'],
+			'map'  => ['key' => 'value'],
+		];
+
+		$request = new GetRequest( $this->getWorkerPath( 'queryWorker.php' ) );
+		$request->setRequestUri( '/unit/test/' );
+		$request->setQueryParams( $queryParams );
+
+		$response = $this->client->sendRequest( $this->connection, $request );
+
+		$expectedQueryString = 'unit=test&text=some%20text%20%26%20more&list%5B0%5D=a&list%5B1%5D=b&map%5Bkey%5D=value';
+		$expectedResult      = [
+			'get'         => $queryParams,
+			'requestUri'  => '/unit/test/?' . $expectedQueryString,
+			'queryString' => $expectedQueryString,
+		];
+
+		self::assertSame( $expectedResult, json_decode( $response->getBody(), true ) );
+	}
+
+	/**
+	 * Params longer than one FastCGI record are sent in multiple records, split between name-value pairs.
+	 *
+	 * @throws Throwable
+	 */
+	public function testParamsLongerThanOneRecordAreReceived() : void
+	{
+		$request         = new GetRequest( $this->getWorkerPath( 'paramsWorker.php' ) );
+		$expectedLengths = [];
+
+		for ( $i = 10; $i < 30; $i++ )
+		{
+			$request->setCustomVar( 'LARGE_PARAM_' . $i, str_repeat( 'p', 5000 ) );
+			$expectedLengths[ 'LARGE_PARAM_' . $i ] = 5000;
+		}
+
+		$response = $this->client->sendRequest( $this->connection, $request );
+
+		self::assertSame( $expectedLengths, json_decode( $response->getBody(), true ) );
+	}
+
+	/**
+	 * php-fpm cannot receive a single name-value pair that is longer than one record, and closes the connection.
+	 *
+	 * @throws Throwable
+	 */
+	public function testPhpFpmDoesNotAcceptParamLongerThanOneRecord() : void
+	{
+		$request = new GetRequest( $this->getWorkerPath( 'paramsWorker.php' ) );
+		$request->setCustomVar( 'LARGE_PARAM_1', str_repeat( 'p', 70000 ) );
+
+		$this->expectException( ReadFailedException::class );
+
+		/** @noinspection UnusedFunctionResultInspection */
+		$this->client->sendRequest( $this->connection, $request );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws InvalidArgumentException
+	 */
 	public function testSuccessiveRequestsShouldUseSameSocket() : void
 	{
-		$request = new GetRequest( $this->getWorkerPath( 'sleepWorker.php' ), '' );
+		$request = new GetRequest( $this->getWorkerPath( 'sleepWorker.php' ) );
 
 		$sockets = (new ReflectionClass( $this->client ))->getProperty( 'sockets' );
-		$sockets->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$sockets->setAccessible( true );
+		}
 
 		self::assertCount( 0, $sockets->getValue( $this->client ) );
 

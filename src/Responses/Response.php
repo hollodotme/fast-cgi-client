@@ -1,25 +1,4 @@
 <?php declare(strict_types=1);
-/*
- * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 namespace hollodotme\FastCGI\Responses;
 
@@ -40,44 +19,31 @@ use const PREG_OFFSET_CAPTURE;
  */
 class Response implements ProvidesResponseData
 {
-	private const HEADER_PATTERN     = '#^([^:\s][^:]*):(.*)$#';
+	private const HEADER_PATTERN        = '#^([^:\s][^:]*):(.*)$#';
 
-	private const LINE_BREAK_PATTERN = '#\r?\n#';
+	private const STATUS_CODE_PATTERN   = '#^\s*(\d{3})(?:\s|$)#';
 
-	private const BLANK_LINE_PATTERN = '#\r?\n\r?\n#';
+	private const LINE_BREAK_PATTERN    = '#\r?\n#';
+
+	private const BLANK_LINE_PATTERN    = '#\r?\n\r?\n#';
+
+	private const DEFAULT_STATUS_CODE   = 200;
 
 	/** @var array<string, array<int, string>> */
-	private $normalizedHeaders;
+	private array $normalizedHeaders = [];
 
 	/** @var array<string, array<int, string>> */
-	private $headers;
+	private array $headers = [];
 
-	/** @var string */
-	private $body;
+	private string $body = '';
 
-	/** @var string */
-	private $output;
-
-	/** @var string */
-	private $error;
-
-	/** @var float */
-	private $duration;
-
-	public function __construct( string $output, string $error, float $duration )
+	public function __construct( private string $output, private string $error, private float $duration )
 	{
-		$this->output            = $output;
-		$this->error             = $error;
-		$this->duration          = $duration;
-		$this->normalizedHeaders = [];
-		$this->headers           = [];
-		$this->body              = '';
-
 		$this->parseHeadersAndBody();
 	}
 
 	/**
-	 * The headers are separated from the body by the first blank line, independent of the line endings.
+	 * The headers are separated from the body by the first blank line.
 	 * If the output does not start with a block of headers, the whole output is the body.
 	 */
 	private function parseHeadersAndBody() : void
@@ -90,7 +56,7 @@ class Response implements ProvidesResponseData
 		}
 
 		$blankLinePosition = $matches[0][1];
-		$headers           = $this->parseHeaderBlock( (string)substr( $this->output, 0, $blankLinePosition ) );
+		$headers           = $this->parseHeaderBlock( substr( $this->output, 0, $blankLinePosition ) );
 
 		if ( null === $headers )
 		{
@@ -103,12 +69,10 @@ class Response implements ProvidesResponseData
 			$this->addNormalizedHeader( $headerKey, $headerValue );
 		}
 
-		$this->body = (string)substr( $this->output, $blankLinePosition + strlen( $matches[0][0] ) );
+		$this->body = substr( $this->output, $blankLinePosition + strlen( $matches[0][0] ) );
 	}
 
 	/**
-	 * @param string $headerBlock
-	 *
 	 * @return array<int, array{0: string, 1: string}>|null NULL, if the block contains a line that is not a header
 	 */
 	private function parseHeaderBlock( string $headerBlock ) : ?array
@@ -202,5 +166,21 @@ class Response implements ProvidesResponseData
 	public function getDuration() : float
 	{
 		return $this->duration;
+	}
+
+	/**
+	 * Returns the status code of the Status header, or 200 if there is no Status header,
+	 * as defined by the CGI specification.
+	 */
+	public function getStatusCode() : int
+	{
+		$status = $this->normalizedHeaders['status'][0] ?? '';
+
+		if ( 1 === preg_match( self::STATUS_CODE_PATTERN, $status, $matches ) )
+		{
+			return (int)$matches[1];
+		}
+
+		return self::DEFAULT_STATUS_CODE;
 	}
 }

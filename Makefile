@@ -24,7 +24,7 @@ DOCKER_COMPOSE_EXEC_COMMAND = $(DOCKER_COMPOSE_BASE_COMMAND) exec -T
 DOCKER_COMPOSE_ISOLATED_RUN_COMMAND = $(DOCKER_COMPOSE_BASE_COMMAND) run --rm --no-deps
 
 ## Install/Update whole setup
-update: dcbuild dcpull install-tools composer-update
+update: dcbuild dcpull composer-update
 .PHONY: update
 
 ## Build all custom docker images
@@ -46,38 +46,84 @@ dcdown:
 	$(DOCKER_COMPOSE_BASE_COMMAND) down
 .PHONY: dcdown
 
-# Versions of the tools in .tools
-PHPUNIT_7_VERSION = 7.5.20
-PHPUNIT_8_VERSION = 8.5.26
-PHPUNIT_9_VERSION = 9.5.21
-PHPSTAN_VERSION = 1.12.32
-COMPOSER_VERSION = 2.2.25
+## Install composer to .tools
+install-composer:
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
+	curl -L -o "./.tools/composer.phar" "https://getcomposer.org/download/latest-stable/composer.phar"
+.PHONY: install-composer
 
-## Install the tools (PHPUnit, PHPStan, Composer, PHP linting) to .tools
-install-tools:
-	curl -fsSL -o "./.tools/phpunit-7.phar" "https://phar.phpunit.de/phpunit-$(PHPUNIT_7_VERSION).phar"
-	curl -fsSL -o "./.tools/phpunit-8.phar" "https://phar.phpunit.de/phpunit-$(PHPUNIT_8_VERSION).phar"
-	curl -fsSL -o "./.tools/phpunit-9.phar" "https://phar.phpunit.de/phpunit-$(PHPUNIT_9_VERSION).phar"
-	curl -fsSL -o "./.tools/phpstan.phar" "https://github.com/phpstan/phpstan/releases/download/$(PHPSTAN_VERSION)/phpstan.phar"
-	curl -fsSL -o "./.tools/composer.phar" "https://getcomposer.org/download/$(COMPOSER_VERSION)/composer.phar"
-	curl -fsSL -o "./.tools/phplint.sh" "https://gist.githubusercontent.com/hollodotme/9c1b805e9a2f946433512563edc4b702/raw/60532cb51f1b7a1550216088943bacbd3d4c9351/phplint.sh"
-	chmod +x ./.tools/*.phar "./.tools/phplint.sh"
-.PHONY: install-tools
+# Composer cannot detect the version of the package itself, because there is no git in the containers
+COMPOSER_ROOT_VERSION = dev-$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo main)
+COMPOSER_RUN_COMMAND = $(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) -e COMPOSER_ROOT_VERSION=$(COMPOSER_ROOT_VERSION) $(IMAGE)
 
 ## Validate composer config
 composer-validate:
-	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
+	$(COMPOSER_RUN_COMMAND) \
     php /repo/.tools/composer.phar validate
 .PHONY: composer-validate
 
 ## Update composer dependencies
-composer-update:
-	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
+composer-update: install-composer
+	$(COMPOSER_RUN_COMMAND) \
     php /repo/.tools/composer.phar update -o -v
 .PHONY: composer-update
 
+PHPSTAN_COMMAND = php /repo/vendor/bin/phpstan analyse --memory-limit=1G
+
+## Run PHPStan checks for all PHP versions
+phpstan: phpstan-php-8.0 phpstan-php-8.1 phpstan-php-8.2 phpstan-php-8.3 phpstan-php-8.4 phpstan-php-8.5
+.PHONY: phpstan
+
+## Run PHPStan checks on and for PHP 8.0
+phpstan-php-8.0:
+	printf "\n\033[33mRun PHPStan on PHP 8.0\033[0m\n"
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php80 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.0.neon
+.PHONY: phpstan-php-8.0
+
+## Run PHPStan checks on and for PHP 8.1
+phpstan-php-8.1:
+	printf "\n\033[33mRun PHPStan on PHP 8.1\033[0m\n"
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php81 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.1.neon
+.PHONY: phpstan-php-8.1
+
+## Run PHPStan checks on and for PHP 8.2
+phpstan-php-8.2:
+	printf "\n\033[33mRun PHPStan on PHP 8.2\033[0m\n"
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php82 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.2.neon
+.PHONY: phpstan-php-8.2
+
+## Run PHPStan checks on and for PHP 8.3
+phpstan-php-8.3:
+	printf "\n\033[33mRun PHPStan on PHP 8.3\033[0m\n"
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php83 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.3.neon
+.PHONY: phpstan-php-8.3
+
+## Run PHPStan checks on and for PHP 8.4
+phpstan-php-8.4:
+	printf "\n\033[33mRun PHPStan on PHP 8.4\033[0m\n"
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php84 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.4.neon
+.PHONY: phpstan-php-8.4
+
+## Run PHPStan checks on and for PHP 8.5
+phpstan-php-8.5:
+	printf "\n\033[33mRun PHPStan on PHP 8.5\033[0m\n"
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php85 $(PHPSTAN_COMMAND) -c /repo/.phpstan/php-8.5.neon
+.PHONY: phpstan-php-8.5
+
+## Check the coding standard with PHP_CodeSniffer
+phpcs:
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
+	php /repo/vendor/bin/phpcs
+.PHONY: phpcs
+
+## Fix violations of the coding standard with PHP Code Beautifier and Fixer
+phpcbf:
+	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
+	php /repo/vendor/bin/phpcbf
+.PHONY: phpcbf
+
 ## Run all tests on all PHP versions
-tests: composer-validate phplint test-php-7.1 test-php-7.2 test-php-7.3 test-php-7.4 test-php-8.0 test-php-8.1 dcdown phpstan
+tests: composer-validate phpcs phpstan test-php-8.0 test-php-8.1 test-php-8.2 test-php-8.3 test-php-8.4 test-php-8.5 dcdown
 .PHONY: tests
 
 INTEGRATION_WORKER_DIR = ./tests/Integration/Workers
@@ -90,95 +136,77 @@ make-integration-workers-accessible:
 PHP_OPTIONS = -d error_reporting=-1 -dmemory_limit=-1 -d xdebug.mode=coverage -d auto_prepend_file=tests/xdebug-filter.php
 PHPUNIT_OPTIONS = --testdox
 
-## Run PHP linting
-phplint:
-	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) $(IMAGE) \
-	sh -c "sh /repo/.tools/phplint.sh -p8 -f'*.php' /repo/bin /repo/src /repo/tests"
-.PHONY: phplint
-
-## Run test on PHP 7.1 with PHPUnit 7
-test-php-7.1: dcdown make-integration-workers-accessible
-	printf "\n\033[33mRun PHPUnit 7 on PHP 7.1\033[0m\n"
-	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php71
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php71 sh -c 'find /repo -type f -name "*.php" -print0 | xargs -0 -n1 -P8 php -l -n | (! grep -v "No syntax errors detected" )'
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php71 php $(PHP_OPTIONS) .tools/phpunit-7.phar -c tests/phpunit7.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php71 php $(PHP_OPTIONS) .tools/phpunit-7.phar -c tests/phpunit7.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php71 php $(PHP_OPTIONS) .tools/phpunit-7.phar -c tests/phpunit7.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php71 php $(PHP_OPTIONS) .tools/phpunit-7.phar -c tests/phpunit7.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php71 php $(PHP_OPTIONS) .tools/phpunit-7.phar -c tests/phpunit7.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php71 php $(PHP_OPTIONS) .tools/phpunit-7.phar -c tests/phpunit7.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
-.PHONY: test-php-7.1
-
-## Run test on PHP 7.2 with PHPUnit 8
-test-php-7.2: dcdown make-integration-workers-accessible
-	printf "\n\033[33mRun PHPUnit 8 on PHP 7.2\033[0m\n"
-	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php72
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php72 sh -c 'find /repo -type f -name "*.php" -print0 | xargs -0 -n1 -P8 php -l -n | (! grep -v "No syntax errors detected" )'
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php72 php $(PHP_OPTIONS) .tools/phpunit-8.phar -c tests/phpunit8.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php72 php $(PHP_OPTIONS) .tools/phpunit-8.phar -c tests/phpunit8.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php72 php $(PHP_OPTIONS) .tools/phpunit-8.phar -c tests/phpunit8.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php72 php $(PHP_OPTIONS) .tools/phpunit-8.phar -c tests/phpunit8.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php72 php $(PHP_OPTIONS) .tools/phpunit-8.phar -c tests/phpunit8.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php72 php $(PHP_OPTIONS) .tools/phpunit-8.phar -c tests/phpunit8.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
-.PHONY: test-php-7.2
-
-## Run test on PHP 7.3 with PHPUnit 9
-test-php-7.3: dcdown make-integration-workers-accessible
-	printf "\n\033[33mRun PHPUnit 9 on PHP 7.3\033[0m\n"
-	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php73
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php73 sh -c 'find /repo -type f -name "*.php" -print0 | xargs -0 -n1 -P8 php -l -n | (! grep -v "No syntax errors detected" )'
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php73 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php73 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php73 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php73 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php73 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php73 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
-.PHONY: test-php-7.3
-
-## Run test on PHP 7.4 with PHPUnit 9
-test-php-7.4: dcdown make-integration-workers-accessible
-	printf "\n\033[33mRun PHPUnit 9 on PHP 7.4\033[0m\n"
-	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php74
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php74 sh -c 'find /repo -type f -name "*.php" -print0 | xargs -0 -n1 -P8 php -l -n | (! grep -v "No syntax errors detected" )'
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php74 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php74 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php74 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php74 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php74 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php74 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
-.PHONY: test-php-7.4
-
 ## Run test on PHP 8.0 with PHPUnit 9
 test-php-8.0: dcdown make-integration-workers-accessible
 	printf "\n\033[33mRun PHPUnit 9 on PHP 8.0\033[0m\n"
 	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php80
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 sh -c 'find /repo -type f -name "*.php" -print0 | xargs -0 -n1 -P8 php -l -n | (! grep -v "No syntax errors detected" )'
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php80 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
 .PHONY: test-php-8.0
 
 ## Run test on PHP 8.1 with PHPUnit 9
 test-php-8.1: dcdown make-integration-workers-accessible
 	printf "\n\033[33mRun PHPUnit 9 on PHP 8.1\033[0m\n"
 	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php81
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 sh -c 'find /repo -type f -name "*.php" -print0 | xargs -0 -n1 -P8 php -l -n | (! grep -v "No syntax errors detected" )'
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
-	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 php $(PHP_OPTIONS) .tools/phpunit-9.phar -c tests/phpunit9.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php81 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
 .PHONY: test-php-8.1
 
-## Run PHPStan
-phpstan:
-	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) php74 \
-	php /repo/.tools/phpstan.phar analyze --memory-limit=-1
-.PHONY: phpstan
+## Run test on PHP 8.2 with PHPUnit 9
+test-php-8.2: dcdown make-integration-workers-accessible
+	printf "\n\033[33mRun PHPUnit 9 on PHP 8.2\033[0m\n"
+	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php82
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php82 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php82 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php82 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php82 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php82 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php82 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
+.PHONY: test-php-8.2
+
+## Run test on PHP 8.3 with PHPUnit 9
+test-php-8.3: dcdown make-integration-workers-accessible
+	printf "\n\033[33mRun PHPUnit 9 on PHP 8.3\033[0m\n"
+	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php83
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php83 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php83 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php83 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php83 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php83 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php83 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
+.PHONY: test-php-8.3
+
+## Run test on PHP 8.4 with PHPUnit 9
+test-php-8.4: dcdown make-integration-workers-accessible
+	printf "\n\033[33mRun PHPUnit 9 on PHP 8.4\033[0m\n"
+	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php84
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php84 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php84 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php84 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php84 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php84 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php84 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
+.PHONY: test-php-8.4
+
+## Run test on PHP 8.5 with PHPUnit 9
+test-php-8.5: dcdown make-integration-workers-accessible
+	printf "\n\033[33mRun PHPUnit 9 on PHP 8.5\033[0m\n"
+	$(DOCKER_COMPOSE_BASE_COMMAND) up -d --force-recreate php85
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php85 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Async-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php85 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=FileUpload-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php85 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=NetworkSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php85 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=UnixDomainSocket-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php85 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Signals-Integration $(PHPUNIT_OPTIONS)
+	$(DOCKER_COMPOSE_EXEC_COMMAND) php85 php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Unit $(PHPUNIT_OPTIONS)
+.PHONY: test-php-8.5
 
 ## Run examples
 examples: dcdown
@@ -186,3 +214,45 @@ examples: dcdown
 	$(DOCKER_COMPOSE_EXEC_COMMAND) $(IMAGE) php $(PHP_OPTIONS) bin/examples.php
 .PHONY: examples
 
+COMPATIBILITY_DIR = .docker/compatibility
+COMPATIBILITY_SERVERS = $(notdir $(patsubst %/Dockerfile,%,$(wildcard $(COMPATIBILITY_DIR)/*/Dockerfile)))
+COMPATIBILITY_COMPOSE_COMMAND = FASTCGI_SERVER=$* $(DOCKER_COMPOSE_BASE_COMMAND) -f $(COMPATIBILITY_DIR)/docker-compose.yml
+
+## Run compatibility tests against the FastCGI servers of all other programming languages
+test-compatibility: $(addprefix test-compatibility-,$(COMPATIBILITY_SERVERS))
+.PHONY: test-compatibility
+
+## Run compatibility tests against the FastCGI server in .docker/compatibility/<name>: make test-compatibility-<name>
+test-compatibility-%: dcdown
+	printf "\n\033[33mRun compatibility tests against FastCGI server: $*\033[0m\n"
+	$(COMPATIBILITY_COMPOSE_COMMAND) up -d --build --force-recreate fastcgi-server $(IMAGE)
+	$(COMPATIBILITY_COMPOSE_COMMAND) exec -T $(IMAGE) php $(PHP_OPTIONS) vendor/bin/phpunit -c phpunit.xml --testsuite=Compatibility $(PHPUNIT_OPTIONS) \
+	|| { $(COMPATIBILITY_COMPOSE_COMMAND) logs fastcgi-server; $(COMPATIBILITY_COMPOSE_COMMAND) down; exit 1; }
+	$(COMPATIBILITY_COMPOSE_COMMAND) down
+
+# The docs containers write into the working copy, so they run with the user and group of the host
+DOCS_RUN_COMMAND = $(DOCKER_COMPOSE_BASE_COMMAND) run --rm --user "$(shell id -u):$(shell id -g)" -e HOME=/tmp -e NPM_CONFIG_UPDATE_NOTIFIER=false -e GITHUB_TOKEN
+
+## Install the dependencies of the documentation website
+docs-install:
+	$(DOCS_RUN_COMMAND) docs npm ci --no-audit --no-fund
+.PHONY: docs-install
+
+# In a git worktree, .git refers to the git directory of the main working copy, which is mounted at the same path
+GIT_COMMON_DIR = $(shell git rev-parse --path-format=absolute --git-common-dir)
+
+## Build the API reference of all major versions with Doctum
+docs-api:
+	$(DOCKER_COMPOSE_BASE_COMMAND) build docs-api
+	$(DOCS_RUN_COMMAND) -v "$(GIT_COMMON_DIR):$(GIT_COMMON_DIR):ro" docs-api sh website/scripts/build-api.sh
+.PHONY: docs-api
+
+## Build the documentation website into website/build
+docs-build: docs-install docs-api
+	$(DOCS_RUN_COMMAND) docs npm run build
+.PHONY: docs-build
+
+## Serve the documentation website with live reload on http://localhost:3000
+docs-serve: docs-install
+	$(DOCS_RUN_COMMAND) --service-ports docs npm run start -- --host 0.0.0.0
+.PHONY: docs-serve

@@ -1,7 +1,8 @@
+# Base configuration, analyses for the minimum supported PHP version.
+# The configurations in .phpstan/ include this file and set the PHP version to analyse for.
 parameters:
+    phpVersion: 80000
     paths:
         - src
         - tests
     level: 8
-    bootstrapFiles:
-        - /repo/.tools/phpunit-7.phar

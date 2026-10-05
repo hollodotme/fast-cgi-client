@@ -1,48 +1,4 @@
 services:
-  php71:
-    build:
-      dockerfile: 7.1/Dockerfile
-      context: .docker/php
-    container_name: fcc_php71
-    restart: "no"
-    networks:
-      - fcc_network
-    volumes:
-      - ./:/repo
-
-  php72:
-    build:
-      dockerfile: 7.2/Dockerfile
-      context: .docker/php
-    container_name: fcc_php72
-    restart: "no"
-    networks:
-      - fcc_network
-    volumes:
-      - ./:/repo
-
-  php73:
-    build:
-      dockerfile: 7.3/Dockerfile
-      context: .docker/php
-    container_name: fcc_php73
-    restart: "no"
-    networks:
-      - fcc_network
-    volumes:
-      - ./:/repo
-
-  php74:
-    build:
-      dockerfile: 7.4/Dockerfile
-      context: .docker/php
-    container_name: fcc_php74
-    restart: "no"
-    networks:
-      - fcc_network
-    volumes:
-      - ./:/repo
-
   php80:
     build:
       dockerfile: 8.0/Dockerfile
@@ -65,6 +21,67 @@ services:
     volumes:
       - ./:/repo
 
+  php82:
+    build:
+      dockerfile: 8.2/Dockerfile
+      context: .docker/php
+    container_name: fcc_php82
+    restart: "no"
+    networks:
+      - fcc_network
+    volumes:
+      - ./:/repo
+
+  php83:
+    build:
+      dockerfile: 8.3/Dockerfile
+      context: .docker/php
+    container_name: fcc_php83
+    restart: "no"
+    networks:
+      - fcc_network
+    volumes:
+      - ./:/repo
+
+  php84:
+    build:
+      dockerfile: 8.4/Dockerfile
+      context: .docker/php
+    container_name: fcc_php84
+    restart: "no"
+    networks:
+      - fcc_network
+    volumes:
+      - ./:/repo
+
+  php85:
+    build:
+      dockerfile: 8.5/Dockerfile
+      context: .docker/php
+    container_name: fcc_php85
+    restart: "no"
+    networks:
+      - fcc_network
+    volumes:
+      - ./:/repo
+
+  docs:
+    image: node:24-alpine
+    profiles: [ docs ]
+    working_dir: /repo/website
+    restart: "no"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/repo
+
+  docs-api:
+    build:
+      context: .docker/docs-api
+    profiles: [ docs ]
+    restart: "no"
+    volumes:
+      - ./:/repo
+
 networks:
   fcc_network:
-

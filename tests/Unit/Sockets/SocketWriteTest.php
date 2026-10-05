@@ -1,33 +1,13 @@
 <?php declare(strict_types=1);
-/*
- * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 namespace hollodotme\FastCGI\Tests\Unit\Sockets;
 
 use Exception;
 use hollodotme\FastCGI\Encoders\NameValuePairEncoder;
 use hollodotme\FastCGI\Encoders\PacketEncoder;
+use hollodotme\FastCGI\Exceptions\ConnectException;
 use hollodotme\FastCGI\Exceptions\TimedoutException;
-use hollodotme\FastCGI\Exceptions\WriteFailedException;
+use hollodotme\FastCGI\RequestContents\PlainText;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
@@ -35,7 +15,6 @@ use hollodotme\FastCGI\Sockets\Socket;
 use hollodotme\FastCGI\Sockets\SocketId;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
-use RuntimeException;
 use Throwable;
 use function chr;
 use function fclose;
@@ -44,6 +23,7 @@ use function is_resource;
 use function microtime;
 use function str_repeat;
 use function stream_socket_pair;
+use const PHP_VERSION_ID;
 use const STREAM_PF_UNIX;
 use const STREAM_SOCK_STREAM;
 
@@ -102,7 +82,7 @@ final class SocketWriteTest extends TestCase
 	{
 		$socket = $this->getSocketWithPeer( 400 );
 
-		$socket->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
+		$socket->sendRequest( new PostRequest( '/path/to/script.php' ) );
 		$this->respond( $socket->getId() );
 
 		self::assertSame( 'unit', $socket->fetchResponse( 50 )->getBody() );
@@ -132,16 +112,13 @@ final class SocketWriteTest extends TestCase
 
 		fclose( $this->getPeer() );
 
-		$this->expectException( WriteFailedException::class );
-		$this->expectExceptionMessage( 'Failed to write request to socket [broken pipe]' );
+		$this->expectException( ConnectException::class );
+		$this->expectExceptionMessage( 'Trying to send a request to a socket that is not usable anymore.' );
 
-		$socket->sendRequest( new PostRequest( '/path/to/script.php', '' ) );
+		$socket->sendRequest( new PostRequest( '/path/to/script.php' ) );
 	}
 
 	/**
-	 * @param int $readWriteTimeout
-	 *
-	 * @return Socket
 	 * @throws Exception
 	 */
 	private function getSocketWithPeer( int $readWriteTimeout ) : Socket
@@ -150,7 +127,7 @@ final class SocketWriteTest extends TestCase
 
 		if ( false === $pair )
 		{
-			throw new RuntimeException( 'Could not create socket pair.' );
+			self::fail( 'Could not create socket pair.' );
 		}
 
 		$socket = new Socket(
@@ -161,7 +138,10 @@ final class SocketWriteTest extends TestCase
 		);
 
 		$property = new ReflectionProperty( $socket, 'resource' );
-		$property->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$property->setAccessible( true );
+		}
 		$property->setValue( $socket, $pair[0] );
 
 		$this->peer = $pair[1];
@@ -176,7 +156,7 @@ final class SocketWriteTest extends TestCase
 	{
 		if ( !is_resource( $this->peer ) )
 		{
-			throw new RuntimeException( 'Peer is not open.' );
+			self::fail( 'Peer is not open.' );
 		}
 
 		return $this->peer;
@@ -187,7 +167,7 @@ final class SocketWriteTest extends TestCase
 	 */
 	private function getLargeRequest() : PostRequest
 	{
-		return new PostRequest( '/path/to/script.php', str_repeat( 'x', 8 * 1024 * 1024 ) );
+		return new PostRequest( '/path/to/script.php', new PlainText( str_repeat( 'x', 8 * 1024 * 1024 ) ) );
 	}
 
 	private function respond( int $requestId ) : void

@@ -1,0 +1,330 @@
+---
+title: Multiple requests
+sidebar_position: 3
+---
+
+import Animation from '@site/src/components/Animation';
+
+## Sending multiple requests and reading their responses (order preserved)
+
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
+
+$request1 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '1']));
+$request2 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '2']));
+$request3 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '3']));
+
+$socketIds = [];
+
+$socketIds[] = $client->sendAsyncRequest($connection, $request1);
+$socketIds[] = $client->sendAsyncRequest($connection, $request2);
+$socketIds[] = $client->sendAsyncRequest($connection, $request3);
+
+echo 'Sent requests with IDs: ' . implode( ', ', $socketIds ) . "\n";
+
+# Do something else here in the meanwhile
+
+# Blocking call until all responses are received or read timed out
+# Responses are read in same order the requests were sent
+foreach ($client->readResponses(3000, ...$socketIds) as $response)
+{
+	echo $response->getBody() . "\n";	
+}
+```
+
+```
+# prints
+Sent requests with IDs: 23417, 8091, 51602
+1
+2
+3
+```
+
+### See it in action
+
+The three requests run in parallel, but `readResponses()` returns their responses in the order the requests were
+sent. Switch to `readReadyResponses()` to compare it with the reactive way below:
+
+<Animation scene="multipleRequests" settings={{mode: 'ordered'}} />
+
+## Sending multiple requests and reading their responses (reactive)
+
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
+
+$request1 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '1', 'sleep' => 3]));
+$request2 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '2', 'sleep' => 2]));
+$request3 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '3', 'sleep' => 1]));
+
+$socketIds = [];
+
+$socketIds[] = $client->sendAsyncRequest($connection, $request1);
+$socketIds[] = $client->sendAsyncRequest($connection, $request2);
+$socketIds[] = $client->sendAsyncRequest($connection, $request3);
+
+echo 'Sent requests with IDs: ' . implode( ', ', $socketIds ) . "\n";
+
+# Do something else here in the meanwhile
+
+# Loop until all responses were received
+while ( $client->hasUnhandledResponses() )
+{
+	# read all ready responses
+	foreach ( $client->readReadyResponses( 3000 ) as $response )
+	{
+		echo $response->getBody() . "\n";
+	}
+	
+	echo '.';
+}
+
+# ... is the same as
+
+while ( $client->hasUnhandledResponses() )
+{
+	$readySocketIds = $client->getSocketIdsHavingResponse();
+	
+	# read all ready responses
+	foreach ( $client->readResponses( 3000, ...$readySocketIds ) as $response )
+	{
+		echo $response->getBody() . "\n";
+	}
+	
+	echo '.';
+}
+
+# ... is the same as
+
+while ( $client->hasUnhandledResponses() )
+{
+	$readySocketIds = $client->getSocketIdsHavingResponse();
+	
+	# read all ready responses
+	foreach ($readySocketIds as $socketId)
+	{
+		$response = $client->readResponse($socketId, 3000);
+		echo $response->getBody() . "\n";
+	}
+	
+	echo '.';
+}
+```
+
+```
+# prints, the loop waits up to 200 ms per round for responses (stream select timeout)
+Sent requests with IDs: 23417, 8091, 51602
+....3
+.....2
+.....1
+.
+```
+
+### See it in action
+
+`readReadyResponses()` returns each response as soon as it is ready, so the fastest request is printed first:
+
+<Animation scene="multipleRequests" settings={{mode: 'reactive'}} />
+
+## Sending multiple requests and notifying callbacks (reactive)
+
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\RequestContents\UrlEncodedFormData;
+use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+use Throwable;
+
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
+
+$responseCallback = static function( ProvidesResponseData $response )
+{
+	echo $response->getBody() . "\n";
+};
+
+$failureCallback = static function ( Throwable $throwable )
+{
+	echo $throwable->getMessage();	
+};
+
+$request1 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '1', 'sleep' => 3]));
+$request2 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '2', 'sleep' => 2]));
+$request3 = new PostRequest('/path/to/target/script.php', new UrlEncodedFormData(['key' => '3', 'sleep' => 1]));
+
+$request1->addResponseCallbacks($responseCallback);
+$request1->addFailureCallbacks($failureCallback);
+
+$request2->addResponseCallbacks($responseCallback);
+$request2->addFailureCallbacks($failureCallback);
+
+$request3->addResponseCallbacks($responseCallback);
+$request3->addFailureCallbacks($failureCallback);
+
+$socketIds = [];
+
+$socketIds[] = $client->sendAsyncRequest($connection, $request1);
+$socketIds[] = $client->sendAsyncRequest($connection, $request2);
+$socketIds[] = $client->sendAsyncRequest($connection, $request3);
+
+echo 'Sent requests with IDs: ' . implode( ', ', $socketIds ) . "\n";
+
+# Do something else here in the meanwhile
+
+# Blocking call until all responses were received and all callbacks notified.
+# Requests without a response after 5 seconds notify their failure callbacks with a TimedoutException.
+$client->waitForResponses(5000);
+
+# ... is the same as, apart from the overall timeout of 5 seconds
+
+while ( $client->hasUnhandledResponses() )
+{
+	$client->handleReadyResponses(3000);
+}
+
+# ... is the same as, apart from the overall timeout
+
+while ( $client->hasUnhandledResponses() )
+{
+	$readySocketIds = $client->getSocketIdsHavingResponse();
+	
+	# read all ready responses
+	foreach ($readySocketIds as $socketId)
+	{
+		$client->handleResponse($socketId, 3000);
+	}
+}
+
+# ... is the same as, apart from the overall timeout
+
+while ( $client->hasUnhandledResponses() )
+{
+	$readySocketIds = $client->getSocketIdsHavingResponse();
+	
+	$client->handleResponses(3000, ...$readySocketIds);
+}
+```
+
+```
+# prints
+Sent requests with IDs: 23417, 8091, 51602
+3
+2
+1
+```
+
+### See it in action
+
+`waitForResponses()` calls the response callback of each request as soon as its response is there. Lower the timeout
+to see the failure callback of a request that takes too long:
+
+<Animation scene="callbacks" />
+
+## Reading output buffer from worker script using pass through callbacks
+
+It may be useful to see the progression of a requested script by having access to the flushed output of that script.
+The `output_buffering` setting of the php.ini files `php.ini-production` and `php.ini-development` is 4096 bytes, so
+PHP-FPM may collect the output before sending it; without a php.ini it is off, and it is always off for the CLI.
+([See documentation](http://php.net/manual/en/outcontrol.configuration.php#ini.output-buffering))
+Calling `ob_implicit_flush()` causes every call to `echo` or `print` to immediately be flushed.
+
+The callee script could look like this:
+
+```php
+<?php declare(strict_types=1);
+
+ob_implicit_flush();
+
+function show( string $string )
+{
+	echo $string . str_repeat( "\r", 4096 - strlen( $string ) ) . "\n";
+	sleep( 1 );
+}
+
+show( 'One' );
+show( 'Two' );
+show( 'Three' );
+
+error_log("Oh oh!\n");
+
+echo 'End';
+```
+
+The caller then could look like this:
+
+```php
+<?php declare(strict_types=1);
+
+namespace YourVendor\YourProject;
+
+use hollodotme\FastCGI\Client;
+use hollodotme\FastCGI\Requests\GetRequest;
+use hollodotme\FastCGI\SocketConnections\NetworkSocket;
+
+$client     = new Client();
+$connection = new NetworkSocket('127.0.0.1', 9000);
+
+# Each call passes either output (STDOUT) or error output (STDERR) of the script
+$passThroughCallback = static function( string $outputBuffer, string $errorBuffer )
+{
+	if ( '' !== $outputBuffer )
+	{
+		echo 'Output: ' . $outputBuffer;
+	}
+
+	if ( '' !== $errorBuffer )
+	{
+		echo 'Error: ' . $errorBuffer;
+	}
+};
+
+$request = new GetRequest('/path/to/target/script.php');
+$request->addPassThroughCallbacks( $passThroughCallback );
+
+$client->sendAsyncRequest($connection, $request);
+$client->waitForResponses();
+```
+
+```
+# prints immediately (preceded by an X-Powered-By header, if expose_php is enabled)
+Output: Content-type: text/html; charset=UTF-8
+
+One
+# sleeps 1 sec
+Output: Two
+# sleeps 1 sec
+Output: Three
+# sleeps 1 sec
+Error: PHP message: Oh oh!
+Output: End
+```
+
+### See it in action
+
+PHP-FPM sends flushed output right away. Compare a pass-through callback with reading the complete response:
+
+<Animation scene="passThrough" />

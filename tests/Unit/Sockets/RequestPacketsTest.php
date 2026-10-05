@@ -1,31 +1,12 @@
 <?php declare(strict_types=1);
-/*
- * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 namespace hollodotme\FastCGI\Tests\Unit\Sockets;
 
 use Exception;
 use hollodotme\FastCGI\Encoders\NameValuePairEncoder;
 use hollodotme\FastCGI\Encoders\PacketEncoder;
+use hollodotme\FastCGI\Interfaces\ComposesRequestContent;
+use hollodotme\FastCGI\RequestContents\PlainText;
 use hollodotme\FastCGI\Requests\AbstractRequest;
 use hollodotme\FastCGI\Requests\PostRequest;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
@@ -41,6 +22,7 @@ use function implode;
 use function str_repeat;
 use function strlen;
 use function substr;
+use const PHP_VERSION_ID;
 
 /**
  * Checks the records a request is encoded into, without sending them.
@@ -56,7 +38,7 @@ final class RequestPacketsTest extends TestCase
 	 */
 	public function testParamsFitIntoOneRecord() : void
 	{
-		$records = $this->getRecords( new PostRequest( '/path/to/script.php', '' ) );
+		$records = $this->getRecords( new PostRequest( '/path/to/script.php' ) );
 
 		self::assertCount( 2, $this->getContents( $records, self::PARAMS ) );
 		self::assertSame( '', $this->getContents( $records, self::PARAMS )[1] );
@@ -69,7 +51,7 @@ final class RequestPacketsTest extends TestCase
 	 */
 	public function testParamsLongerThanOneRecordAreSplitBetweenNameValuePairs() : void
 	{
-		$request = new PostRequest( '/path/to/script.php', '' );
+		$request = new PostRequest( '/path/to/script.php' );
 
 		for ( $i = 0; $i < 20; $i++ )
 		{
@@ -98,7 +80,7 @@ final class RequestPacketsTest extends TestCase
 	 */
 	public function testNameValuePairLongerThanOneRecordSpansRecords() : void
 	{
-		$request = new PostRequest( '/path/to/script.php', '' );
+		$request = new PostRequest( '/path/to/script.php' );
 		$request->setCustomVar( 'HUGE_PARAM', str_repeat( 'h', 70000 ) );
 
 		$contents = array_values( array_filter( $this->getContents( $this->getRecords( $request ), self::PARAMS ) ) );
@@ -115,7 +97,7 @@ final class RequestPacketsTest extends TestCase
 	{
 		$content  = str_repeat( 'abc', 70000 );
 		$contents = $this->getContents(
-			$this->getRecords( new PostRequest( '/path/to/script.php', $content ) ),
+			$this->getRecords( new PostRequest( '/path/to/script.php', new PlainText( $content ) ) ),
 			self::STDIN
 		);
 
@@ -127,19 +109,36 @@ final class RequestPacketsTest extends TestCase
 	/**
 	 * @throws Exception
 	 */
-	public function testEmptyContentIsSentAsOneEmptyRecord() : void
+	public function testContentLengthMatchesTheContentThatIsSent() : void
 	{
-		$contents = $this->getContents(
-			$this->getRecords( new PostRequest( '/path/to/script.php', '' ) ),
-			self::STDIN
+		# A content that is composed differently each time
+		$content = new class implements ComposesRequestContent
+		{
+			private int $calls = 0;
+
+			public function getContentType() : string
+			{
+				return 'text/plain';
+			}
+
+			public function getContent() : string
+			{
+				return str_repeat( 'x', ++$this->calls * 10 );
+			}
+		};
+
+		$records = $this->getRecords( new PostRequest( '/path/to/script.php', $content ) );
+		$params  = (new NameValuePairEncoder())->decodePairs(
+			implode( '', $this->getContents( $records, self::PARAMS ) )
 		);
 
-		self::assertSame( [''], $contents );
+		self::assertSame(
+			(string)strlen( implode( '', $this->getContents( $records, self::STDIN ) ) ),
+			$params['CONTENT_LENGTH']
+		);
 	}
 
 	/**
-	 * @param AbstractRequest $request
-	 *
 	 * @return array<int, array{0: int, 1: string}> Type and content of each record
 	 * @throws Exception
 	 */
@@ -153,7 +152,10 @@ final class RequestPacketsTest extends TestCase
 		);
 
 		$method = (new ReflectionClass( $socket ))->getMethod( 'getRequestPackets' );
-		$method->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$method->setAccessible( true );
+		}
 
 		/** @var string $packets */
 		$packets = $method->invoke( $socket, $request );
@@ -164,7 +166,7 @@ final class RequestPacketsTest extends TestCase
 		while ( $offset < strlen( $packets ) )
 		{
 			$header    = $encoder->decodeHeader( substr( $packets, $offset, 8 ) );
-			$records[] = [$header['type'], (string)substr( $packets, $offset + 8, $header['contentLength'] )];
+			$records[] = [$header['type'], substr( $packets, $offset + 8, $header['contentLength'] )];
 			$offset    += 8 + $header['contentLength'] + $header['paddingLength'];
 		}
 

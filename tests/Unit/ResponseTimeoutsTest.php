@@ -1,25 +1,4 @@
 <?php declare(strict_types=1);
-/*
- * Copyright (c) 2010-2014 Pierrick Charron
- * Copyright (c) 2016-2020 Holger Woltersdorf & Contributors
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
 
 namespace hollodotme\FastCGI\Tests\Unit;
 
@@ -36,25 +15,19 @@ use hollodotme\FastCGI\Sockets\SocketCollection;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
-use RuntimeException;
 use Throwable;
 use function chr;
 use function count;
-use function escapeshellarg;
 use function explode;
 use function fclose;
-use function fgets;
 use function fwrite;
-use function is_resource;
+use function iterator_to_array;
 use function microtime;
-use function proc_close;
-use function proc_open;
 use function str_repeat;
 use function stream_socket_accept;
 use function stream_socket_get_name;
 use function stream_socket_server;
-use function trim;
-use const PHP_BINARY;
+use const PHP_VERSION_ID;
 
 /**
  * The test acts as the FastCGI server: it accepts the connections of the client and decides whether it answers.
@@ -71,19 +44,15 @@ final class ResponseTimeoutsTest extends TestCase
 	private $server;
 
 	/** @var array<int, resource> */
-	private $connections = [];
+	private array $connections = [];
 
-	/** @var Client */
-	private $client;
+	private Client $client;
 
 	/** @var array<int, string> */
-	private $bodies = [];
+	private array $bodies = [];
 
 	/** @var array<int, Throwable> */
-	private $failures = [];
-
-	/** @var array<int, resource> */
-	private $processes = [];
+	private array $failures = [];
 
 	protected function setUp() : void
 	{
@@ -91,15 +60,11 @@ final class ResponseTimeoutsTest extends TestCase
 
 		if ( false === $server )
 		{
-			throw new RuntimeException( 'Could not start server.' );
+			self::fail( 'Could not start server.' );
 		}
 
-		$this->server      = $server;
-		$this->client      = new Client();
-		$this->connections = [];
-		$this->bodies      = [];
-		$this->failures    = [];
-		$this->processes   = [];
+		$this->server = $server;
+		$this->client = new Client();
 	}
 
 	protected function tearDown() : void
@@ -110,11 +75,39 @@ final class ResponseTimeoutsTest extends TestCase
 		}
 
 		fclose( $this->server );
+	}
 
-		foreach ( $this->processes as $process )
+	/**
+	 * Before, a response that could not be read was skipped silently.
+	 *
+	 * @throws Throwable
+	 */
+	public function testReadingResponsesThrowsExceptionIfResponseTimesOut() : void
+	{
+		$socketId = $this->sendRequest( 5000 );
+
+		$this->expectException( TimedoutException::class );
+		$this->expectExceptionMessage( 'Read timed out' );
+
+		iterator_to_array( $this->client->readResponses( 100, $socketId ) );
+	}
+
+	/**
+	 * @throws Throwable
+	 */
+	public function testReadingResponsesSkipsUnknownSocketIds() : void
+	{
+		$socketId = $this->sendRequest( 5000 );
+		$this->respond( 0, $socketId, 'unit' );
+
+		$bodies = [];
+
+		foreach ( $this->client->readResponses( null, 12345, $socketId ) as $response )
 		{
-			proc_close( $process );
+			$bodies[] = $response->getBody();
 		}
+
+		self::assertSame( ['unit'], $bodies );
 	}
 
 	/**
@@ -135,21 +128,16 @@ final class ResponseTimeoutsTest extends TestCase
 	}
 
 	/**
-	 * Without a timeout, waiting does not end before the response is received, as in previous versions,
-	 * also if the script runs longer than the read/write timeout of the connection.
-	 *
 	 * @throws Throwable
 	 */
-	public function testWaitingForResponseWithoutTimeoutWaitsForLateResponse() : void
+	public function testWaitingForResponseUsesReadWriteTimeoutOfConnectionByDefault() : void
 	{
-		$socketId = $this->sendRequestToDelayedServer( 200, 0.6 );
+		$socketId = $this->sendRequest( 300 );
 		$start    = microtime( true );
 
 		$this->client->waitForResponse( $socketId );
 
-		self::assertSame( [], $this->failures );
-		self::assertSame( ['late'], $this->bodies );
-		self::assertGreaterThanOrEqual( 0.5, microtime( true ) - $start );
+		$this->assertTimedOut( $start, 0.3 );
 	}
 
 	/**
@@ -171,22 +159,6 @@ final class ResponseTimeoutsTest extends TestCase
 	}
 
 	/**
-	 * @throws Throwable
-	 */
-	public function testWaitingForResponsesWithoutTimeoutWaitsForLateResponses() : void
-	{
-		$this->sendRequestToDelayedServer( 200, 0.6 );
-		$start = microtime( true );
-
-		$this->client->waitForResponses();
-
-		self::assertSame( [], $this->failures );
-		self::assertSame( ['late'], $this->bodies );
-		self::assertGreaterThanOrEqual( 0.5, microtime( true ) - $start );
-		self::assertFalse( $this->client->hasUnhandledResponses() );
-	}
-
-	/**
 	 * Before, the socket that could not connect stayed in the collection of the client.
 	 *
 	 * @throws Throwable
@@ -197,7 +169,7 @@ final class ResponseTimeoutsTest extends TestCase
 		{
 			$this->client->sendAsyncRequest(
 				new UnixDomainSocket( $this->getNonExistingUnixDomainSocket() ),
-				new GetRequest( 'script.php', '' )
+				new GetRequest( 'script.php' )
 			);
 
 			self::fail( 'Expected ConnectException to be thrown.' );
@@ -205,7 +177,10 @@ final class ResponseTimeoutsTest extends TestCase
 		catch ( ConnectException $e )
 		{
 			$property = new ReflectionProperty( $this->client, 'sockets' );
-			$property->setAccessible( true );
+			if ( PHP_VERSION_ID < 80100 )
+			{
+				$property->setAccessible( true );
+			}
 
 			/** @var SocketCollection $sockets */
 			$sockets = $property->getValue( $this->client );
@@ -217,16 +192,13 @@ final class ResponseTimeoutsTest extends TestCase
 	/**
 	 * Sends a request with callbacks on a new connection and accepts the connection on the server side.
 	 *
-	 * @param int $readWriteTimeout
-	 *
-	 * @return int
 	 * @throws Throwable
 	 */
 	private function sendRequest( int $readWriteTimeout ) : int
 	{
 		[$host, $port] = explode( ':', (string)stream_socket_get_name( $this->server, false ) );
 
-		$request = new GetRequest( 'script.php', '' );
+		$request = new GetRequest( 'script.php' );
 		$request->addResponseCallbacks(
 			function ( ProvidesResponseData $response ) : void
 			{
@@ -246,7 +218,8 @@ final class ResponseTimeoutsTest extends TestCase
 				$host,
 				(int)$port,
 				Defaults::CONNECT_TIMEOUT,
-				$readWriteTimeout + count( $this->connections )
+				$readWriteTimeout + count( $this->connections ),
+				50
 			),
 			$request
 		);
@@ -255,75 +228,12 @@ final class ResponseTimeoutsTest extends TestCase
 
 		if ( false === $connection )
 		{
-			throw new RuntimeException( 'Client did not connect.' );
+			self::fail( 'Client did not connect.' );
 		}
 
 		$this->connections[] = $connection;
 
 		return $socketId;
-	}
-
-	/**
-	 * Starts a server in another process, which answers the request after the given delay,
-	 * while this process waits for the response.
-	 *
-	 * @param int   $readWriteTimeout
-	 * @param float $delaySeconds
-	 *
-	 * @return int
-	 * @throws Throwable
-	 */
-	private function sendRequestToDelayedServer( int $readWriteTimeout, float $delaySeconds ) : int
-	{
-		$server = <<<'PHP'
-$server = stream_socket_server( 'tcp://127.0.0.1:0' );
-echo stream_socket_get_name( $server, false ), "\n";
-$connection = stream_socket_accept( $server, 5 );
-$header     = fread( $connection, 8 );
-$requestId  = (ord( $header[2] ) << 8) + ord( $header[3] );
-usleep( (int)($argv[1] * 1000000) );
-$record = static function ( int $type, string $content ) use ( $requestId ) : string {
-	$length = strlen( $content );
-	return chr( 1 ) . chr( $type ) . chr( ($requestId >> 8) & 0xFF ) . chr( $requestId & 0xFF )
-		. chr( ($length >> 8) & 0xFF ) . chr( $length & 0xFF ) . chr( 0 ) . chr( 0 ) . $content;
-};
-fwrite( $connection, $record( 6, "Content-Type: text/plain\r\n\r\nlate" ) . $record( 3, str_repeat( chr( 0 ), 8 ) ) );
-sleep( 1 );
-PHP;
-
-		# PHP < 7.4 only accepts the command as string
-		$process = proc_open(
-			escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $server ) . ' ' . escapeshellarg( (string)$delaySeconds ),
-			[1 => ['pipe', 'w']],
-			$pipes
-		);
-
-		if ( !is_resource( $process ) )
-		{
-			throw new RuntimeException( 'Could not start the delayed server.' );
-		}
-
-		$this->processes[] = $process;
-		[$host, $port] = explode( ':', trim( (string)fgets( $pipes[1] ) ) );
-
-		$request = new GetRequest( 'script.php', '' );
-		$request->addResponseCallbacks(
-			function ( ProvidesResponseData $response ) : void
-			{
-				$this->bodies[] = $response->getBody();
-			}
-		);
-		$request->addFailureCallbacks(
-			function ( Throwable $e ) : void
-			{
-				$this->failures[] = $e;
-			}
-		);
-
-		return $this->client->sendAsyncRequest(
-			new NetworkSocket( $host, (int)$port, Defaults::CONNECT_TIMEOUT, $readWriteTimeout ),
-			$request
-		);
 	}
 
 	private function respond( int $connectionIndex, int $requestId, string $body ) : void
@@ -343,7 +253,6 @@ PHP;
 
 		self::assertCount( 1, $this->failures );
 		self::assertInstanceOf( TimedoutException::class, $this->failures[0] );
-		self::assertSame( 'Read timed out', $this->failures[0]->getMessage() );
 		self::assertGreaterThanOrEqual( $timeoutSeconds - 0.01, $duration );
 		self::assertLessThan( $timeoutSeconds + 1.0, $duration );
 	}

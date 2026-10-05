@@ -10,6 +10,7 @@ use hollodotme\FastCGI\Exceptions\TimedoutException;
 use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\Requests\PostRequest;
+use hollodotme\FastCGI\SocketConnections\Defaults;
 use hollodotme\FastCGI\SocketConnections\NetworkSocket;
 use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
@@ -27,13 +28,13 @@ use function feof;
 use function fread;
 use function reset;
 use const STDIN;
+use const PHP_VERSION_ID;
 
 final class SocketCollectionTest extends TestCase
 {
 	use SocketDataProviding;
 
-	/** @var SocketCollection */
-	private $collection;
+	private SocketCollection $collection;
 
 	protected function setUp() : void
 	{
@@ -80,11 +81,17 @@ final class SocketCollectionTest extends TestCase
 		);
 
 		$connectMethod = (new ReflectionClass( $socketOne ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socketOne );
 
 		$connectMethod = (new ReflectionClass( $socketTwo ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socketTwo );
 
 		$resources = [];
@@ -116,13 +123,20 @@ final class SocketCollectionTest extends TestCase
 		);
 
 		$connectMethod = (new ReflectionClass( $socket ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socket );
 
 		$resources = [];
 		$socket->collectResource( $resources );
 
-		$checkSocket = $this->collection->getByResource( reset( $resources ) );
+		$resource = reset( $resources );
+
+		self::assertIsResource( $resource );
+
+		$checkSocket = $this->collection->getByResource( $resource );
 
 		self::assertSame( $checkSocket, $socket );
 	}
@@ -169,11 +183,17 @@ final class SocketCollectionTest extends TestCase
 		);
 
 		$connectMethod = (new ReflectionClass( $socketOne ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socketOne );
 
 		$connectMethod = (new ReflectionClass( $socketTwo ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socketTwo );
 
 		$resources = [];
@@ -245,10 +265,7 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$request = new PostRequest(
-			dirname( __DIR__, 2 ) . '/Integration/Workers/sleepWorker.php',
-			''
-		);
+		$request = new PostRequest( dirname( __DIR__, 2 ) . '/Integration/Workers/sleepWorker.php' );
 		$socket->sendRequest( $request );
 
 		/** @noinspection UnusedFunctionResultInspection */
@@ -280,9 +297,7 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$socket->sendRequest(
-			new PostRequest( '/some/script.php', '' )
-		);
+		$socket->sendRequest( new PostRequest( '/some/script.php' ) );
 
 		self::assertNull( $this->collection->getIdleSocket( $connection ) );
 	}
@@ -310,7 +325,10 @@ final class SocketCollectionTest extends TestCase
 		);
 
 		$connectMethod = (new ReflectionClass( $socket ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socket );
 
 		foreach ( $this->collection->collectResources() as $resource )
@@ -351,7 +369,10 @@ final class SocketCollectionTest extends TestCase
 		);
 
 		$connectMethod = (new ReflectionClass( $socket ))->getMethod( 'connect' );
-		$connectMethod->setAccessible( true );
+		if ( PHP_VERSION_ID < 80100 )
+		{
+			$connectMethod->setAccessible( true );
+		}
 		$connectMethod->invoke( $socket );
 
 		foreach ( $this->collection->collectResources() as $resource )
@@ -486,11 +507,69 @@ final class SocketCollectionTest extends TestCase
 			$nameValuePairEncoder
 		);
 
-		$socket->sendRequest(
-			new PostRequest( '/some/sctipt.php', '' )
-		);
+		$socket->sendRequest( new PostRequest( '/some/sctipt.php' ) );
 
 		self::assertTrue( $this->collection->hasBusySockets() );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws \Exception
+	 */
+	public function testStreamSelectTimeoutIsSmallestOneOfBusySockets() : void
+	{
+		$packetEncoder        = new PacketEncoder();
+		$nameValuePairEncoder = new NameValuePairEncoder();
+		$request              = new PostRequest( '/some/script.php' );
+
+		self::assertSame( Defaults::STREAM_SELECT_TIMEOUT, $this->collection->getStreamSelectTimeout() );
+
+		$this->collection->new(
+			new UnixDomainSocket(
+				$this->getUnixDomainSocket(),
+				Defaults::CONNECT_TIMEOUT,
+				Defaults::READ_WRITE_TIMEOUT,
+				50
+			),
+			$packetEncoder,
+			$nameValuePairEncoder
+		);
+
+		# Sockets that are not waiting for a response are ignored
+		self::assertSame( Defaults::STREAM_SELECT_TIMEOUT, $this->collection->getStreamSelectTimeout() );
+
+		$socketOne = $this->collection->new(
+			new UnixDomainSocket(
+				$this->getUnixDomainSocket(),
+				Defaults::CONNECT_TIMEOUT,
+				Defaults::READ_WRITE_TIMEOUT,
+				700
+			),
+			$packetEncoder,
+			$nameValuePairEncoder
+		);
+		$socketOne->sendRequest( $request );
+
+		self::assertSame( 700, $this->collection->getStreamSelectTimeout() );
+
+		$socketTwo = $this->collection->new(
+			new NetworkSocket(
+				$this->getNetworkSocketHost(),
+				$this->getNetworkSocketPort(),
+				Defaults::CONNECT_TIMEOUT,
+				Defaults::READ_WRITE_TIMEOUT,
+				300
+			),
+			$packetEncoder,
+			$nameValuePairEncoder
+		);
+		$socketTwo->sendRequest( $request );
+
+		self::assertSame( 300, $this->collection->getStreamSelectTimeout() );
 	}
 
 	/**

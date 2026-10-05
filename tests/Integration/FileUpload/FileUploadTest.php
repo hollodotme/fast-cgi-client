@@ -24,11 +24,9 @@ final class FileUploadTest extends TestCase
 {
 	use SocketDataProviding;
 
-	/** @var NetworkSocket */
-	private $connection;
+	private NetworkSocket $connection;
 
-	/** @var Client */
-	private $client;
+	private Client $client;
 
 	protected function setUp() : void
 	{
@@ -61,7 +59,7 @@ final class FileUploadTest extends TestCase
 		];
 
 		$multipartFormData = new MultipartFormData( $formData, $files );
-		$postRequest       = PostRequest::newWithRequestContent(
+		$postRequest = new PostRequest(
 			dirname( __DIR__ ) . '/Workers/fileUploadWorker.php',
 			$multipartFormData
 		);
@@ -69,11 +67,11 @@ final class FileUploadTest extends TestCase
 		$response = $this->client->sendRequest( $this->connection, $postRequest );
 
 		$expectedBody = "POST data:\n"
-		                . "KEY: testKey1\n"
-		                . "VALUE: value1\n\n"
-		                . "KEY: testKey2\n"
-		                . "VALUE: value2\n\n"
-		                . "Uploaded files:\n";
+						. "KEY: testKey1\n"
+						. "VALUE: value1\n\n"
+						. "KEY: testKey2\n"
+						. "VALUE: value2\n\n"
+						. "Uploaded files:\n";
 
 		foreach ( $files as $key => $filePath )
 		{
@@ -82,9 +80,9 @@ final class FileUploadTest extends TestCase
 			$targetPath = sys_get_temp_dir() . '/' . $fileName;
 
 			$expectedBody .= "KEY: {$key}\n"
-			                 . "FILENAME: {$fileName}\n"
-			                 . "SIZE: {$fileSize}\n"
-			                 . "Moved to {$targetPath}\n\n";
+							 . "FILENAME: {$fileName}\n"
+							 . "SIZE: {$fileSize}\n"
+							 . "Moved to {$targetPath}\n\n";
 
 			self::assertFileEquals( $targetPath, $filePath );
 
@@ -92,6 +90,44 @@ final class FileUploadTest extends TestCase
 		}
 
 		self::assertSame( $expectedBody, $response->getBody() );
+	}
+
+	/**
+	 * @throws ConnectException
+	 * @throws ExpectationFailedException
+	 * @throws InvalidArgumentException
+	 * @throws Throwable
+	 * @throws TimedoutException
+	 * @throws WriteFailedException
+	 * @throws \InvalidArgumentException
+	 */
+	public function testCanUploadFileThatWasAddedAfterContentWasPassedToRequest() : void
+	{
+		$filePath          = dirname( __DIR__ ) . '/_files/php-logo.png';
+		$targetPath        = sys_get_temp_dir() . '/php-logo.png';
+		$multipartFormData = new MultipartFormData( ['testKey1' => 'value1'], [] );
+		$postRequest       = new PostRequest(
+			dirname( __DIR__ ) . '/Workers/fileUploadWorker.php',
+			$multipartFormData
+		);
+
+		$multipartFormData->addFile( 'image', $filePath );
+
+		$response = $this->client->sendRequest( $this->connection, $postRequest );
+
+		$expectedBody = "POST data:\n"
+						. "KEY: testKey1\n"
+						. "VALUE: value1\n\n"
+						. "Uploaded files:\n"
+						. "KEY: image\n"
+						. "FILENAME: php-logo.png\n"
+						. 'SIZE: ' . filesize( $filePath ) . "\n"
+						. "Moved to {$targetPath}\n\n";
+
+		self::assertSame( $expectedBody, $response->getBody() );
+		self::assertFileEquals( $filePath, $targetPath );
+
+		@unlink( $targetPath );
 	}
 
 	/**

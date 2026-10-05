@@ -9,22 +9,21 @@ use hollodotme\FastCGI\Exceptions\WriteFailedException;
 use hollodotme\FastCGI\Interfaces\ConfiguresSocketConnection;
 use hollodotme\FastCGI\Interfaces\EncodesNameValuePair;
 use hollodotme\FastCGI\Interfaces\EncodesPacket;
+use hollodotme\FastCGI\SocketConnections\Defaults;
 use function array_search;
 use function count;
+use function min;
 
 final class SocketCollection implements Countable
 {
 	/** @var Socket[] */
-	private $sockets = [];
+	private array $sockets = [];
 
 	/**
-	 * @param ConfiguresSocketConnection $connection
-	 * @param EncodesPacket              $packetEncoder
-	 * @param EncodesNameValuePair       $nameValuePairEncoder
-	 *
-	 * @return Socket
 	 * @throws Exception
 	 * @throws WriteFailedException
+	 *
+	 * @phpstan-impure
 	 */
 	public function new(
 		ConfiguresSocketConnection $connection,
@@ -55,9 +54,6 @@ final class SocketCollection implements Countable
 	}
 
 	/**
-	 * @param int $socketId
-	 *
-	 * @return Socket
 	 * @throws ReadFailedException
 	 */
 	public function getById( int $socketId ) : Socket
@@ -75,11 +71,19 @@ final class SocketCollection implements Countable
 	 */
 	public function getSocketIdsByResources( array $resources ) : array
 	{
-		$socketIds = [];
+		$knownResources = $this->collectResources();
+		$socketIds      = [];
 
 		foreach ( $resources as $resource )
 		{
-			$socketIds[] = $this->getByResource( $resource )->getId();
+			$socketId = array_search( $resource, $knownResources, true );
+
+			if ( false === $socketId )
+			{
+				throw new ReadFailedException( 'Socket not found for resource' );
+			}
+
+			$socketIds[] = (int)$socketId;
 		}
 
 		return $socketIds;
@@ -88,7 +92,6 @@ final class SocketCollection implements Countable
 	/**
 	 * @param resource $resource
 	 *
-	 * @return Socket
 	 * @throws ReadFailedException
 	 */
 	public function getByResource( $resource ) : Socket
@@ -104,8 +107,6 @@ final class SocketCollection implements Countable
 	}
 
 	/**
-	 * @param int $socketId
-	 *
 	 * @throws ReadFailedException
 	 */
 	private function guardSocketExists( int $socketId ) : void
@@ -194,6 +195,42 @@ final class SocketCollection implements Countable
 	}
 
 	/**
+	 * Returns the smallest stream select timeout of all sockets waiting for a response,
+	 * so that none of them is checked less often than its connection is configured to.
+	 *
+	 * @return int Timeout in milliseconds
+	 */
+	public function getStreamSelectTimeout() : int
+	{
+		$timeouts = [];
+
+		foreach ( $this->sockets as $socket )
+		{
+			if ( $socket->isBusy() )
+			{
+				$timeouts[] = $socket->getStreamSelectTimeout();
+			}
+		}
+
+		return [] === $timeouts ? Defaults::STREAM_SELECT_TIMEOUT : min( $timeouts );
+	}
+
+	/**
+	 * @return array<int, resource>
+	 */
+	public function collectResources() : array
+	{
+		$resources = [];
+
+		foreach ( $this->sockets as $socket )
+		{
+			$socket->collectResource( $resources );
+		}
+
+		return $resources;
+	}
+
+	/**
 	 * Only sockets that wait for a response can have a new one. An idle socket becomes readable as well,
 	 * when the server closes its connection, but it only has the response that was already read.
 	 *
@@ -209,21 +246,6 @@ final class SocketCollection implements Countable
 			{
 				$socket->collectResource( $resources );
 			}
-		}
-
-		return $resources;
-	}
-
-	/**
-	 * @return array<int, resource>
-	 */
-	public function collectResources() : array
-	{
-		$resources = [];
-
-		foreach ( $this->sockets as $socket )
-		{
-			$socket->collectResource( $resources );
 		}
 
 		return $resources;
