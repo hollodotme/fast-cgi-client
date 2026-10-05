@@ -18,7 +18,6 @@ use hollodotme\FastCGI\Sockets\Socket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
 use InvalidArgumentException;
 use Throwable;
-use function count;
 use function intdiv;
 use function microtime;
 use function stream_select;
@@ -276,7 +275,14 @@ class Client
 			return [];
 		}
 
-		$reads     = $this->sockets->collectResourcesOfBusySockets();
+		$reads = $this->sockets->collectResourcesOfBusySockets();
+
+		# stream_select() throws a ValueError, if there is no stream to watch
+		if ( [] === $reads )
+		{
+			return [];
+		}
+
 		$writes    = $excepts = null;
 		$timeoutMs = $this->sockets->getStreamSelectTimeout();
 
@@ -288,7 +294,8 @@ class Client
 			($timeoutMs % 1000) * 1000
 		);
 
-		if ( false === $result || 0 === count( $reads ) )
+		# stream_select() returns the number of streams that are readable
+		if ( false === $result || 0 === $result )
 		{
 			return [];
 		}
