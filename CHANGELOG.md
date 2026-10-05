@@ -9,9 +9,9 @@ Backport of fixes from version 4.0.0.
 
 ### Fixed
 
-* `Client#waitForResponse()` and `Client#waitForResponses()` did not return, if the server did not respond. After the
-  timeout (default: the read/write timeout of the connection) the failure callbacks of the request are notified with
-  a `TimedoutException` now.
+* `Client#waitForResponse()` and `Client#waitForResponses()` did not return, if the server did not respond, even if a
+  timeout was passed. If a timeout is passed, the failure callbacks of the request are notified with a
+  `TimedoutException` after it now. Without a timeout, they still wait until the response is received.
 * A socket that could not connect stayed in the collection of the client.
 * Endless loop when the connection was closed before a packet was received completely, e.g. when the process
   handling the request was terminated while it sent its response, or when the client was connected to a HTTP server

@@ -131,8 +131,9 @@ class Client
 
 	/**
 	 * Waits until the response is received and notifies the response callbacks of the request.
-	 * If there is no response within the timeout (default: the read/write timeout of the connection),
-	 * the failure callbacks are notified with a TimedoutException.
+	 * If a timeout is given and there is no response within it, the failure callbacks are notified with a
+	 * TimedoutException. Without a timeout, it waits until the response is received.
+	 * The timeout also applies to reading the response, the read/write timeout of the connection by default.
 	 *
 	 * @param int      $socketId
 	 * @param int|null $timeoutMs
@@ -146,7 +147,7 @@ class Client
 
 		while ( !$socket->hasResponse() )
 		{
-			if ( $this->isWaitingTimedOut( $socket, $waitingSince, $timeoutMs ) )
+			if ( $this->isWaitingTimedOut( $waitingSince, $timeoutMs ) )
 			{
 				$this->notifyTimeout( $socket );
 
@@ -159,8 +160,9 @@ class Client
 
 	/**
 	 * Waits until all responses are received and notifies the callbacks of their requests.
-	 * Requests without response within the timeout (default: the read/write timeout of their connection)
-	 * notify their failure callbacks with a TimedoutException.
+	 * If a timeout is given, requests without response within it notify their failure callbacks with a
+	 * TimedoutException. Without a timeout, it waits until all responses are received.
+	 * The timeout also applies to reading each response, the read/write timeout of the connection by default.
 	 *
 	 * @param int|null $timeoutMs
 	 *
@@ -182,7 +184,7 @@ class Client
 
 			foreach ( $this->sockets->getBusySockets() as $socket )
 			{
-				if ( $this->isWaitingTimedOut( $socket, $waitingSince, $timeoutMs ) )
+				if ( $this->isWaitingTimedOut( $waitingSince, $timeoutMs ) )
 				{
 					$this->notifyTimeout( $socket );
 				}
@@ -190,11 +192,17 @@ class Client
 		}
 	}
 
-	private function isWaitingTimedOut( Socket $socket, float $waitingSince, ?int $timeoutMs ) : bool
+	/**
+	 * Without a timeout, waiting does not end before the response is received, as in previous versions.
+	 */
+	private function isWaitingTimedOut( float $waitingSince, ?int $timeoutMs ) : bool
 	{
-		$timeoutSeconds = ($timeoutMs ?? $socket->getReadWriteTimeout()) / 1000;
+		if ( null === $timeoutMs )
+		{
+			return false;
+		}
 
-		return microtime( true ) - $waitingSince >= $timeoutSeconds;
+		return microtime( true ) - $waitingSince >= $timeoutMs / 1000;
 	}
 
 	private function notifyTimeout( Socket $socket ) : void

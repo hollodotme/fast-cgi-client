@@ -184,14 +184,6 @@ final class Socket
 	}
 
 	/**
-	 * @return int Timeout in milliseconds
-	 */
-	public function getReadWriteTimeout() : int
-	{
-		return $this->connection->getReadWriteTimeout();
-	}
-
-	/**
 	 * @param ProvidesRequestData $request
 	 *
 	 * @throws ConnectException
