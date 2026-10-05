@@ -19,17 +19,12 @@ help:
 PROJECT = fast-cgi-client
 IMAGE = php80
 DOCKER_COMPOSE_OPTIONS = -p $(PROJECT) -f docker-compose.yml
-DOCKER_COMPOSE_BASE_COMMAND = docker-compose $(DOCKER_COMPOSE_OPTIONS)
+DOCKER_COMPOSE_BASE_COMMAND = docker compose $(DOCKER_COMPOSE_OPTIONS)
 DOCKER_COMPOSE_EXEC_COMMAND = $(DOCKER_COMPOSE_BASE_COMMAND) exec -T
 DOCKER_COMPOSE_ISOLATED_RUN_COMMAND = $(DOCKER_COMPOSE_BASE_COMMAND) run --rm --no-deps
 
-phpUnitKey 		= 4AA394086372C20A
-phpStanKey 		= CF1A108D0E7AE720
-composerKey 	= CBB3D576F2A0946F
-trustedKeys 	= "$(phpUnitKey),$(phpStanKey),$(composerKey)"
-
 ## Install/Update whole setup
-update: dcbuild dcpull update-tools composer-update
+update: dcbuild dcpull install-tools composer-update
 .PHONY: update
 
 ## Build all custom docker images
@@ -51,20 +46,22 @@ dcdown:
 	$(DOCKER_COMPOSE_BASE_COMMAND) down
 .PHONY: dcdown
 
-## Run install & update of tools via Phive
-update-tools:
-	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) phive \
-	sh -c "php -dmemory_limit=-1 /usr/local/bin/phive --no-progress install --trust-gpg-keys \"$(trustedKeys)\" && php -dmemory_limit=-1 /usr/local/bin/phive --no-progress update"
-	curl -L -o "./.tools/phplint.sh" "https://gist.githubusercontent.com/hollodotme/9c1b805e9a2f946433512563edc4b702/raw/60532cb51f1b7a1550216088943bacbd3d4c9351/phplint.sh"
-	chmod +x "./.tools/phplint.sh"
-.PHONY: update-tools
+# Versions of the tools in .tools
+PHPUNIT_7_VERSION = 7.5.20
+PHPUNIT_8_VERSION = 8.5.26
+PHPUNIT_9_VERSION = 9.5.21
+PHPSTAN_VERSION = 1.12.32
+COMPOSER_VERSION = 2.2.25
 
-## Install PHAR tools
+## Install the tools (PHPUnit, PHPStan, Composer, PHP linting) to .tools
 install-tools:
-	$(DOCKER_COMPOSE_ISOLATED_RUN_COMMAND) phive \
-	sh -c "php -dmemory_limit=-1 /usr/local/bin/phive --no-progress install --trust-gpg-keys \"$(trustedKeys)\""
-	curl -L -o "./.tools/phplint.sh" "https://gist.githubusercontent.com/hollodotme/9c1b805e9a2f946433512563edc4b702/raw/60532cb51f1b7a1550216088943bacbd3d4c9351/phplint.sh"
-	chmod +x "./.tools/phplint.sh"
+	curl -fsSL -o "./.tools/phpunit-7.phar" "https://phar.phpunit.de/phpunit-$(PHPUNIT_7_VERSION).phar"
+	curl -fsSL -o "./.tools/phpunit-8.phar" "https://phar.phpunit.de/phpunit-$(PHPUNIT_8_VERSION).phar"
+	curl -fsSL -o "./.tools/phpunit-9.phar" "https://phar.phpunit.de/phpunit-$(PHPUNIT_9_VERSION).phar"
+	curl -fsSL -o "./.tools/phpstan.phar" "https://github.com/phpstan/phpstan/releases/download/$(PHPSTAN_VERSION)/phpstan.phar"
+	curl -fsSL -o "./.tools/composer.phar" "https://getcomposer.org/download/$(COMPOSER_VERSION)/composer.phar"
+	curl -fsSL -o "./.tools/phplint.sh" "https://gist.githubusercontent.com/hollodotme/9c1b805e9a2f946433512563edc4b702/raw/60532cb51f1b7a1550216088943bacbd3d4c9351/phplint.sh"
+	chmod +x ./.tools/*.phar "./.tools/phplint.sh"
 .PHONY: install-tools
 
 ## Validate composer config
