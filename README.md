@@ -227,10 +227,12 @@ echo "Request sent, got ID: {$socketId}";
 
 # Blocking call until response is received or read timed out
 # If response was received all registered response callbacks will be notified
+# If a timeout is passed and no response was received within it, all registered failure callbacks
+# will be notified with a TimedoutException. Without a timeout, it waits until the response is received.
 $client->waitForResponse( 
 	$socketId,     # The socket ID 
-	3000            # Optional timeout to wait for response,
-					# defaults to read/write timeout in milliseconds set in connection
+	3000            # Optional timeout in milliseconds to wait for and read the response,
+					# without it, it waits until the response is received
 );
 
 # ... is the same as
@@ -426,6 +428,8 @@ echo 'Sent requests with IDs: ' . implode( ', ', $socketIds ) . "\n";
 # Do something else here in the meanwhile
 
 # Blocking call until all responses were received and all callbacks notified
+# If a timeout is passed, requests without a response within it notify their failure callbacks
+# with a TimedoutException. Without a timeout, it waits until all responses are received.
 $client->waitForResponses(3000);
 
 # ... is the same as

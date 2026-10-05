@@ -27,6 +27,7 @@ use hollodotme\FastCGI\Interfaces\EncodesPacket;
 use function chr;
 use function ord;
 use function strlen;
+use function substr;
 
 /**
  * Class PacketEncoder
@@ -34,9 +35,41 @@ use function strlen;
  */
 final class PacketEncoder implements EncodesPacket
 {
-	private const VERSION = 1;
+	private const VERSION            = 1;
 
+	private const MAX_CONTENT_LENGTH = 65535;
+
+	/**
+	 * Content that is longer than a record can hold is split into consecutive records of the same type.
+	 * Empty content results in one empty record, which ends a stream.
+	 *
+	 * @param int    $type
+	 * @param string $content
+	 * @param int    $requestId
+	 *
+	 * @return string
+	 */
 	public function encodePacket( int $type, string $content, int $requestId ) : string
+	{
+		$packets = '';
+		$offset  = 0;
+
+		do
+		{
+			$packets .= $this->encodeRecord(
+				$type,
+				# Before PHP 8, substr() returns FALSE instead of an empty string
+				(string)substr( $content, $offset, self::MAX_CONTENT_LENGTH ),
+				$requestId
+			);
+			$offset  += self::MAX_CONTENT_LENGTH;
+		}
+		while ( $offset < strlen( $content ) );
+
+		return $packets;
+	}
+
+	private function encodeRecord( int $type, string $content, int $requestId ) : string
 	{
 		$contentLength = strlen( $content );
 

@@ -44,9 +44,7 @@ use function floor;
 use function fread;
 use function fwrite;
 use function is_resource;
-use function max;
 use function microtime;
-use function min;
 use function ord;
 use function str_repeat;
 use function stream_get_meta_data;
@@ -56,7 +54,7 @@ use function stream_socket_client;
 use function stream_socket_shutdown;
 use function strlen;
 use function substr;
-use const PHP_INT_MAX;
+use const PHP_VERSION_ID;
 use const STREAM_SHUT_RDWR;
 
 final class Socket
@@ -92,6 +90,8 @@ final class Socket
 	private const SOCK_STATE_IDLE      = 3;
 
 	private const REQ_MAX_CONTENT_SIZE = 65535;
+
+	private const WRITE_CHUNK_SIZE     = 65536;
 
 	public const  STREAM_SELECT_USEC   = 200000;
 
@@ -165,6 +165,13 @@ final class Socket
 
 	public function hasResponse() : bool
 	{
+		# Only a busy socket waits for a response. An idle socket has its response already, its stream becomes
+		# readable when the server closes the connection, which is no new response.
+		if ( !$this->isBusy() )
+		{
+			return null !== $this->response;
+		}
+
 		if ( !is_resource( $this->resource ) )
 		{
 			return false;
@@ -194,6 +201,9 @@ final class Socket
 		$this->passThroughCallbacks = $request->getPassThroughCallbacks();
 
 		$this->connect();
+
+		# A read timeout that was passed to fetchResponse() for the previous request must not apply to this one
+		$this->setStreamTimeout( $this->connection->getReadWriteTimeout() );
 
 		$requestPackets = $this->getRequestPackets( $request );
 
@@ -353,41 +363,66 @@ final class Socket
 			$this->id->getValue()
 		);
 
-		$paramsRequest = $this->nameValuePairEncoder->encodePairs( $request->getParams() );
-
-		if ( $paramsRequest )
+		foreach ( $this->getParamsRecordContents( $request->getParams() ) as $paramsRecordContent )
 		{
 			$requestPackets .= $this->packetEncoder->encodePacket(
 				self::PARAMS,
-				$paramsRequest,
+				$paramsRecordContent,
 				$this->id->getValue()
 			);
 		}
 
 		$requestPackets .= $this->packetEncoder->encodePacket( self::PARAMS, '', $this->id->getValue() );
 
-		if ( $request->getContent() )
+		# The packet encoder splits content that is longer than one record
+		if ( '' !== $request->getContent() )
 		{
-			$offset = 0;
-			do
-			{
-				$requestPackets .= $this->packetEncoder->encodePacket(
-					self::STDIN,
-					substr(
-						$request->getContent(),
-						$offset,
-						self::REQ_MAX_CONTENT_SIZE
-					),
-					$this->id->getValue()
-				);
-				$offset         += self::REQ_MAX_CONTENT_SIZE;
-			}
-			while ( $offset < $request->getContentLength() );
+			$requestPackets .= $this->packetEncoder->encodePacket(
+				self::STDIN,
+				$request->getContent(),
+				$this->id->getValue()
+			);
 		}
 
 		$requestPackets .= $this->packetEncoder->encodePacket( self::STDIN, '', $this->id->getValue() );
 
 		return $requestPackets;
+	}
+
+	/**
+	 * Distributes the encoded params to records of at most 65535 bytes without splitting a name-value pair,
+	 * because php-fpm decodes the params of each record separately and closes the connection otherwise.
+	 * A single pair that is longer than one record is split by the packet encoder, as the FastCGI specification
+	 * allows. php-fpm cannot receive such a pair, other servers can.
+	 *
+	 * @param array<string, mixed> $params
+	 *
+	 * @return array<int, string>
+	 */
+	private function getParamsRecordContents( array $params ) : array
+	{
+		$recordContents = [];
+		$recordContent  = '';
+
+		foreach ( $params as $name => $value )
+		{
+			$pair = $this->nameValuePairEncoder->encodePair( (string)$name, (string)$value );
+
+			if ( '' !== $recordContent && strlen( $recordContent ) + strlen( $pair ) > self::REQ_MAX_CONTENT_SIZE )
+			{
+				$recordContents[] = $recordContent;
+				$recordContent    = '';
+			}
+
+			$recordContent .= $pair;
+		}
+
+		if ( '' !== $recordContent )
+		{
+			$recordContents[] = $recordContent;
+		}
+
+		return $recordContents;
 	}
 
 	/**
@@ -403,10 +438,33 @@ final class Socket
 			throw new WriteFailedException( 'Failed to write request to socket [broken pipe]' );
 		}
 
-		$writeResult = @fwrite( $this->resource, $data );
+		$length  = strlen( $data );
+		$written = 0;
+
+		# fwrite() writes only a part of the data, if the peer does not read fast enough before the timeout
+		while ( $written < $length )
+		{
+			$chunk = substr( $data, $written, self::WRITE_CHUNK_SIZE );
+			$bytes = @fwrite( $this->resource, $chunk );
+
+			if ( false === $bytes || 0 === $bytes )
+			{
+				break;
+			}
+
+			$written += $bytes;
+
+			# A chunk that was written partly because the timeout was reached ends the request,
+			# writing the rest would wait for another full timeout
+			if ( $bytes < strlen( $chunk ) && stream_get_meta_data( $this->resource )['timed_out'] )
+			{
+				break;
+			}
+		}
+
 		$flushResult = @fflush( $this->resource );
 
-		if ( $writeResult === false || !$flushResult )
+		if ( $written < $length || !$flushResult )
 		{
 			if ( stream_get_meta_data( $this->resource )['timed_out'] )
 			{
@@ -471,8 +529,16 @@ final class Socket
 		while ( null !== $packet );
 
 		$this->handleNullPacket( $packet );
-		$character = isset( $packet['content'] ) ? ((string)$packet['content'])[4] : '';
-		$this->guardRequestCompleted( ord( $character ) );
+
+		# The protocol status is the fifth byte of the end-request record
+		$endRequest = (string)($packet['content'] ?? '');
+
+		if ( strlen( $endRequest ) < 5 )
+		{
+			throw new ReadFailedException( 'Invalid end-request record: missing protocol status' );
+		}
+
+		$this->guardRequestCompleted( ord( $endRequest[4] ) );
 
 		$this->response = new Response(
 			$output,
@@ -491,47 +557,70 @@ final class Socket
 	 */
 	private function readPacket() : ?array
 	{
-		if ( !is_resource( $this->resource ) )
+		$header = $this->read( self::HEADER_LEN );
+
+		if ( null === $header )
 		{
 			return null;
 		}
 
-		if ( $header = fread( $this->resource, self::HEADER_LEN ) )
+		$packet = $this->packetEncoder->decodeHeader( $header );
+
+		$content = $this->read( (int)$packet['contentLength'] );
+		$padding = $this->read( (int)$packet['paddingLength'] );
+
+		if ( null === $content || null === $padding )
 		{
-			$packet            = $this->packetEncoder->decodeHeader( $header );
-			$packet['content'] = '';
-
-			if ( $packet['contentLength'] )
-			{
-				$length = $this->getValidLength( (int)$packet['contentLength'] );
-
-				while ( $length && ($buffer = fread( $this->resource, $length )) !== false )
-				{
-					$length            = $this->getValidLength( $length - strlen( (string)$buffer ) );
-					$packet['content'] .= $buffer;
-				}
-			}
-
-			if ( $packet['paddingLength'] )
-			{
-				/** @noinspection UnusedFunctionResultInspection */
-				fread( $this->resource, $this->getValidLength( (int)$packet['paddingLength'] ) );
-			}
-
-			return $packet;
+			return null;
 		}
 
-		return null;
+		$packet['content'] = $content;
+
+		return $packet;
 	}
 
 	/**
-	 * @param int $value
+	 * Reads exactly the given number of bytes from the stream.
+	 * Returns NULL, if the stream ended or timed out before all bytes were received.
 	 *
-	 * @return int<0, max>
+	 * @param int $length
+	 *
+	 * @return string|null
 	 */
-	private function getValidLength( int $value ) : int
+	private function read( int $length ) : ?string
 	{
-		return (int)max( 0, min( $value, PHP_INT_MAX ) );
+		$resource = $this->resource;
+
+		if ( !is_resource( $resource ) )
+		{
+			return null;
+		}
+
+		$data = '';
+
+		while ( $length > 0 )
+		{
+			$buffer = fread( $resource, $length );
+
+			# An empty string means that the stream timed out or was closed by the peer,
+			# further attempts to read would return an empty string over and over again
+			if ( false === $buffer || '' === $buffer )
+			{
+				return null;
+			}
+
+			$data   .= $buffer;
+			$length -= strlen( $buffer );
+
+			# If the timeout was reached during this read, waiting for the rest would take another full timeout.
+			# Since PHP 8.3 incomplete reads are the normal case for large packets, so the flag is not checked there.
+			if ( $length > 0 && PHP_VERSION_ID < 80300 && stream_get_meta_data( $resource )['timed_out'] )
+			{
+				return null;
+			}
+		}
+
+		return $data;
 	}
 
 	private function notifyPassThroughCallbacks( string $outputBuffer, string $errorBuffer ) : void
@@ -550,7 +639,12 @@ final class Socket
 	 */
 	private function handleNullPacket( ?array $packet ) : void
 	{
-		if ( $packet === null && is_resource( $this->resource ) )
+		if ( null !== $packet )
+		{
+			return;
+		}
+
+		if ( is_resource( $this->resource ) )
 		{
 			$info = stream_get_meta_data( $this->resource );
 
@@ -563,9 +657,9 @@ final class Socket
 			{
 				throw new ReadFailedException( 'Stream got blocked, or terminated.' );
 			}
-
-			throw new ReadFailedException( 'Read failed' );
 		}
+
+		throw new ReadFailedException( 'Read failed' );
 	}
 
 	/**

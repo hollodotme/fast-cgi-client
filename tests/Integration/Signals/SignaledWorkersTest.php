@@ -14,6 +14,7 @@ use hollodotme\FastCGI\SocketConnections\UnixDomainSocket;
 use hollodotme\FastCGI\Tests\Traits\SocketDataProviding;
 use PHPUnit\Framework\ExpectationFailedException;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use SebastianBergmann\RecursionContext\InvalidArgumentException;
 use Throwable;
 use function escapeshellarg;
@@ -133,16 +134,23 @@ final class SignaledWorkersTest extends TestCase
 			escapeshellarg( $poolName )
 		);
 		$list    = (string)shell_exec( $command );
+		$pids    = [];
 
-		return array_map(
-			static function ( string $item )
+		foreach ( explode( "\n", trim( $list ) ) as $line )
+		{
+			if ( 1 === preg_match( '#^(\d+)\s.+$#', trim( $line ), $matches ) )
 			{
-				preg_match( '#^(\d+)\s.+$#', trim( $item ), $matches );
+				$pids[] = (int)$matches[1];
+			}
+		}
 
-				return (int)$matches[1];
-			},
-			explode( "\n", trim( $list ) )
-		);
+		# Killing PID 0 would signal the whole process group, i.e. the test run itself
+		if ( [] === $pids )
+		{
+			throw new RuntimeException( 'No worker of pool ' . $poolName . ' found.' );
+		}
+
+		return $pids;
 	}
 
 	private function killPoolWorker( int $PID, int $signal ) : void

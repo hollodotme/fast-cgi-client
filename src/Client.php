@@ -38,7 +38,7 @@ use hollodotme\FastCGI\Interfaces\ProvidesResponseData;
 use hollodotme\FastCGI\Sockets\Socket;
 use hollodotme\FastCGI\Sockets\SocketCollection;
 use Throwable;
-use function count;
+use function microtime;
 use function stream_select;
 
 class Client
@@ -100,7 +100,7 @@ class Client
 
 			return $socket->getId();
 		}
-		catch ( TimedoutException | WriteFailedException $e )
+		catch ( ConnectException | TimedoutException | WriteFailedException $e )
 		{
 			$this->sockets->remove( $socket->getId() );
 
@@ -130,6 +130,11 @@ class Client
 	}
 
 	/**
+	 * Waits until the response is received and notifies the response callbacks of the request.
+	 * If a timeout is given and there is no response within it, the failure callbacks are notified with a
+	 * TimedoutException. Without a timeout, it waits until the response is received.
+	 * The timeout also applies to reading the response, the read/write timeout of the connection by default.
+	 *
 	 * @param int      $socketId
 	 * @param int|null $timeoutMs
 	 *
@@ -137,19 +142,28 @@ class Client
 	 */
 	public function waitForResponse( int $socketId, ?int $timeoutMs = null ) : void
 	{
-		$socket = $this->sockets->getById( $socketId );
+		$socket       = $this->sockets->getById( $socketId );
+		$waitingSince = microtime( true );
 
-		while ( true )
+		while ( !$socket->hasResponse() )
 		{
-			if ( $socket->hasResponse() )
+			if ( $this->isWaitingTimedOut( $waitingSince, $timeoutMs ) )
 			{
-				$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
-				break;
+				$this->notifyTimeout( $socket );
+
+				return;
 			}
 		}
+
+		$this->fetchResponseAndNotifyCallback( $socket, $timeoutMs );
 	}
 
 	/**
+	 * Waits until all responses are received and notifies the callbacks of their requests.
+	 * If a timeout is given, requests without response within it notify their failure callbacks with a
+	 * TimedoutException. Without a timeout, it waits until all responses are received.
+	 * The timeout also applies to reading each response, the read/write timeout of the connection by default.
+	 *
 	 * @param int|null $timeoutMs
 	 *
 	 * @throws ReadFailedException
@@ -162,9 +176,44 @@ class Client
 			throw new ReadFailedException( 'No pending requests found.' );
 		}
 
+		$waitingSince = microtime( true );
+
 		while ( $this->hasUnhandledResponses() )
 		{
 			$this->handleReadyResponses( $timeoutMs );
+
+			foreach ( $this->sockets->getBusySockets() as $socket )
+			{
+				if ( $this->isWaitingTimedOut( $waitingSince, $timeoutMs ) )
+				{
+					$this->notifyTimeout( $socket );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Without a timeout, waiting does not end before the response is received, as in previous versions.
+	 */
+	private function isWaitingTimedOut( float $waitingSince, ?int $timeoutMs ) : bool
+	{
+		if ( null === $timeoutMs )
+		{
+			return false;
+		}
+
+		return microtime( true ) - $waitingSince >= $timeoutMs / 1000;
+	}
+
+	private function notifyTimeout( Socket $socket ) : void
+	{
+		try
+		{
+			$socket->notifyFailureCallbacks( new TimedoutException( 'Read timed out' ) );
+		}
+		finally
+		{
+			$this->sockets->remove( $socket->getId() );
 		}
 	}
 
@@ -220,12 +269,20 @@ class Client
 			return [];
 		}
 
-		$reads  = $this->sockets->collectResources();
+		$reads = $this->sockets->collectResourcesOfBusySockets();
+
+		# stream_select() throws a ValueError on PHP 8, if there is no stream to watch
+		if ( [] === $reads )
+		{
+			return [];
+		}
+
 		$writes = $excepts = null;
 
 		$result = @stream_select( $reads, $writes, $excepts, 0, Socket::STREAM_SELECT_USEC );
 
-		if ( false === $result || 0 === count( $reads ) )
+		# stream_select() returns the number of streams that are readable
+		if ( false === $result || 0 === $result )
 		{
 			return [];
 		}

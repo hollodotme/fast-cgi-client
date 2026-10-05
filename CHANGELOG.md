@@ -3,6 +3,67 @@
 All notable changes to this project will be documented in this file. This project adheres
 to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepachangelog.com).
 
+## [3.1.8] - 2026-10-05
+
+Backport of fixes from version 4.0.0.
+
+### Fixed
+
+* `Client#waitForResponse()` and `Client#waitForResponses()` did not return, if the server did not respond, even if a
+  timeout was passed. If a timeout is passed, the failure callbacks of the request are notified with a
+  `TimedoutException` after it now. Without a timeout, they still wait until the response is received.
+* A socket that could not connect stayed in the collection of the client.
+* Endless loop when the connection was closed before a packet was received completely, e.g. when the process
+  handling the request was terminated while it sent its response, or when the client was connected to a HTTP server
+  instead of a FastCGI server. A `ReadFailedException` is thrown now.
+* Reading a response that was not completed by the server timed out after twice the read/write timeout.
+* Packet headers are read completely before they are decoded, also if they arrive in several parts.
+* `NameValuePairEncoder#decodePairs()` decoded names and values of 16 MiB and more with a wrong length.
+* The first two lines of a response were lost, if it did not start with a header.
+* Headers and body of a response are separated independently of the line endings of the platform the client runs on.
+* Request parameters longer than 65535 bytes in total corrupted the request, because the length of a record was cut
+  to 2 bytes. They are sent in multiple records now, split between name-value pairs. `PacketEncoder#encodePacket()`
+  splits content that is longer than one record into consecutive records of the same type.
+* Request content `"0"` was not sent.
+* A request that could only be written partly, e.g. because the server did not read it before the read/write timeout,
+  was treated as sent. A `TimedoutException` or `WriteFailedException` is thrown now.
+* A read timeout passed to `readResponse()` and the other methods reading responses applied to writing the next
+  request on the same socket as well. The read/write timeout of the connection applies again.
+* An idle socket was reported as having a response, when the server closed its connection. Its response was then
+  returned again by `readReadyResponses()`, and its callbacks were notified again by `handleReadyResponses()` and
+  `waitForResponses()`.
+* `Client#hasResponse()` and `Client#waitForResponse()` checked the stream of a socket whose response was already read
+  with `readResponse()`. Such a socket has its response now.
+* A response without any packet was returned as an empty response, if the socket had no stream anymore.
+* `Client#getSocketIdsHavingResponse()` and the methods based on it could throw a `ValueError` on PHP 8, if the
+  sockets of the client had no stream, e.g. after a failed connect.
+* A partly written request waited for the read/write timeout twice before a `TimedoutException` was thrown.
+* An end-request record without protocol status caused an "Uninitialized string offset" notice and was treated as
+  a completed request. A `ReadFailedException` is thrown now.
+
+### Changed
+
+These changes of the behaviour are fixes, but you may notice them:
+
+* A timeout passed to `Client#waitForResponse()` and `Client#waitForResponses()` ends the waiting. The failure
+  callbacks of requests without response are notified with a `TimedoutException` then. Without a timeout, both
+  methods wait until the responses are received, as before.
+* `Client#hasResponse()` returns `true` for a socket whose response was already read with `readResponse()`.
+  Before, it returned `false` until the server closed the connection, and `true` afterwards.
+* `Client#getSocketIdsHavingResponse()`, `readReadyResponses()` and `handleReadyResponses()` only consider sockets
+  that wait for a response. Idle sockets are not reported anymore.
+* Exceptions are thrown in situations that hung, returned an empty response or treated a request as sent before:
+  a connection closed while the response is received or a HTTP server instead of a FastCGI server
+  (`ReadFailedException`), a response that is not completed within the read/write timeout (`TimedoutException`),
+  a partly written request (`TimedoutException` or `WriteFailedException`) and an end-request record without
+  protocol status (`ReadFailedException`).
+* `PacketEncoder#encodePacket()` returns several records for content that is longer than 65535 bytes, instead of one
+  record with a wrong length.
+* Output that consists of header lines without a blank line after them is the body of the response now, without
+  headers. The headers of a response are separated from its body by a blank line, which php-fpm always sends.
+* The CI uses the `docker compose` plugin, downloads its tools directly instead of using Phive and re-enables
+  `fastcgi.logging` in the php-fpm images used for the tests.
+
 ## [3.1.7] - 2021-12-07
 
 * Make sure length values are within valid bounds
@@ -413,6 +474,8 @@ on [Pierrick Charron](https://github.com/adoy)'s [PHP-FastCGI-Client](https://gi
 * Getters/Setters for connect timeout, read/write timeout, keep alive, socket persistence from `Client` (now part of the
   socket connection)
 * Method `Client->getValues()`
+
+[3.1.8]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.7...v3.1.8
 
 [3.1.7]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.6...v3.1.7
 
