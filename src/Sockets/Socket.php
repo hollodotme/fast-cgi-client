@@ -456,7 +456,8 @@ final class Socket
 		# fwrite() writes only a part of the data, if the peer does not read fast enough before the timeout
 		while ( $written < $length )
 		{
-			$bytes = @fwrite( $this->resource, substr( $data, $written, self::WRITE_CHUNK_SIZE ) );
+			$chunk = substr( $data, $written, self::WRITE_CHUNK_SIZE );
+			$bytes = @fwrite( $this->resource, $chunk );
 
 			if ( false === $bytes || 0 === $bytes )
 			{
@@ -464,6 +465,13 @@ final class Socket
 			}
 
 			$written += $bytes;
+
+			# A chunk that was written partly because the timeout was reached ends the request,
+			# writing the rest would wait for another full timeout
+			if ( $bytes < strlen( $chunk ) && stream_get_meta_data( $this->resource )['timed_out'] )
+			{
+				break;
+			}
 		}
 
 		$flushResult = @fflush( $this->resource );

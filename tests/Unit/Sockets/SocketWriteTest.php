@@ -67,7 +67,9 @@ final class SocketWriteTest extends TestCase
 		catch ( TimedoutException $e )
 		{
 			self::assertSame( 'Write timed out', $e->getMessage() );
+			# One timeout, not two
 			self::assertGreaterThanOrEqual( 0.19, microtime( true ) - $start );
+			self::assertLessThan( 0.35, microtime( true ) - $start );
 		}
 	}
 
@@ -95,8 +97,9 @@ final class SocketWriteTest extends TestCase
 		}
 		catch ( TimedoutException $e )
 		{
-			# The read/write timeout of the connection applies, not the 50 ms of the previous read
+			# The read/write timeout of the connection applies once, not the 50 ms of the previous read
 			self::assertGreaterThanOrEqual( 0.39, microtime( true ) - $start );
+			self::assertLessThan( 0.7, microtime( true ) - $start );
 		}
 	}
 

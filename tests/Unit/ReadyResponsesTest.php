@@ -143,6 +143,33 @@ final class ReadyResponsesTest extends TestCase
 	}
 
 	/**
+	 * Only busy sockets are watched for responses. Without a busy socket there is nothing to watch, which must not
+	 * pass empty arrays to stream_select(), it throws a ValueError then.
+	 *
+	 * @throws Throwable
+	 */
+	public function testNoSocketHasResponseIfNoSocketIsBusy() : void
+	{
+		$client = new Client();
+
+		$socketId   = $client->sendAsyncRequest( $this->getConnection( 1000 ), new GetRequest( 'script.php' ) );
+		$connection = $this->accept();
+		$this->respond( $connection, $socketId, 'first' );
+
+		self::assertSame( 'first', $client->readResponse( $socketId )->getBody() );
+		self::assertFalse( $client->hasUnhandledResponses() );
+
+		self::assertSame( [], $client->getSocketIdsHavingResponse() );
+		self::assertSame( [], iterator_to_array( $client->readReadyResponses() ) );
+
+		$client->handleReadyResponses();
+
+		fclose( $connection );
+
+		self::assertSame( [], $client->getSocketIdsHavingResponse() );
+	}
+
+	/**
 	 * Connections with different read/write timeouts are not equal, so each request gets its own socket.
 	 */
 	private function getConnection( int $readWriteTimeout ) : NetworkSocket
