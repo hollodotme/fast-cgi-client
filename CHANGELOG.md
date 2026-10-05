@@ -35,11 +35,16 @@ Backport of fixes from version 4.0.0.
 * `Client#hasResponse()` and `Client#waitForResponse()` checked the stream of a socket whose response was already read
   with `readResponse()`. Such a socket has its response now.
 * A response without any packet was returned as an empty response, if the socket had no stream anymore.
-* `Client#getSocketIdsHavingResponse()` and the methods based on it threw a `ValueError` on PHP 8, if the client
-  had no socket waiting for a response.
+* `Client#getSocketIdsHavingResponse()` and the methods based on it could throw a `ValueError` on PHP 8, if the
+  sockets of the client had no stream, e.g. after a failed connect.
+* A partly written request waited for the read/write timeout twice before a `TimedoutException` was thrown.
+* An end-request record without protocol status caused an "Uninitialized string offset" notice and was treated as
+  a completed request. A `ReadFailedException` is thrown now.
 
 ### Changed
 
+* Output that consists of header lines without a blank line after them is the body of the response now, without
+  headers. The headers of a response are separated from its body by a blank line, which php-fpm always sends.
 * The CI uses the `docker compose` plugin, downloads its tools directly instead of using Phive and re-enables
   `fastcgi.logging` in the php-fpm images used for the tests.
 

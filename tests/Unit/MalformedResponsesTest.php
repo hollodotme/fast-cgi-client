@@ -171,6 +171,29 @@ final class MalformedResponsesTest extends TestCase
 	}
 
 	/**
+	 * The protocol status is the fifth byte of an end-request record. Before, a shorter record caused an
+	 * "Uninitialized string offset" notice and was treated as a completed request.
+	 *
+	 * @throws Throwable
+	 */
+	public function testEndRequestRecordWithoutProtocolStatusFails() : void
+	{
+		$socketId = $this->sendRequestAndRespond(
+			function ( int $id ) : string
+			{
+				return $this->record( self::STDOUT, $id, 'unit' )
+					   . $this->record( self::END_REQUEST, $id, str_repeat( chr( 0 ), 3 ) );
+			}
+		);
+
+		$this->expectException( ReadFailedException::class );
+		$this->expectExceptionMessage( 'Invalid end-request record: missing protocol status' );
+
+		/** @noinspection UnusedFunctionResultInspection */
+		$this->client->readResponse( $socketId );
+	}
+
+	/**
 	 * @throws Throwable
 	 */
 	public function testReadingTimesOutIfResponseIsNotCompleted() : void

@@ -414,7 +414,7 @@ final class Socket
 
 		foreach ( $params as $name => $value )
 		{
-			$pair = $this->nameValuePairEncoder->encodePairs( [(string)$name => $value] );
+			$pair = $this->nameValuePairEncoder->encodePair( (string)$name, (string)$value );
 
 			if ( '' !== $recordContent && strlen( $recordContent ) + strlen( $pair ) > self::REQ_MAX_CONTENT_SIZE )
 			{
@@ -452,7 +452,8 @@ final class Socket
 		# fwrite() writes only a part of the data, if the peer does not read fast enough before the timeout
 		while ( $written < $length )
 		{
-			$bytes = @fwrite( $this->resource, substr( $data, $written, self::WRITE_CHUNK_SIZE ) );
+			$chunk = substr( $data, $written, self::WRITE_CHUNK_SIZE );
+			$bytes = @fwrite( $this->resource, $chunk );
 
 			if ( false === $bytes || 0 === $bytes )
 			{
@@ -460,6 +461,13 @@ final class Socket
 			}
 
 			$written += $bytes;
+
+			# A chunk that was written partly because the timeout was reached ends the request,
+			# writing the rest would wait for another full timeout
+			if ( $bytes < strlen( $chunk ) && stream_get_meta_data( $this->resource )['timed_out'] )
+			{
+				break;
+			}
 		}
 
 		$flushResult = @fflush( $this->resource );
@@ -529,8 +537,16 @@ final class Socket
 		while ( null !== $packet );
 
 		$this->handleNullPacket( $packet );
-		$character = isset( $packet['content'] ) ? ((string)$packet['content'])[4] : '';
-		$this->guardRequestCompleted( ord( $character ) );
+
+		# The protocol status is the fifth byte of the end-request record
+		$endRequest = (string)($packet['content'] ?? '');
+
+		if ( strlen( $endRequest ) < 5 )
+		{
+			throw new ReadFailedException( 'Invalid end-request record: missing protocol status' );
+		}
+
+		$this->guardRequestCompleted( ord( $endRequest[4] ) );
 
 		$this->response = new Response(
 			$output,
@@ -604,8 +620,8 @@ final class Socket
 			$data   .= $buffer;
 			$length -= strlen( $buffer );
 
-			# Before PHP 8.3 an incomplete read only returns after the timeout was reached,
-			# so there is no point in waiting for the rest once again.
+			# If the timeout was reached during this read, waiting for the rest would take another full timeout.
+			# Since PHP 8.3 incomplete reads are the normal case for large packets, so the flag is not checked there.
 			if ( $length > 0 && PHP_VERSION_ID < 80300 && stream_get_meta_data( $resource )['timed_out'] )
 			{
 				return null;
