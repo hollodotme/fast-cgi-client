@@ -11,7 +11,7 @@ git clone --quiet --no-checkout /repo "${DOCTUM_SOURCE_DIR}"
 # Doctum checks out each version by its name, so the names of the major versions become branches of the clone
 git -C "${DOCTUM_SOURCE_DIR}" branch 1.x v1.4.2
 git -C "${DOCTUM_SOURCE_DIR}" branch 2.x v2.7.2
-git -C "${DOCTUM_SOURCE_DIR}" branch 3.x v3.1.7
+git -C "${DOCTUM_SOURCE_DIR}" branch 3.x v3.1.8
 git -C "${DOCTUM_SOURCE_DIR}" branch 4.x "$(git -C /repo rev-parse HEAD)"
 git -C "${DOCTUM_SOURCE_DIR}" checkout --quiet 4.x
 

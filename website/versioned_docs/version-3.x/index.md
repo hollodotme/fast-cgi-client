@@ -8,7 +8,7 @@ slug: /
 
 :::info
 
-This is the documentation of version 3.x (latest release [v3.1.7](https://github.com/hollodotme/fast-cgi-client/releases/tag/v3.1.7)), which requires PHP >= 7.1.
+This is the documentation of version 3.x (latest release [v3.1.8](https://github.com/hollodotme/fast-cgi-client/releases/tag/v3.1.8)), which requires PHP >= 7.1.
 The [current version is 4.x](/docs/), see the [migration guide](/docs/migration) for upgrading.
 
 :::
@@ -25,7 +25,7 @@ loops) and unit and integration tests as well.
 
 This is the documentation of the latest release.
 
-Please have a look at the [backwards incompatible changes (BC breaks) in the changelog](https://github.com/hollodotme/fast-cgi-client/blob/v3.1.7/CHANGELOG.md).
+Please have a look at the [backwards incompatible changes (BC breaks) in the changelog](https://github.com/hollodotme/fast-cgi-client/blob/v3.1.8/CHANGELOG.md).
 
 Please see the following links for earlier releases:
 
@@ -212,7 +212,7 @@ $connection = new NetworkSocket('127.0.0.1', 9000);
 $content    = http_build_query(['key' => 'value']);
 $request    = new PostRequest('/path/to/target/script.php', $content);
 
-# Register a response callback, expects a `ProvidesResponseData` instance as the only paramter
+# Register a response callback, expects a `ProvidesResponseData` instance as the only parameter
 $request->addResponseCallbacks(
 	static function( ProvidesResponseData $response )
 	{
@@ -236,10 +236,12 @@ echo "Request sent, got ID: {$socketId}";
 
 # Blocking call until response is received or read timed out
 # If response was received all registered response callbacks will be notified
+# If a timeout is passed and no response was received within it, all registered failure callbacks
+# will be notified with a TimedoutException. Without a timeout, it waits until the response is received.
 $client->waitForResponse( 
 	$socketId,     # The socket ID 
-	3000            # Optional timeout to wait for response,
-					# defaults to read/write timeout in milliseconds set in connection
+	3000            # Optional timeout in milliseconds to wait for and read the response,
+					# without it, it waits until the response is received
 );
 
 # ... is the same as
@@ -435,6 +437,8 @@ echo 'Sent requests with IDs: ' . implode( ', ', $socketIds ) . "\n";
 # Do something else here in the meanwhile
 
 # Blocking call until all responses were received and all callbacks notified
+# If a timeout is passed, requests without a response within it notify their failure callbacks
+# with a TimedoutException. Without a timeout, it waits until all responses are received.
 $client->waitForResponses(3000);
 
 # ... is the same as
@@ -616,13 +620,13 @@ The abstract request class defines several default values which you can optional
 In order to make the composition of different request content types easier there are classes covering the typical
 content types:
 
-* [UrlEncodedFormData](https://github.com/hollodotme/fast-cgi-client/blob/v3.1.7/src/RequestContents/UrlEncodedFormData.php)
-* [MultipartFormData](https://github.com/hollodotme/fast-cgi-client/blob/v3.1.7/src/RequestContents/MultipartFormData.php)
-* [JsonData](https://github.com/hollodotme/fast-cgi-client/blob/v3.1.7/src/RequestContents/JsonData.php)
+* [UrlEncodedFormData](https://github.com/hollodotme/fast-cgi-client/blob/v3.1.8/src/RequestContents/UrlEncodedFormData.php)
+* [MultipartFormData](https://github.com/hollodotme/fast-cgi-client/blob/v3.1.8/src/RequestContents/MultipartFormData.php)
+* [JsonData](https://github.com/hollodotme/fast-cgi-client/blob/v3.1.8/src/RequestContents/JsonData.php)
 
 You can create your own request content type composer by implementing the following interface:
 
-[**ComposesRequestContent**](https://github.com/hollodotme/fast-cgi-client/blob/v3.1.7/src/Interfaces/ComposesRequestContent.php)
+[**ComposesRequestContent**](https://github.com/hollodotme/fast-cgi-client/blob/v3.1.8/src/Interfaces/ComposesRequestContent.php)
 
 ```php
 interface ComposesRequestContent

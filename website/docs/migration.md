@@ -17,9 +17,10 @@ The [changelog](/changelog/4.x) lists all changes, including the new features an
 2. [Pass request content as an object instead of a string](#request-content)
 3. [Replace `newWithRequestContent()` with the constructor](#named-constructor)
 4. [Catch exceptions of `readResponses()` and `readReadyResponses()`](#reading-multiple-responses)
-5. [Replace `Socket::STREAM_SELECT_USEC`](#stream-select-timeout)
-6. If you implement interfaces of the library: [add the new methods](#own-implementations-of-interfaces)
-7. If you extend classes of the library: [adapt the type declarations](#extended-classes)
+5. [Pass a timeout to `waitForResponse()` and `waitForResponses()` for long-running scripts](#waiting-for-responses)
+6. [Replace `Socket::STREAM_SELECT_USEC`](#stream-select-timeout)
+7. If you implement interfaces of the library: [add the new methods](#own-implementations-of-interfaces)
+8. If you extend classes of the library: [adapt your subclasses](#extended-classes)
 
 ## Requirements
 
@@ -36,7 +37,7 @@ If you need to stay on PHP 7.1 - 7.4, keep using version 3.x. It still gets bug 
 
 In 3.x, the constructor of a request and `setContent()` took the content as a string, and you had to set the matching
 content type yourself. The content classes `UrlEncodedFormData`, `JsonData` and `MultipartFormData` already existed
-since 3.1.0, but could only be used with the named constructor [`newWithRequestContent()`](#named-constructor).
+since 3.1.0, but were mainly used with the named constructor [`newWithRequestContent()`](#named-constructor).
 In 4.x, the content is always an object implementing `ComposesRequestContent`. It composes the content and determines
 its content type, so you pass it as the optional second argument of the constructor or to `setContent()`.
 
@@ -204,6 +205,26 @@ If you want to handle each failure individually and continue with the other resp
 and use `waitForResponses()` or `handleReadyResponses()` instead, see
 [multiple requests](./usage/multiple-requests.mdx#sending-multiple-requests-and-notifying-callbacks-reactive).
 
+## Waiting for responses
+
+`waitForResponse()` and `waitForResponses()` stop waiting after a timeout now, even if you pass none. The default is
+the read/write timeout of the connection (`Defaults::READ_WRITE_TIMEOUT`, 5000 ms). The failure callbacks of requests
+without response are notified with a `TimedoutException` then. In 3.x, both methods waited until the response was
+received, if no timeout was passed (3.1.8 still does), so scripts that run longer than the read/write timeout before
+they send output fail in 4.x. A timeout you pass limits the whole waiting time now, not only the reading of the
+response.
+
+```php
+# 3.x: waits until all responses are received, however long the scripts run
+$client->waitForResponses();
+
+# 4.x: waits at most the read/write timeout of the connections (default: 5000 ms)
+$client->waitForResponses();
+
+# 4.x: waits up to 60 seconds
+$client->waitForResponses( 60000 );
+```
+
 ## Stream select timeout
 
 The public constant `Socket::STREAM_SELECT_USEC` (200000 µs) was removed. How long the client waits when checking for
@@ -252,16 +273,19 @@ final class MyConnection implements ConfiguresSocketConnection
 
 ## Extended classes
 
-Properties and some parameters have native type declarations now, e.g. `AbstractRequest#setCustomVar()` and
-`JsonData#__construct()` use `mixed`. If you extend classes of the library, adapt the declarations of overridden
-methods accordingly.
+If you extend `AbstractRequest` or a request class, adapt overridden `setContent()` and `getContent()` methods and
+calls of `parent::__construct()` to the content object. Check your subclasses for methods that collide with the new
+public methods `Client#tryRequest()`, `Client#tryAsyncRequest()`, `AbstractRequest#setQueryParams()`,
+`AbstractRequest#getQueryParams()`, `AbstractRequest#getQueryString()` and `Response#getStatusCode()`.
 
 ## Changed behaviour
 
 These changes need no code changes, but you may notice them:
 
-* `waitForResponse()` and `waitForResponses()` do not wait forever anymore, if the server does not respond. After the
-  timeout, the failure callbacks of the request are notified with a `TimedoutException`.
+* Output that starts with header lines without a blank line after them is the body of the response, without headers.
+  Header values continued on the next line (obsolete line folding) are joined to the value of the header.
+* `hasResponse()` returns `true` for a socket whose response was already read with `readResponse()`.
+  `getSocketIdsHavingResponse()`, `readReadyResponses()` and `handleReadyResponses()` ignore idle sockets.
 * Received packets are validated. A response with an invalid packet, e.g. from a server that is no FastCGI server,
   throws a `ReadFailedException` instead of hanging in an endless loop.
 * A request that could only be written partly throws a `TimedoutException` or `WriteFailedException` instead of

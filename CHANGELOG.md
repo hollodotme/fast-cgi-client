@@ -6,7 +6,7 @@ to [Semantic Versioning](http://semver.org/) and [Keep a CHANGELOG](http://keepa
 This file covers the 4.x releases. For previous major versions see:
 [3.x](./docs/changelog/3.x.md), [2.x](./docs/changelog/2.x.md), [1.x](./docs/changelog/1.x.md)
 
-## [4.0.0] - Unreleased
+## [4.0.0] - 2026-10-05
 
 ### Backwards incompatible changes (BC breaks)
 
@@ -22,8 +22,9 @@ This file covers the 4.x releases. For previous major versions see:
   * `ProvidesRequestData#getContent()` returns `?ComposesRequestContent` instead of `string`.
   * The named constructor `newWithRequestContent()`, introduced in 3.1.0, was removed from all request classes.
   * The content length and, unless it was set explicitly, the content type of a request are determined from the
-    content object when the request is sent. Changes to the content object after it was passed to the request are
-    taken into account. - [#76]
+    content object when the request is sent, which composes the content twice: once for the `CONTENT_LENGTH`
+    parameter and once for the body. Changes to the content object after it was passed to the request are taken
+    into account. - [#76], [#97]
 
   ```php
   # Previous versions
@@ -43,13 +44,18 @@ This file covers the 4.x releases. For previous major versions see:
   to own implementations of this interface. - [#82]
 * `Client#readResponses()` and `Client#readReadyResponses()` throw the exception, if a response cannot be read,
   e.g. a `TimedoutException`. Before, such responses were skipped silently. Unknown socket IDs are still skipped.
+* `Client#waitForResponse()` and `Client#waitForResponses()` time out after the read/write timeout of the connection,
+  if no timeout is passed. The failure callbacks of requests without response are notified with a `TimedoutException`
+  then. Before, both methods waited until the response was received, also for scripts that run longer than the
+  read/write timeout before they send output. Pass a timeout that is long enough for your scripts.
 * The interface `ProvidesResponseData` has the new method `getStatusCode() : int`, which must be added to own
   implementations of this interface.
 * The public constant `Socket::STREAM_SELECT_USEC` was removed in favour of the configurable stream select timeout
   of the socket connections. - [#82]
-* Properties and some method parameters have native type declarations now, e.g. `AbstractRequest#setCustomVar()`
-  and `JsonData#__construct()` use `mixed`. Classes that extend classes of this library may need to adapt their
-  declarations. - [#57], [#85]
+* Classes that extend `AbstractRequest` or a request class must adapt overridden `setContent()` and `getContent()`
+  methods and calls of `parent::__construct()` to the content object. New public methods may collide with methods of
+  own subclasses: `Client#tryRequest()`, `Client#tryAsyncRequest()`, `AbstractRequest#setQueryParams()`,
+  `AbstractRequest#getQueryParams()`, `AbstractRequest#getQueryString()` and `Response#getStatusCode()`. - [#57]
 
 ### Added
 
@@ -66,13 +72,14 @@ This file covers the 4.x releases. For previous major versions see:
 * Compatibility with PHP 8.2, 8.3, 8.4 and 8.5. All test suites run on PHP 8.0 - 8.5.
 * Validation of received packets according to the FastCGI specification. A `ReadFailedException` is thrown, if a
   packet has an unsupported protocol version, an unexpected record type, the ID of another request or, in case of
-  an end-request record, an unexpected length. - [#78]
+  an end-request record, an unexpected length. - [#78], [#95]
 
 ### Improved
 
 * Idle sockets that were closed by the peer, e.g. because their php-fpm child process was terminated, are detected
   and replaced before a request is sent. - [#84]
-* Use of PHP 8.0 language features like constructor property promotion, `match` and `mixed`. - [#85]
+* Use of PHP 8.0 language features like typed properties, constructor property promotion, `match` and `mixed`.
+  - [#70], [#85]
 * PHPStan (level 8) is part of the test pipeline and analyses the code on and for each supported PHP version.
 * Values passed to `chr()` when encoding packets are limited to one byte, because values out of this range are
   deprecated in PHP 8.5.
@@ -80,10 +87,8 @@ This file covers the 4.x releases. For previous major versions see:
 * Compatibility with FastCGI servers of other programming languages is checked continuously in a workflow per server,
   independently of the CI workflow (`make test-compatibility`).
 * PHP_CodeSniffer is part of the test pipeline and checks the coding standard, PSR-12 with the adjustments listed
-  in the contribution guide (`make phpcs`, `make phpcbf`). - [#75]
+  in the contribution guide (`make phpcs`, `make phpcbf`). - [#75], [#98]
 * Integration tests do not depend on fixed waiting times anymore. - [#86]
-* The content of a request is composed twice per request when it is sent, instead of once for every 65535 bytes:
-  once for the `CONTENT_LENGTH` parameter and once for the body.
 * Documentation and changelog are split by major version. - [#87]
 * The documentation moved to a website at [fast-cgi-client.hollo.me](https://fast-cgi-client.hollo.me), with the
   documentation of all major versions and their API reference. It is built with Docusaurus and Doctum
@@ -103,23 +108,29 @@ This file covers the 4.x releases. For previous major versions see:
 
 ### Fixed
 
-* `Client#waitForResponse()` and `Client#waitForResponses()` did not return, if the server did not respond. After the
-  timeout (default: the read/write timeout of the connection) the failure callbacks of the request are notified with
-  a `TimedoutException` now.
+Most of these fixes were also released for 3.x in version 3.1.8.
+
+* `Client#waitForResponse()` and `Client#waitForResponses()` did not return, if the server did not respond, even if a
+  timeout was passed. After the timeout the failure callbacks of the request are notified with a `TimedoutException`
+  now.
 * A socket that could not connect stayed in the collection of the client.
 * Endless loop when the connection was closed before a packet was received completely, e.g. when the process
   handling the request was terminated while it sent its response, or when the client was connected to a HTTP server
-  instead of a FastCGI server. A `ReadFailedException` is thrown now. - [#78]
+  instead of a FastCGI server. A `ReadFailedException` is thrown now. - [#78], [#95]
 * Reading a response that was not completed by the server timed out after twice the read/write timeout.
 * Packet headers are read completely before they are decoded, also if they arrive in several parts.
 * `NameValuePairEncoder#decodePairs()` decoded names and values of 16 MiB and more with a wrong length.
 * The first two lines of a response were lost, if it did not start with a header.
+* Output that starts with header lines, but has no blank line after them, was split into headers and a body that
+  lost its first line. It is the body of the response now, without headers. The headers of a response are separated
+  from its body by a blank line, which php-fpm always sends.
+* A header value continued on the next line (obsolete line folding) ended the headers and was lost. It is appended
+  to the value of the header now.
 * Headers and body of a response are separated independently of the line endings of the platform the client runs on.
 * Request parameters longer than 65535 bytes in total corrupted the request, because the length of a record was cut
   to 2 bytes. They are sent in multiple records now, split between name-value pairs. `PacketEncoder#encodePacket()`
   splits content that is longer than one record into consecutive records of the same type.
-* The `CONTENT_LENGTH` parameter always matches the length of the content that is sent, even if the content
-  object composes a different content each time.
+* Request content `"0"` was not sent.
 * A request that could only be written partly, e.g. because the server did not read it before the read/write timeout,
   was treated as sent. A `TimedoutException` or `WriteFailedException` is thrown now.
 * A read timeout passed to `readResponse()` and the other methods reading responses applied to writing the next
@@ -129,18 +140,25 @@ This file covers the 4.x releases. For previous major versions see:
   `waitForResponses()`.
 * `Client#hasResponse()` and `Client#waitForResponse()` checked the stream of a socket whose response was already read
   with `readResponse()`. `hasResponse()` returned `false`, and `true` once the server closed the idle connection.
-  `waitForResponse()` then waited until the timeout and notified the failure callbacks, or notified the response
-  callbacks with the response again. Such a socket has its response now.
+  `waitForResponse()` blocked until then. Such a socket has its response now.
+* A response without any packet was returned as an empty response, if the socket had no stream anymore. A
+  `ReadFailedException` is thrown now.
+* `Client#getSocketIdsHavingResponse()` and the methods based on it could throw a `ValueError` on PHP 8, if the
+  sockets of the client had no stream, e.g. after a failed connect.
+* An end-request record without protocol status caused an "Uninitialized string offset" warning and was treated as
+  a completed request. A `ReadFailedException` is thrown now. - [#78], [#95]
 
 ### Removed
 
 * License information from all PHP files. The [LICENSE](./LICENSE) file applies to the whole project. - [#57]
 
-[4.0.0]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.7...4.x-dev
+[4.0.0]: https://github.com/hollodotme/fast-cgi-client/compare/v3.1.8...v4.0.0
 
 [#18]: https://github.com/hollodotme/fast-cgi-client/issues/18
 
 [#57]: https://github.com/hollodotme/fast-cgi-client/issues/57
+
+[#70]: https://github.com/hollodotme/fast-cgi-client/pull/70
 
 [#75]: https://github.com/hollodotme/fast-cgi-client/pull/75
 
@@ -161,3 +179,9 @@ This file covers the 4.x releases. For previous major versions see:
 [#86]: https://github.com/hollodotme/fast-cgi-client/issues/86
 
 [#87]: https://github.com/hollodotme/fast-cgi-client/issues/87
+
+[#95]: https://github.com/hollodotme/fast-cgi-client/pull/95
+
+[#97]: https://github.com/hollodotme/fast-cgi-client/pull/97
+
+[#98]: https://github.com/hollodotme/fast-cgi-client/pull/98
