@@ -32,9 +32,9 @@
         "ext-json": "*"
     },
     "require-dev": {
-        "ext-xdebug": ">=3.1",
-        "phpunit/phpunit": "^9",
-        "phpstan/phpstan": "^2.1",
+        "ext-xdebug": ">=3.5",
+        "phpunit/phpunit": "^9.6",
+        "phpstan/phpstan": "^2.3",
         "squizlabs/php_codesniffer": "^4.0"
     }
 }

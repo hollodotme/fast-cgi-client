@@ -1,4 +1,4 @@
-FROM php:8.4-cli-alpine
+FROM php:8.4.27-cli-alpine
 
 ARG DOCTUM_VERSION=5.6.0
 
